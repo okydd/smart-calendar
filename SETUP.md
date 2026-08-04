@@ -116,20 +116,38 @@ create index if not exists calendar_events_user_updated_idx
    - 不要勾选任何初始化选项
 3. 点 **Create repository**
 
-### 步骤 2：上传代码
+### 步骤 2：上传代码（推荐网页拖拽，不用装任何东西）
 
-在本项目目录（`E:\教学小工具\日历记录`）打开命令行，依次执行（把 `你的用户名` 换掉）：
+我已经把需要上传的 45 个文件整理好放在这个文件夹里：
+
+```
+E:\教学小工具\日历记录\github-upload
+```
+
+操作方法：
+
+1. 刚建好的空仓库页面上，点中间的 **uploading an existing file** 链接
+2. 打开 `github-upload` 文件夹，**全选里面的所有内容**（Ctrl+A，包括 `.github`、`public`、`src` 这几个文件夹）
+3. 直接拖进 GitHub 网页的上传区域，等待文件列表加载完
+4. 页面拉到底，点绿色的 **Commit changes**
+
+> ⚠️ 注意是拖「文件夹**里面**的内容」，不是拖 `github-upload` 这个文件夹本身，否则目录层级会多一层导致部署失败。
+
+<details>
+<summary>备选：用命令行推送（需要 GitHub Personal Access Token）</summary>
+
+本地仓库已经初始化并提交好了，只需关联远程并推送：
 
 ```bash
-git init
-git add .
-git commit -m "智能日历：日程管理 + 云同步 + 长图导出"
+cd "E:\教学小工具\日历记录"
 git branch -M main
 git remote add origin https://github.com/你的用户名/smart-calendar.git
 git push -u origin main
 ```
 
-> 没装 git 的话，也可以在仓库页面点 **uploading an existing file**，把项目文件夹里除 `node_modules`、`dist` 之外的所有文件拖进去上传。
+GitHub 已不支持用登录密码推送，弹出输入框时：用户名填 GitHub 用户名，密码位置填 **Personal Access Token**（在 GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token，勾选 `repo` 和 `workflow` 权限后生成）。
+
+</details>
 
 ### 步骤 3：开启 Pages
 

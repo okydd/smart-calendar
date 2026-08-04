@@ -1,6 +1,7 @@
 node_modules
 dist
 dist-ssr
+github-upload
 *.local
 .DS_Store
 .workbuddy
