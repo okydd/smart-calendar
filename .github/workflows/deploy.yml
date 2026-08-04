@@ -29,11 +29,9 @@ jobs:
         run: npm ci
 
       - name: Build
-        # 若在仓库 Settings → Secrets 中配置了这两个值，
-        # 则同步参数会被打包进程序，用户无需手工填写。
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        # 云同步参数来自仓库根目录的 .env.production
+        # （VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY）。
+        # anon key 属于公开密钥，配合数据库行级安全策略 RLS 使用，可安全放入仓库。
         run: npm run build
 
       - name: Disable Jekyll processing
