@@ -36,26 +36,40 @@ function writeSecrets(o) {
 }
 
 let TOKEN = '';
+/** 国内访问 GitHub 偶发 TLS 超时，这里做 4 次重试，避免整个流程被一次抖动打断 */
 async function api(method, urlPath, body) {
-  const res = await fetch(API + urlPath, {
-    method,
-    headers: {
-      Authorization: `Bearer ${TOKEN}`,
-      Accept: 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-      'Content-Type': 'application/json',
-      'User-Agent': 'smart-calendar-setup'
-    },
-    body: body ? JSON.stringify(body) : undefined
-  });
-  const text = await res.text();
-  let data = null;
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = text;
+  let lastErr = null;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      const res = await fetch(API + urlPath, {
+        method,
+        headers: {
+          Authorization: `Bearer ${TOKEN}`,
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+          'Content-Type': 'application/json',
+          'User-Agent': 'smart-calendar-setup'
+        },
+        body: body ? JSON.stringify(body) : undefined
+      });
+      const text = await res.text();
+      let data = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        data = text;
+      }
+      return { ok: res.ok, status: res.status, data };
+    } catch (e) {
+      lastErr = e;
+      await sleep(3000 * (attempt + 1));
+    }
   }
-  return { ok: res.ok, status: res.status, data };
+  return {
+    ok: false,
+    status: 0,
+    data: `网络请求失败：${lastErr?.cause?.code || lastErr?.message || '未知错误'}`
+  };
 }
 
 function git(cmd, opts = {}) {
