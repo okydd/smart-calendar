@@ -5,3 +5,4 @@ github-upload
 *.local
 .DS_Store
 .workbuddy
+.secrets.json

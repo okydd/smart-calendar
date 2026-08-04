@@ -10,6 +10,48 @@
 
 ---
 
+## 最快路径 · 交给助手全自动配置（推荐，你只需 5 分钟）
+
+下面第一、二、三部分的所有操作，都可以由自动化脚本代劳。你只需要做两件事：
+
+### 你要做的（约 5 分钟）
+
+**① 注册 Supabase 并生成访问令牌**
+
+1. 打开 <https://supabase.com>，点 **Start your project**，用邮箱注册并完成邮件验证
+2. 首次登录时会让你建一个 **Organization**（组织），名字随便填，计划选 **Free**
+3. 打开 <https://supabase.com/dashboard/account/tokens>
+4. 点 **Generate new token**，名字填 `setup`，生成后**立刻复制**（只显示这一次）
+5. 令牌形如 `sbp_1a2b3c...`
+
+**② 注册 GitHub 并生成访问令牌**
+
+1. 打开 <https://github.com/signup> 注册（已有账号就直接登录）
+2. 打开 <https://github.com/settings/tokens/new>
+3. **Note** 填 `smart-calendar-deploy`，**Expiration** 选 30 days
+4. 勾选两项权限：**repo**（整组勾上）和 **workflow**
+5. 拉到底点 **Generate token**，复制生成的令牌，形如 `ghp_1a2b3c...`
+
+**③ 把两个令牌填进 `.secrets.json`**
+
+用记事本打开项目根目录的 `.secrets.json`，把两处 `PASTE_HERE` 换成对应令牌，保存。
+
+> 该文件已被 `.gitignore` 排除，不会上传到 GitHub，也不会出现在任何提交里。
+> 全部配置完成后，你可以随时到上面两个页面把令牌删除（**Revoke**），不影响已完成的配置。
+
+### 脚本会做的（约 5 分钟，自动）
+
+```bash
+node scripts/setup-supabase.mjs   # 建项目 → 建表 → 配安全策略 → 取连接参数
+node scripts/setup-github.mjs     # 建仓库 → 推代码 → 开 Pages → 等待发布
+```
+
+跑完会直接打印出你的永久网址，形如 `https://你的用户名.github.io/smart-calendar/`。
+
+> 想自己手工操作、或脚本中途出错时，按下面的分步指南走即可，两者效果完全一样。
+
+---
+
 ## 第一部分 · 开通云同步（约 10 分钟）
 
 ### 步骤 1：注册 Supabase
