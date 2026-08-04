@@ -1,247 +1,124 @@
-# 智能日历 · 云同步与长期托管配置指南
+# 智能日历 · 使用与维护说明
 
-按本文操作后，你将得到：
-
-- 手机与电脑登录**同一个邮箱账号**，日程自动双向同步
-- 数据存放在**你自己的**云数据库里，别人看不到，也不会随浏览器清理而丢失
-- 一个**长期稳定、不会失效**的访问网址
-
-全程免费，两部分加起来大约 20 分钟。
+> 配置已全部完成，打开网址即可使用。本文档留作日后查阅。
 
 ---
 
-## 最快路径 · 交给助手全自动配置（推荐，你只需 5 分钟）
+## 一、开始使用
 
-下面第一、二、三部分的所有操作，都可以由自动化脚本代劳。你只需要做两件事：
-
-### 你要做的（约 5 分钟）
-
-**① 注册 Supabase 并生成访问令牌**
-
-1. 打开 <https://supabase.com>，点 **Start your project**，用邮箱注册并完成邮件验证
-2. 首次登录时会让你建一个 **Organization**（组织），名字随便填，计划选 **Free**
-3. 打开 <https://supabase.com/dashboard/account/tokens>
-4. 点 **Generate new token**，名字填 `setup`，生成后**立刻复制**（只显示这一次）
-5. 令牌形如 `sbp_1a2b3c...`
-
-**② 注册 GitHub 并生成访问令牌**
-
-1. 打开 <https://github.com/signup> 注册（已有账号就直接登录）
-2. 打开 <https://github.com/settings/tokens/new>
-3. **Note** 填 `smart-calendar-deploy`，**Expiration** 选 30 days
-4. 勾选两项权限：**repo**（整组勾上）和 **workflow**
-5. 拉到底点 **Generate token**，复制生成的令牌，形如 `ghp_1a2b3c...`
-
-**③ 把两个令牌填进 `.secrets.json`**
-
-用记事本打开项目根目录的 `.secrets.json`，把两处 `PASTE_HERE` 换成对应令牌，保存。
-
-> 该文件已被 `.gitignore` 排除，不会上传到 GitHub，也不会出现在任何提交里。
-> 全部配置完成后，你可以随时到上面两个页面把令牌删除（**Revoke**），不影响已完成的配置。
-
-### 脚本会做的（约 5 分钟，自动）
-
-```bash
-node scripts/setup-supabase.mjs   # 建项目 → 建表 → 配安全策略 → 取连接参数
-node scripts/setup-github.mjs     # 建仓库 → 推代码 → 开 Pages → 等待发布
-```
-
-跑完会直接打印出你的永久网址，形如 `https://你的用户名.github.io/smart-calendar/`。
-
-> 想自己手工操作、或脚本中途出错时，按下面的分步指南走即可，两者效果完全一样。
-
----
-
-## 第一部分 · 开通云同步（约 10 分钟）
-
-### 步骤 1：注册 Supabase
-
-1. 打开 <https://supabase.com>，点右上角 **Start your project**
-2. 用 GitHub 账号或邮箱注册（免费，无需信用卡）
-3. 登录后点 **New project**，填写：
-   - **Name**：随便填，例如 `calendar`
-   - **Database Password**：设一个数据库密码，**请单独记下来**（这个不是登录 App 用的密码，但以后可能会用到）
-   - **Region**：选 **Southeast Asia (Singapore)**，国内访问最快
-4. 点 **Create new project**，等待约 2 分钟初始化完成
-
-### 步骤 2：创建数据表
-
-1. 在项目左侧菜单点 **SQL Editor** → **New query**
-2. 把下面整段复制粘贴进去，点右下角 **Run**（或按 Ctrl+Enter）
-
-```sql
-create table if not exists public.calendar_events (
-  id          text        not null,
-  user_id     uuid        not null references auth.users(id) on delete cascade,
-  title       text        not null default '',
-  date        text        not null default '',
-  start_time  text        not null default '',
-  end_time    text        not null default '',
-  all_day     boolean     not null default false,
-  description text        not null default '',
-  tag         text        not null default 'purple',
-  done        boolean     not null default false,
-  deleted     boolean     not null default false,
-  updated_at  timestamptz not null default now(),
-  primary key (user_id, id)
-);
-
-alter table public.calendar_events enable row level security;
-
-create policy "read own"   on public.calendar_events
-  for select using (auth.uid() = user_id);
-create policy "insert own" on public.calendar_events
-  for insert with check (auth.uid() = user_id);
-create policy "update own" on public.calendar_events
-  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "delete own" on public.calendar_events
-  for delete using (auth.uid() = user_id);
-
-create index if not exists calendar_events_user_updated_idx
-  on public.calendar_events (user_id, updated_at desc);
-```
-
-看到 **Success. No rows returned** 就说明成功了。
-
-> 这段 SQL 里的 `row level security` 和四条 policy 是关键安全设置：它保证**每个账号只能读写自己的数据**，即使有人拿到了下一步的 anon key 也看不到你的日程。
-
-### 步骤 3（可选但推荐）：关掉邮箱验证
-
-默认注册后需要去邮箱点验证链接。如果只有你自己用，可以关掉，注册完直接就能用：
-
-**Authentication** → **Sign In / Providers** → **Email** → 关闭 **Confirm email** → **Save**
-
-### 步骤 4：复制两个连接参数
-
-左下角 **Settings**（齿轮）→ **API**，复制这两项：
-
-| 参数 | 位置 | 样子 |
-|---|---|---|
-| **Project URL** | Project URL 区块 | `https://abcdefgh.supabase.co` |
-| **anon public** | Project API keys 区块 | `eyJhbGciOiJIUzI1NiIs...`（很长一串） |
-
-> **anon key 可以公开吗？** 可以。它只是让程序知道该连哪个项目，真正的权限由上面的 RLS 策略和你的登录账号决定。这是 Supabase 的标准用法。
-
-### 步骤 5：在 App 里填入并登录
-
-1. 打开智能日历，点顶部的 **云图标**（或「更多 → 云同步」）
-2. 把 Project URL 和 anon public key 粘贴进去，点**保存连接参数**
-3. 点「还没有账号？去注册」，填入你的邮箱和密码（至少 6 位），点**注册新账号**
-4. 注册成功后会自动同步，顶部云图标变绿
-
-**在另一台设备上**：打开同一个网址 → 云同步 → 填入**相同的**两个参数 → 用**同一个邮箱密码登录** → 数据立刻同步过来。
-
-> 如果按第三部分部署到了 GitHub Pages 并配置了 Secrets，其它设备连参数都不用填，直接登录即可。
-
----
-
-## 第二部分 · 同步是怎么工作的
-
-- **实时性**：修改后 1.5 秒自动上传；每 60 秒、以及每次切回 App 时自动拉取云端
-- **冲突处理**：同一条日程在两台设备上都改了，以**最后修改的那次为准**
-- **删除同步**：删除会作为「墓碑记录」同步到其它设备，不会出现删了又冒出来的情况
-- **离线可用**：没网时照常增删改查，联网后自动补传
-- **不影响本地**：即使不登录，App 也完全可用，数据存在本机
-
----
-
-## 第三部分 · 部署到 GitHub Pages（约 10 分钟）
-
-这样你会得到一个形如 `https://你的用户名.github.io/smart-calendar/` 的**永久网址**。
-
-### 步骤 1：注册并新建仓库
-
-1. 打开 <https://github.com> 注册账号（已有则跳过）
-2. 点右上角 **+** → **New repository**
-   - **Repository name**：`smart-calendar`
-   - 选 **Public**（Public 仓库的 Pages 才免费）
-   - 不要勾选任何初始化选项
-3. 点 **Create repository**
-
-### 步骤 2：上传代码（推荐网页拖拽，不用装任何东西）
-
-我已经把需要上传的 45 个文件整理好放在这个文件夹里：
+**网址（手机、电脑通用）**
 
 ```
-E:\教学小工具\日历记录\github-upload
+https://okydd.github.io/smart-calendar/
 ```
 
-操作方法：
+### 手机装成 App
 
-1. 刚建好的空仓库页面上，点中间的 **uploading an existing file** 链接
-2. 打开 `github-upload` 文件夹，**全选里面的所有内容**（Ctrl+A，包括 `.github`、`public`、`src` 这几个文件夹）
-3. 直接拖进 GitHub 网页的上传区域，等待文件列表加载完
-4. 页面拉到底，点绿色的 **Commit changes**
-
-> ⚠️ 注意是拖「文件夹**里面**的内容」，不是拖 `github-upload` 这个文件夹本身，否则目录层级会多一层导致部署失败。
-
-<details>
-<summary>备选：用命令行推送（需要 GitHub Personal Access Token）</summary>
-
-本地仓库已经初始化并提交好了，只需关联远程并推送：
-
-```bash
-cd "E:\教学小工具\日历记录"
-git branch -M main
-git remote add origin https://github.com/你的用户名/smart-calendar.git
-git push -u origin main
-```
-
-GitHub 已不支持用登录密码推送，弹出输入框时：用户名填 GitHub 用户名，密码位置填 **Personal Access Token**（在 GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token，勾选 `repo` 和 `workflow` 权限后生成）。
-
-</details>
-
-### 步骤 3：开启 Pages
-
-仓库页面 → **Settings** → 左侧 **Pages** → **Source** 选择 **GitHub Actions** → 保存。
-
-### 步骤 4（可选）：把同步参数写进部署
-
-这样所有设备打开就已经配好了，只需登录：
-
-**Settings** → **Secrets and variables** → **Actions** → **New repository secret**，添加两条：
-
-| Name | Secret |
+| 系统 | 步骤 |
 |---|---|
-| `VITE_SUPABASE_URL` | 你的 Project URL |
-| `VITE_SUPABASE_ANON_KEY` | 你的 anon public key |
+| 安卓 / 鸿蒙 | 用 Chrome、Edge 打开网址 → 右上角菜单 → **添加到主屏幕** / **安装应用** |
+| iPhone / iPad | 用 **Safari** 打开网址 → 底部**分享**按钮 → **添加到主屏幕** |
 
-添加后到 **Actions** 标签页点最新一次运行 → **Re-run all jobs** 重新构建。
+装好后桌面会出现独立图标，点开全屏运行，没有浏览器地址栏，断网也能记录。
 
-### 步骤 5：等待部署完成
+### 电脑使用
 
-**Actions** 标签页会看到工作流在跑，约 1-2 分钟出现绿色对勾。然后回到 **Settings → Pages**，页面顶部会显示你的网址。
-
-手机浏览器打开该网址 →「添加到主屏幕」，就装好了。
+浏览器直接打开同一个网址。屏幕宽度 ≥1024px 时自动切换成「左侧日历 + 右侧清单」双栏布局。
 
 ---
 
-## 常见问题
+## 二、开启多设备同步（首次需要 1 分钟）
 
-**Q：提示「云端数据表未创建」**
-第一部分步骤 2 的 SQL 没执行成功，回去重新执行一遍。
+1. 打开 App → 点右上角**云图标**
+2. 选择**注册**，填一个邮箱和密码（密码至少 6 位）
+3. 点注册 —— 立即登录，无需收验证邮件
 
-**Q：提示「邮箱尚未验证」**
-去邮箱收件箱（含垃圾箱）点验证链接；或按步骤 3 关掉邮箱验证后重新注册。
+在另一台设备（手机或电脑）上打开同一网址，用**同一个邮箱密码**登录，两边数据即自动互通。
 
-**Q：提示「权限策略未生效」**
-SQL 里的四条 `create policy` 没跑成功。可以在 **Table Editor → calendar_events → 右上角 RLS** 里确认策略是否存在。
+### 同步规则
 
-**Q：两台设备数据没同步**
-检查三点：① 两边填的 Project URL 是否完全一致；② 是否登录的是同一个邮箱；③ 顶部云图标是否为绿色。可点「立即同步」手动触发。
+| 项目 | 行为 |
+|---|---|
+| 上传 | 增删改后 **1.5 秒**自动上传 |
+| 下载 | 每 **60 秒**，以及切回 App、网络恢复时自动拉取 |
+| 冲突 | 两端改了同一条 → 以**最后修改时间**为准 |
+| 删除 | 通过「墓碑记录」传播，不会删了又冒出来 |
+| 离线 | 断网照常增删改，联网后自动补传 |
 
-**Q：忘记密码**
-云同步面板填入邮箱后点「忘记密码」，会收到重置邮件。
+---
 
-**Q：想换个数据库 / 停用同步**
-云同步面板底部「断开云同步」，清除本机配置并回到纯本地模式，云端数据不受影响。
+## 三、数据在哪里、安不安全
 
-**Q：本地开发怎么跑**
+- **日程数据**存在你自己名下的 Supabase 数据库（东京节点），本机浏览器另存一份，互为备份。
+- 数据库开启了**行级安全策略（RLS）**：数据库层面强制「每个账号只能读写自己的数据」。已实测验证——只拿公开密钥、不登录，一条记录都读不出来。
+- 程序代码托管在你自己的 GitHub 仓库，公开可见，但**不含任何日程内容**。
+
+**你的资产**
+
+| 项目 | 地址 |
+|---|---|
+| 应用网址 | https://okydd.github.io/smart-calendar/ |
+| 代码仓库 | https://github.com/okydd/smart-calendar |
+| 数据库后台 | https://supabase.com/dashboard/project/uppdqtukckhwkyuwpmuz |
+
+---
+
+## 四、导出与备份
+
+App 内右上角 **⋯ 更多**：
+
+- **导出为图片** —— 选日期范围，生成 750px 宽的蓝紫渐变长图（含日期 / 事件名称 / 时间三列表格），适合发微信或打印。
+- **导出 JSON 备份** —— 下载完整数据文件，换设备或误删时用「导入 JSON」一键恢复。
+- **导入 JSON** —— 从备份文件恢复。
+- **恢复示例数据** —— 重置为初始演示事件。
+
+即使已开启云同步，仍建议每月导出一次 JSON 存到网盘或微信收藏。
+
+---
+
+## 五、日常维护须知
+
+**1. Supabase 免费项目会休眠**
+连续 **7 天**完全没有访问，项目会自动暂停。日常用日历不会触发；若长假不用，回来第一次打开可能要等几十秒唤醒，或到数据库后台点一下 **Restore**。
+
+**2. GitHub Pages 偶发访问慢**
+`github.io` 在国内偶尔出现连接超时（实测约 10% 概率，刷新即可）。若某段时间完全打不开，可把网站另外发布到腾讯云 EdgeOne Pages（可直连本仓库自动部署），拿一个国内加速域名作为备用。
+
+**3. 访问令牌**
+配置用的两个令牌保存在本机 `.secrets.json`（已排除出版本库，不会上传）。
+- Supabase 令牌：`https://supabase.com/dashboard/account/tokens` 可随时 Revoke
+- GitHub 令牌：`https://github.com/settings/tokens` 可随时 Revoke，本身也会在 30 天后自动过期
+
+撤销令牌**不影响**已完成的配置和正在运行的应用，只是以后要再自动更新代码时需要重新生成。
+
+---
+
+## 六、以后想改功能怎么办
+
+代码改完后，在项目目录执行：
 
 ```bash
-npm install
-npm run dev     # 开发预览 http://localhost:5173
-npm run build   # 生产构建，产物在 dist/
+node scripts/setup-github.mjs
 ```
 
-Windows 下如果 `npm run build` 报 `safe-delete` 相关错误，先手动删掉 `dist` 文件夹再构建。
+脚本会自动提交、推送、触发云端构建并发布，约 2 分钟后网址上就是新版本。
+（需要 `.secrets.json` 里的 GitHub 令牌仍然有效。）
+
+想确认线上一切正常，随时运行体检脚本：
+
+```bash
+node scripts/verify.mjs      # 网址 + 注册登录 + 读写 + 安全隔离，全流程自检
+node scripts/netcheck.mjs    # 换网络时测国内裸连可达性
+```
+
+---
+
+## 七、本地开发
+
+```bash
+npm install          # 首次
+npm run dev          # 开发预览 → http://localhost:5173/
+npm run build        # 生产构建 → dist/
+```
+
+云同步参数存放在 `.env.production`，构建时自动注入。
