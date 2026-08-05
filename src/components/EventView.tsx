@@ -126,28 +126,35 @@ export default function EventView() {
           </div>
         </div>
 
-        <div className="ev-foot">
-          <button
-            className="ev-cancel"
-            onClick={() => {
-              openCreate({ date: e.date });
-              closeEventView();
-            }}
-          >
-            新建
-          </button>
-          <button
-            className="ev-cancel"
-            onClick={() => {
-              openEdit(e);
-              closeEventView();
-            }}
-          >
-            编辑
-          </button>
-          <button className="ev-del" onClick={handleDelete}>
-            删除
-          </button>
+        <div className="ev-foot ev-foot-stack">
+          <div className="ev-foot-row">
+            <button
+              className="ev-btn-new"
+              onClick={() => {
+                openCreate({ date: e.date });
+                closeEventView();
+              }}
+            >
+              新建
+            </button>
+            <button
+              className="ev-btn-edit"
+              onClick={() => {
+                openEdit(e);
+                closeEventView();
+              }}
+            >
+              编辑
+            </button>
+          </div>
+          <div className="ev-foot-row">
+            <button className="ev-btn-gray" onClick={handleDelete}>
+              删除
+            </button>
+            <button className="ev-btn-gray" onClick={closeEventView}>
+              取消
+            </button>
+          </div>
         </div>
       </div>
     </div>
