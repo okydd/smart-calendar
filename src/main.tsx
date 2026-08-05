@@ -64,3 +64,28 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
+
+// 每次打开网址：若线上版本比本机已加载版本新，自动刷新摘取最新版本
+(function checkAppUpdate() {
+  const VERSION_URL = `${import.meta.env.BASE_URL}version.json`;
+  const STORE_KEY = 'appVersion';
+  const RELOAD_FLAG = 'appReloading';
+  fetch(VERSION_URL + '?_=' + Date.now(), { cache: 'no-store' })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j) => {
+      if (!j || !j.version) return;
+      const cur = localStorage.getItem(STORE_KEY);
+      if (!cur) {
+        localStorage.setItem(STORE_KEY, j.version);
+        return;
+      }
+      if (cur !== j.version && !sessionStorage.getItem(RELOAD_FLAG)) {
+        localStorage.setItem(STORE_KEY, j.version);
+        sessionStorage.setItem(RELOAD_FLAG, '1');
+        location.reload(true);
+      }
+    })
+    .catch(() => {
+      /* 忽略网络异常（如离线） */
+    });
+})();
