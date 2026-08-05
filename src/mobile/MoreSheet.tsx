@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Drawer, App, Modal, DatePicker, Space } from 'antd';
+import { Drawer, App, Modal, DatePicker } from 'antd';
 import {
   PictureOutlined,
   DownloadOutlined,
@@ -19,11 +19,15 @@ import ExportModal from '../components/ExportModal';
 export default function MoreSheet({
   open,
   onClose,
-  onOpenSync
+  onOpenSync,
+  installable,
+  onInstall
 }: {
   open: boolean;
   onClose: () => void;
   onOpenSync: () => void;
+  installable: boolean;
+  onInstall: () => void;
 }) {
   const { message, modal } = App.useApp();
   const { events, activeTags, toggleTag, clearTags, importEvents } = useCalendar();
@@ -140,7 +144,7 @@ export default function MoreSheet({
           <h4>数据与导出</h4>
           <div className="export-range">
             <div className="export-range-label">选择时间范围</div>
-            <Space className="export-range-pickers">
+            <div className="export-range-pickers">
               <DatePicker
                 value={startDate}
                 onChange={(v) => v && setStartDate(v)}
@@ -157,10 +161,10 @@ export default function MoreSheet({
                 suffixIcon={null}
                 allowClear={false}
               />
-            </Space>
+            </div>
           </div>
 
-          <div className="sheet-actions-v2">
+          <div className="sheet-actions-row">
             <button className="sheet-btn-v2 primary" onClick={() => setExportOpen(true)}>
               <PictureOutlined className="ico" />
               导出图片
@@ -169,6 +173,8 @@ export default function MoreSheet({
               <CopyOutlined className="ico" />
               复制事件
             </button>
+          </div>
+          <div className="sheet-actions-row">
             <button className="sheet-btn-v2" onClick={handleExportJSON}>
               <DownloadOutlined className="ico" />
               导出JSON
@@ -200,21 +206,25 @@ export default function MoreSheet({
 
         <button
           className="install-hint-btn"
-          onClick={() =>
-            Modal.info({
-              title: '安装到手机桌面',
-              content: (
-                <div style={{ fontSize: 13, lineHeight: 1.9 }}>
-                  <b>安卓 / 鸿蒙：</b>用浏览器打开本网址，点右上角菜单 →「添加到主屏幕 / 安装应用」。
-                  <br />
-                  <b>iPhone：</b>用 Safari 打开本网址，点底部分享按钮 →「添加到主屏幕」。
-                  <br />
-                  安装后会生成独立图标，全屏运行，断网也能使用。
-                </div>
-              ),
-              okText: '知道了'
-            })
-          }
+          onClick={() => {
+            if (installable) {
+              onInstall();
+            } else {
+              Modal.info({
+                title: '安装到手机桌面',
+                content: (
+                  <div style={{ fontSize: 13, lineHeight: 1.9 }}>
+                    <b>安卓 / 鸿蒙：</b>用浏览器打开本网址，点右上角菜单 →「添加到主屏幕 / 安装应用」。
+                    <br />
+                    <b>iPhone：</b>用 Safari 打开本网址，点底部分享按钮 →「添加到主屏幕」。
+                    <br />
+                    安装后会生成独立图标，全屏运行，断网也能使用。
+                  </div>
+                ),
+                okText: '知道了'
+              });
+            }
+          }}
         >
           <MobileOutlined />
           安装到桌面
