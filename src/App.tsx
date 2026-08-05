@@ -1,21 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { Input, Modal } from 'antd';
+import { Modal } from 'antd';
 import {
-  SearchOutlined,
   MoreOutlined,
   CalendarOutlined,
-  UnorderedListOutlined,
-  CloseOutlined,
-  CloudSyncOutlined,
-  CloudUploadOutlined,
-  CloudOutlined,
-  ExclamationCircleOutlined
+  UnorderedListOutlined
 } from '@ant-design/icons';
 import { CalendarProvider, useCalendar } from './context/CalendarContext';
-import { SyncProvider, useSync } from './context/SyncContext';
+import { SyncProvider } from './context/SyncContext';
 import { UIProvider } from './context/UIContext';
 import EventModal from './components/EventModal';
+import EventView from './components/EventView';
 import CalendarPage from './mobile/CalendarPage';
 import TodoPage from './mobile/TodoPage';
 import MoreSheet from './mobile/MoreSheet';
@@ -26,9 +21,7 @@ import { checkDueReminders } from './utils/notify';
 function Shell() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { search, setSearch, activeTags, clearTags, events } = useCalendar();
-  const { status, email } = useSync();
-  const [searchOpen, setSearchOpen] = useState(false);
+  const { activeTags, clearTags, events } = useCalendar();
   const [moreOpen, setMoreOpen] = useState(false);
   const [syncOpen, setSyncOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -102,27 +95,15 @@ function Shell() {
   const today = dayjs();
   const lunar = useMemo(() => lunarDateLabel(today), [today]);
 
-  /** 顶部同步状态图标 */
-  const syncIcon =
-    status === 'syncing' ? (
-      <CloudUploadOutlined spin />
-    ) : status === 'error' ? (
-      <ExclamationCircleOutlined />
-    ) : email ? (
-      <CloudSyncOutlined />
-    ) : (
-      <CloudOutlined />
-    );
-
   const tab = location.pathname.startsWith('/todos') ? 'todos' : 'calendar';
 
-  /** 待办角标：未完成且今天及以前的事项数量 */
+  /** 待办角标：今天当天的未完成事项数量 */
   const pending = useMemo(
     () =>
       events.filter((e) => {
         if (e.done) return false;
         const d = dayjs(e.date);
-        return d.isValid() && !d.isAfter(today, 'day');
+        return d.isValid() && d.isSame(today, 'day');
       }).length,
     [events, today]
   );
@@ -141,51 +122,12 @@ function Shell() {
           </div>
           <button
             className="topbar-btn"
-            onClick={() => {
-              setSearchOpen((v) => !v);
-              if (searchOpen) setSearch('');
-            }}
-            aria-label="搜索"
-          >
-            {searchOpen ? <CloseOutlined /> : <SearchOutlined />}
-          </button>
-          <button
-            className={`topbar-btn sync-state ${
-              status === 'error' ? 'err' : email ? 'ok' : 'off'
-            }`}
-            onClick={() => setSyncOpen(true)}
-            aria-label="云同步"
-            title={
-              status === 'error'
-                ? '同步失败，点击查看'
-                : email
-                  ? `云同步已开启（${email}）`
-                  : '云同步未开启，点击设置'
-            }
-          >
-            {syncIcon}
-          </button>
-          <button
-            className="topbar-btn"
             onClick={() => setMoreOpen(true)}
             aria-label="更多"
           >
             <MoreOutlined />
           </button>
         </div>
-
-        {searchOpen && (
-          <div className="topbar-search">
-            <Input
-              autoFocus
-              allowClear
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              prefix={<SearchOutlined style={{ color: '#9aa0b4' }} />}
-              placeholder="搜索标题或描述…"
-            />
-          </div>
-        )}
 
         {activeTags.length > 0 && (
           <div className="filter-hint">
@@ -225,6 +167,7 @@ function Shell() {
       </nav>
 
       <EventModal />
+      <EventView />
       <MoreSheet
         open={moreOpen}
         onClose={() => setMoreOpen(false)}
