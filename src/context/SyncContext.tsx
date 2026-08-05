@@ -18,6 +18,8 @@ import {
   validateConfig
 } from '../sync/config';
 import { eventToRow, mergeEvents, rowToEvent, type RemoteRow } from '../sync/merge';
+import { getNotifySettings, saveNotifySettings, type NotifySettings } from '../utils/notify';
+import { fetchCloudNotify, pushCloudNotify } from '../sync/notifySettings';
 
 const TABLE = 'calendar_events';
 const LAST_SYNC_KEY = 'calendarLastSync';
@@ -48,6 +50,12 @@ interface SyncContextValue {
   signOut: () => Promise<void>;
   sendReset: (email: string) => Promise<string | null>;
   syncNow: () => Promise<void>;
+  /** 当前登录用户 id（未登录为 null） */
+  userId: string | null;
+  /** 通知设置云端同步版本号，变化时本机设置已被云端覆盖 */
+  notifySettingsVersion: number;
+  /** 把通知设置推送到云端（跨设备同步），返回是否成功 */
+  syncNotifySettings: (s: NotifySettings) => Promise<boolean>;
 }
 
 const SyncContext = createContext<SyncContextValue | null>(null);
@@ -82,10 +90,12 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     getSupabaseConfig() ? 'signedOut' : 'disabled'
   );
   const [email, setEmail] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [lastSyncAt, setLastSyncAt] = useState<string | null>(
     () => localStorage.getItem(LAST_SYNC_KEY)
   );
   const [error, setError] = useState<string | null>(null);
+  const [notifySettingsVersion, setNotifySettingsVersion] = useState(0);
 
   const userIdRef = useRef<string | null>(null);
   const runningRef = useRef(false);
@@ -149,6 +159,29 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     }
   }, [snapshot, applyMerged]);
 
+  /** 登录后从云端拉取通知设置并覆盖本地（云端无记录时本地不变） */
+  const pullNotify = useCallback(async () => {
+    const supabase = getClient();
+    const uid = userIdRef.current;
+    if (!supabase || !uid) return;
+    const cloud = await fetchCloudNotify(supabase, uid);
+    if (cloud) {
+      saveNotifySettings(cloud);
+      setNotifySettingsVersion((v) => v + 1);
+    }
+  }, []);
+
+  /** 把当前通知设置 upsert 到云端（跨设备同步），返回是否成功 */
+  const syncNotifySettings = useCallback(
+    async (s: NotifySettings): Promise<boolean> => {
+      const supabase = getClient();
+      const uid = userIdRef.current;
+      if (!supabase || !uid) return false;
+      return pushCloudNotify(supabase, uid, s);
+    },
+    []
+  );
+
   /** 恢复已有会话 & 监听登录状态变化 */
   useEffect(() => {
     if (!configured) return;
@@ -161,9 +194,11 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       const s = data.session;
       if (s?.user) {
         userIdRef.current = s.user.id;
+        setUserId(s.user.id);
         setEmail(s.user.email ?? null);
         setStatus('idle');
         void syncNow();
+        void pullNotify();
       } else {
         setStatus('signedOut');
       }
@@ -173,10 +208,13 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       if (!alive) return;
       if (session?.user) {
         userIdRef.current = session.user.id;
+        setUserId(session.user.id);
         setEmail(session.user.email ?? null);
         setStatus('idle');
+        void pullNotify();
       } else {
         userIdRef.current = null;
+        setUserId(null);
         setEmail(null);
         setStatus('signedOut');
       }
@@ -252,9 +290,11 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       if (err) return humanizeError(err.message);
       if (data.user) {
         userIdRef.current = data.user.id;
+        setUserId(data.user.id);
         setEmail(data.user.email ?? null);
         setStatus('idle');
         void syncNow();
+        void pullNotify();
       }
       return null;
     },
@@ -276,9 +316,11 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       }
       if (data.user) {
         userIdRef.current = data.user.id;
+        setUserId(data.user.id);
         setEmail(data.user.email ?? null);
         setStatus('idle');
         void syncNow();
+        void pullNotify();
       }
       return null;
     },
@@ -317,7 +359,10 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       signUp,
       signOut,
       sendReset,
-      syncNow
+      syncNow,
+      userId,
+      notifySettingsVersion,
+      syncNotifySettings
     }),
     [
       status,
@@ -333,7 +378,10 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       signUp,
       signOut,
       sendReset,
-      syncNow
+      syncNow,
+      userId,
+      notifySettingsVersion,
+      syncNotifySettings
     ]
   );
 
