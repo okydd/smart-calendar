@@ -62,8 +62,6 @@ export default function EventModal() {
   const [dateValues, setDateValues] = useState<[number, number, number]>([2026, 8, 5]);
   const [timeValues, setTimeValues] = useState<[number, number]>([9, 0]);
   const [remindOffsets, setRemindOffsets] = useState<ReminderOffset[]>([]);
-  const [customValue, setCustomValue] = useState(1);
-  const [customUnit, setCustomUnit] = useState<'day' | 'hour' | 'minute'>('day');
 
   /** 日期/时间滚轮弹窗的临时草稿值 */
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -90,8 +88,6 @@ export default function EventModal() {
     setRemindOffsets(
       base.reminder && base.reminder.length ? base.reminder.map((r) => ({ ...r })) : []
     );
-    setCustomValue(1);
-    setCustomUnit('day');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initial]);
 
@@ -143,12 +139,6 @@ export default function EventModal() {
     if (isActive(p))
       setRemindOffsets(remindOffsets.filter((o) => !(o.unit === p.unit && o.value === p.value)));
     else setRemindOffsets([...remindOffsets, { unit: p.unit, value: p.value }]);
-  };
-  const addCustom = () => {
-    if (customValue <= 0) return;
-    const off: ReminderOffset = { unit: customUnit, value: customValue };
-    if (!remindOffsets.some((o) => o.unit === off.unit && o.value === off.value))
-      setRemindOffsets([...remindOffsets, off]);
   };
   const removeOffset = (o: ReminderOffset) =>
     setRemindOffsets(remindOffsets.filter((x) => !(x.unit === o.unit && x.value === o.value)));
@@ -215,7 +205,6 @@ export default function EventModal() {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="例如：团队周会"
               maxLength={20}
-              showCount
             />
           </div>
 
@@ -251,11 +240,10 @@ export default function EventModal() {
                 </span>
               </button>
             </div>
-            <div className="ev-dt-hint">时间可选，分钟间隔为1分钟</div>
           </div>
 
           <div className="imp-block">
-            <div className="imp-label">事件级别</div>
+            <div className="imp-label ev-section-title">事件级别</div>
             <div className="imp-btns">
               <button
                 type="button"
@@ -280,7 +268,7 @@ export default function EventModal() {
           </div>
 
           <div className="remind-block">
-            <div className="imp-label">提前提醒（可多选，通过微信推送）</div>
+            <div className="imp-label ev-section-title">消息通知</div>
             <div className="remind-presets">
               {PRESET_REMINDERS.map((p) => (
                 <button
@@ -293,62 +281,22 @@ export default function EventModal() {
                 </button>
               ))}
             </div>
-            <div className="remind-custom">
-              <span>自定义：提前</span>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={String(customValue)}
-                onChange={(e) => {
-                  const n = parseInt(e.target.value.replace(/[^0-9]/g, ''), 10);
-                  setCustomValue(Number.isNaN(n) || n < 1 ? 1 : Math.min(365, n));
-                }}
-                className="remind-num"
-              />
-              <div className="remind-unit">
-                <button
-                  type="button"
-                  className={`ru-btn${customUnit === 'day' ? ' active' : ''}`}
-                  onClick={() => setCustomUnit('day')}
-                >
-                  天
-                </button>
-                <button
-                  type="button"
-                  className={`ru-btn${customUnit === 'hour' ? ' active' : ''}`}
-                  onClick={() => setCustomUnit('hour')}
-                >
-                  小时
-                </button>
-                <button
-                  type="button"
-                  className={`ru-btn${customUnit === 'minute' ? ' active' : ''}`}
-                  onClick={() => setCustomUnit('minute')}
-                >
-                  分钟
-                </button>
-              </div>
-              <button type="button" className="remind-add" onClick={addCustom}>
-                添加
-              </button>
-            </div>
           </div>
 
           <div className="ev-field">
-            <label className="ev-label">描述</label>
+            <label className="ev-label ev-section-title">描述</label>
             <TextArea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows={2}
+              autoSize={{ minRows: 1, maxRows: 10 }}
               placeholder="补充说明（可选，最多 200 字）"
               maxLength={200}
-              showCount
             />
           </div>
 
           <div className="img-upload-block">
             <div className="img-upload-head">
-              <span>图片（最多 {MAX_IMAGES} 张）</span>
+              <span className="ev-section-title">图片（最多 {MAX_IMAGES} 张）</span>
               <span className="img-count">
                 {images.length}/{MAX_IMAGES}
               </span>
