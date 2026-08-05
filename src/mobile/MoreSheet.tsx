@@ -256,41 +256,51 @@ export default function MoreSheet({
 
           {notifyOpen && (
             <div className="notify-form">
-              <label>
-                <MailOutlined /> 接收邮箱（可填多个，用英文逗号分隔）
-              </label>
-              <textarea
-                rows={2}
-                value={ns.emailTarget}
-                placeholder="me@gmail.com, 123456@qq.com"
-                onChange={(e) => setNs({ ...ns, emailTarget: e.target.value })}
-              />
-              <label>EmailJS 服务 ID（邮件发送）</label>
-              <input
-                value={ns.emailjsServiceId}
-                placeholder="service_xxx"
-                onChange={(e) => setNs({ ...ns, emailjsServiceId: e.target.value })}
-              />
-              <label>EmailJS 模板 ID</label>
-              <input
-                value={ns.emailjsTemplateId}
-                placeholder="template_xxx"
-                onChange={(e) => setNs({ ...ns, emailjsTemplateId: e.target.value })}
-              />
-              <label>EmailJS Public Key</label>
-              <input
-                value={ns.emailjsPublicKey}
-                placeholder="public_xxx"
-                onChange={(e) => setNs({ ...ns, emailjsPublicKey: e.target.value })}
-              />
-              <label>
-                <WechatOutlined /> 微信推送 SendKey（ServerChan 方糖）
-              </label>
-              <input
-                value={ns.wechatSendKey}
-                placeholder="SCTxxxxx"
-                onChange={(e) => setNs({ ...ns, wechatSendKey: e.target.value })}
-              />
+              <div className="notify-panel">
+                <div className="notify-panel-head">
+                  <MailOutlined />
+                  <span>邮件通知</span>
+                </div>
+                <label>接收邮箱（可填多个，用英文逗号分隔）</label>
+                <textarea
+                  rows={2}
+                  value={ns.emailTarget}
+                  placeholder="me@gmail.com, 123456@qq.com"
+                  onChange={(e) => setNs({ ...ns, emailTarget: e.target.value })}
+                />
+                <label>EmailJS 服务 ID</label>
+                <input
+                  value={ns.emailjsServiceId}
+                  placeholder="service_xxx"
+                  onChange={(e) => setNs({ ...ns, emailjsServiceId: e.target.value })}
+                />
+                <label>EmailJS 模板 ID</label>
+                <input
+                  value={ns.emailjsTemplateId}
+                  placeholder="template_xxx"
+                  onChange={(e) => setNs({ ...ns, emailjsTemplateId: e.target.value })}
+                />
+                <label>EmailJS Public Key</label>
+                <input
+                  value={ns.emailjsPublicKey}
+                  placeholder="public_xxx"
+                  onChange={(e) => setNs({ ...ns, emailjsPublicKey: e.target.value })}
+                />
+              </div>
+
+              <div className="notify-panel">
+                <div className="notify-panel-head">
+                  <WechatOutlined />
+                  <span>微信推送</span>
+                </div>
+                <label>ServerChan SendKey（方糖）</label>
+                <input
+                  value={ns.wechatSendKey}
+                  placeholder="SCTxxxxx"
+                  onChange={(e) => setNs({ ...ns, wechatSendKey: e.target.value })}
+                />
+              </div>
+
               <div className="notify-tip">
                 事件提前提醒通过微信推送；导出/复制数据通过邮件发送。备份 JSON 会以
                 <b> .json 附件</b>形式发送（需 EmailJS 模板开启附件；若不支持则自动改为正文发送）。
