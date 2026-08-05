@@ -8,7 +8,7 @@ import {
 } from '@ant-design/icons';
 import { CalendarProvider, useCalendar } from './context/CalendarContext';
 import { SyncProvider } from './context/SyncContext';
-import { UIProvider } from './context/UIContext';
+import { UIProvider, useUI } from './context/UIContext';
 import EventModal from './components/EventModal';
 import EventView from './components/EventView';
 import CalendarPage from './mobile/CalendarPage';
@@ -22,6 +22,7 @@ function Shell() {
   const navigate = useNavigate();
   const location = useLocation();
   const { activeTags, clearTags, events, search, setSearch, filteredEvents } = useCalendar();
+  const { openView } = useUI();
   const [moreOpen, setMoreOpen] = useState(false);
   const [syncOpen, setSyncOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -178,16 +179,6 @@ function Shell() {
       </header>
 
       <div className="app-content">
-        {search && (
-          <div className="search-banner">
-            <span className="search-banner-text">
-              搜索「{search}」共 {filteredEvents.length} 条
-            </span>
-            <button className="search-banner-back" onClick={() => setSearch('')}>
-              返回
-            </button>
-          </div>
-        )}
         <div className="app-content-inner">
           <Routes>
             <Route path="/" element={<Navigate to="/calendar" replace />} />
@@ -226,6 +217,39 @@ function Shell() {
         onInstall={handleInstall}
       />
       <SyncPanel open={syncOpen} onClose={() => setSyncOpen(false)} />
+
+      {/* 搜索结果弹窗：关掉后返回原页面 */}
+      <Modal
+        open={!!search}
+        onCancel={() => setSearch('')}
+        footer={null}
+        title={`搜索「${search}」共 ${filteredEvents.length} 条`}
+        className="search-modal"
+        styles={{ body: { maxHeight: '70vh', overflowY: 'auto' } }}
+      >
+        <div className="search-result-list">
+          {filteredEvents.length === 0 ? (
+            <div className="search-empty">未找到匹配的事件</div>
+          ) : (
+            filteredEvents.map((e) => (
+              <div
+                key={e.id}
+                className="search-result-item"
+                onClick={() => {
+                  openView(e);
+                  setSearch('');
+                }}
+              >
+                <span className={`sr-title${e.done ? ' done' : ''}`}>{e.title}</span>
+                <span className="sr-date">
+                  {e.date}
+                  {e.startTime ? ' ' + e.startTime : ''}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }
