@@ -27,4 +27,13 @@ npm run build
 
 推送到 `main` 分支后由 GitHub Actions 自动构建并发布到 GitHub Pages。
 
+## 自动保活
+
+`.github/workflows/keepalive.yml` 每天定时运行，用于消除两个平台的闲置回收规则，使整套系统零维护长期可用：
+
+1. 向 Supabase 发一次真实查询 —— 免费项目「连续 7 天无活动自动暂停」不会触发；
+2. 写入一行心跳时间戳并提交 —— GitHub「仓库 60 天无活动则停用定时任务」不会触发，保证第 1 步能持续运行。
+
+心跳提交带 `[skip ci]` 且在部署工作流中已 `paths-ignore`，不会引起重复构建。
+
 详细的使用、同步、备份与维护说明见 [SETUP.md](./SETUP.md)。
