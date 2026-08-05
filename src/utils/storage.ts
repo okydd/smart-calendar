@@ -72,11 +72,25 @@ export function sanitizeImported(raw: unknown): CalendarEvent[] {
         ? (o.images as unknown[]).filter((x) => typeof x === 'string').slice(0, 10)
         : [],
       reminder: (() => {
-        const rem = o.reminder as { unit?: unknown; value?: unknown } | null | undefined;
-        if (rem && (rem.unit === 'day' || rem.unit === 'hour') && typeof rem.value === 'number') {
-          return { unit: rem.unit as 'day' | 'hour', value: rem.value as number };
+        const rem = o.reminder as unknown;
+        // 新格式：数组（可多个提醒）
+        if (Array.isArray(rem)) {
+          return (rem as { unit?: unknown; value?: unknown }[])
+            .filter(
+              (x) =>
+                (x.unit === 'day' || x.unit === 'hour' || x.unit === 'minute') &&
+                typeof x.value === 'number'
+            )
+            .map((x) => ({ unit: x.unit as 'day' | 'hour' | 'minute', value: x.value as number }));
         }
-        return null;
+        // 兼容旧格式：单个对象
+        if (rem && typeof rem === 'object') {
+          const r = rem as { unit?: unknown; value?: unknown };
+          if ((r.unit === 'day' || r.unit === 'hour') && typeof r.value === 'number') {
+            return [{ unit: r.unit as 'day' | 'hour', value: r.value as number }];
+          }
+        }
+        return [];
       })()
     });
   }
