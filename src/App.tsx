@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Input, Modal } from 'antd';
 import {
@@ -21,6 +21,7 @@ import TodoPage from './mobile/TodoPage';
 import MoreSheet from './mobile/MoreSheet';
 import SyncPanel from './mobile/SyncPanel';
 import { dayjs, lunarDateLabel, weekdayCN } from './utils/date';
+import { checkDueReminders } from './utils/notify';
 
 function Shell() {
   const navigate = useNavigate();
@@ -41,6 +42,37 @@ function Shell() {
     };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  /** 微信到期提醒检查：打开即查、每 60 秒、回到前台/可见时各查一次 */
+  const eventsRef = useRef(events);
+  useEffect(() => {
+    eventsRef.current = events;
+  }, [events]);
+  useEffect(() => {
+    let alive = true;
+    const tick = async () => {
+      if (!alive) return;
+      try {
+        await checkDueReminders(eventsRef.current);
+      } catch {
+        /* 忽略提醒推送异常 */
+      }
+    };
+    tick();
+    const timer = window.setInterval(tick, 60_000);
+    const onFocus = () => tick();
+    const onVis = () => {
+      if (document.visibilityState === 'visible') tick();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      alive = false;
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
 
   const handleInstall = async () => {
