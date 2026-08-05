@@ -10,6 +10,7 @@ import {
   CloseOutlined,
   MailOutlined,
   WechatOutlined,
+  DingtalkOutlined,
   SaveOutlined,
   SearchOutlined,
   BellOutlined,
@@ -23,10 +24,10 @@ import { dayjs } from '../utils/date';
 import {
   getNotifySettings,
   saveNotifySettings,
-  emailConfigured,
-  wechatConfigured,
+  dingtalkConfigured,
   sendEmail,
   buildConciseText,
+  buildFullText,
   buildFullHtml,
   type NotifySettings
 } from '../utils/notify';
@@ -133,19 +134,26 @@ export default function MoreSheet({
   const handleCopyEvents = async () => {
     const list = rangedEvents();
     const text = buildConciseText(list, { rangeStart, rangeEnd, exportTime });
+    const fullText = buildFullText(list, { rangeStart, rangeEnd, exportTime });
+    const html = buildFullHtml(list, { rangeStart, rangeEnd, exportTime });
     try {
       await navigator.clipboard.writeText(text);
       message.success(`已复制 ${list.length} 条事件清单`);
     } catch {
       message.warning('复制失败，已尝试发送到邮箱');
     }
-    const html = buildFullHtml(list, { rangeStart, rangeEnd, exportTime });
-    const r = await sendEmail('智能日历 事件清单（完整版）', text, {
-      name: `Calendar_Events_${dayjs().format('YYYYMMDD')}.html`,
-      data: toBase64(html),
-      mimeType: 'text/html'
+    // 邮件：正文同时包含「简洁版 + 完整版文字」，并附完整版 HTML（含排版与图片）附件，
+    // 通过 html 参数把完整版直接渲染进邮件正文，彻底解决免费计划收不到附件的问题。
+    const body = `${text}\n\n──────────\n\n${fullText}`;
+    const r = await sendEmail('智能日历 事件清单（完整版）', body, {
+      attachment: {
+        name: `Calendar_Events_${dayjs().format('YYYYMMDD')}.html`,
+        data: toBase64(html),
+        mimeType: 'text/html'
+      },
+      html
     });
-    if (r.ok) message.success('清单已发送（含完整版附件）到邮箱');
+    if (r.ok) message.success('清单已发送（含完整版正文与附件）到邮箱');
     else if (r.msg !== '未配置邮箱，仅本地操作') message.info(r.msg);
   };
 
@@ -248,33 +256,34 @@ export default function MoreSheet({
         {/* 需求4：通知设置 / 云同步 / 安装到桌面 三按钮共占一行 */}
         <div className="sheet-section">
           <h4>设置</h4>
-          <div className="tri-row">
-            <button
-              className={`tri-btn${notifyOpen ? ' active' : ''}`}
-              onClick={() => setNotifyOpen((v) => !v)}
-            >
-              <BellOutlined className="ico" />
-              <span className="t">通知设置</span>
-              <span className="s">
-                {emailConfigured(ns) || wechatConfigured(ns) ? '已配置' : '未配置'}
-              </span>
-            </button>
-            <button
-              className={`tri-btn${email && status !== 'error' ? ' on' : ''}`}
-              onClick={() => {
-                onClose();
-                onOpenSync();
-              }}
-            >
-              <CloudSyncOutlined className="ico" />
-              <span className="t">云同步</span>
-              <span className="s">{syncLabel}</span>
-            </button>
-            <button className="tri-btn" onClick={showInstallGuide}>
-              <MobileOutlined className="ico" />
-              <span className="t">安装到桌面</span>
-              <span className="s">{installable ? '可安装' : '查看方法'}</span>
-            </button>
+          <div className="sheet-actions-row">
+            <div className="btn-wrap">
+              <button
+                className={`sheet-btn-v2${notifyOpen ? ' primary' : ''}`}
+                onClick={() => setNotifyOpen((v) => !v)}
+              >
+                <BellOutlined className="ico" />
+                通知设置
+              </button>
+            </div>
+            <div className="btn-wrap">
+              <button
+                className="sheet-btn-v2"
+                onClick={() => {
+                  onClose();
+                  onOpenSync();
+                }}
+              >
+                <CloudSyncOutlined className="ico" />
+                云同步
+              </button>
+            </div>
+            <div className="btn-wrap">
+              <button className="sheet-btn-v2" onClick={showInstallGuide}>
+                <MobileOutlined className="ico" />
+                安装到桌面
+              </button>
+            </div>
           </div>
 
           {notifyOpen && (
@@ -364,9 +373,28 @@ export default function MoreSheet({
                 />
               </div>
 
+              <div className="notify-panel">
+                <div className="notify-panel-head">
+                  <DingtalkOutlined />
+                  <span>钉钉推送</span>
+                </div>
+                <label>钉钉机器人 Webhook 地址（含 access_token=...）</label>
+                <input
+                  value={ns.dingtalkWebhook}
+                  placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxx"
+                  onChange={(e) => setNs({ ...ns, dingtalkWebhook: e.target.value })}
+                />
+                <label>加签密钥（安全设置选了「加签」时填写）</label>
+                <input
+                  value={ns.dingtalkSecret}
+                  placeholder="SECxxxxxxxx"
+                  onChange={(e) => setNs({ ...ns, dingtalkSecret: e.target.value })}
+                />
+              </div>
+
               <div className="notify-tip">
-                事件提前提醒通过微信推送；导出/复制数据通过邮件发送。备份 JSON 会以
-                <b> .json 附件</b>形式发送（需 EmailJS 模板开启附件；若不支持则自动改为正文发送）。
+                事件提前提醒同时推送到微信与钉钉（已配置才发送）；导出/复制数据通过邮件发送。完整版报告会
+                直接写入邮件正文并附 <b>.html 附件</b>（正文确保送达，附件在 EmailJS 付费计划下更稳）。
               </div>
               <button className="notify-save" onClick={saveNotify}>
                 <SaveOutlined /> 保存通知设置
