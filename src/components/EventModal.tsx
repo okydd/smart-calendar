@@ -1,14 +1,35 @@
 import { useEffect, useRef, useState } from 'react';
-import { Form, Input, DatePicker, TimePicker, App } from 'antd';
+import { Input, App, Modal } from 'antd';
 import { DeleteOutlined, PlusOutlined, CloseOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useCalendar } from '../context/CalendarContext';
 import { useUI } from '../context/UIContext';
-import { IMPORTANT_COLOR } from '../constants';
-import type { CalendarEvent } from '../types';
+import { IMPORTANT_COLOR, PRESET_REMINDERS } from '../constants';
+import type { CalendarEvent, ReminderOffset } from '../types';
+import WheelPicker, { WheelColumn } from './WheelPicker';
 
 const { TextArea } = Input;
 const MAX_IMAGES = 10;
+
+const YEARS = Array.from({ length: 16 }, (_, i) => 2020 + i);
+const HOURS = Array.from({ length: 24 }, (_, i) => ({ label: `${i}时`, value: i }));
+const MINUTES = Array.from({ length: 60 }, (_, i) => ({
+  label: `${String(i).padStart(2, '0')}分`,
+  value: i
+}));
+
+function daysInMonth(y: number, m: number): number {
+  return new Date(y, m, 0).getDate();
+}
+function dateColumns(y: number, m: number): WheelColumn[] {
+  const d = daysInMonth(y, m);
+  return [
+    { values: YEARS.map((y) => ({ label: `${y}年`, value: y })) },
+    { values: Array.from({ length: 12 }, (_, i) => ({ label: `${i + 1}月`, value: i + 1 })) },
+    { values: Array.from({ length: d }, (_, i) => ({ label: `${i + 1}日`, value: i + 1 })) }
+  ];
+}
+const timeColumns = (): WheelColumn[] => [{ values: HOURS }, { values: MINUTES }];
 
 interface InitialEvent {
   id?: string;
@@ -22,47 +43,49 @@ interface InitialEvent {
   reminder?: CalendarEvent['reminder'];
 }
 
+type PresetReminder = (typeof PRESET_REMINDERS)[number];
+
 export default function EventModal() {
   const { eventModal, closeEventModal } = useUI();
   const { addEvent, updateEvent, deleteEvent } = useCalendar();
   const { message } = App.useApp();
-  const [form] = Form.useForm();
   const [images, setImages] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const { open, mode, initial } = eventModal;
   const base = (initial ?? {}) as InitialEvent;
 
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [importance, setImportance] = useState<'normal' | 'important'>('normal');
-  const [remindOn, setRemindOn] = useState(false);
-  const [remindValue, setRemindValue] = useState(1);
-  const [remindUnit, setRemindUnit] = useState<'day' | 'hour'>('day');
+  const [allDay, setAllDay] = useState(true);
+  const [dateValues, setDateValues] = useState<[number, number, number]>([2026, 8, 5]);
+  const [timeValues, setTimeValues] = useState<[number, number]>([9, 0]);
+  const [remindOffsets, setRemindOffsets] = useState<ReminderOffset[]>([]);
+  const [customValue, setCustomValue] = useState(1);
+  const [customUnit, setCustomUnit] = useState<'day' | 'hour' | 'minute'>('day');
 
-  // 打开时填充表单
   useEffect(() => {
     if (!open) return;
-    form.setFieldsValue({
-      title: base.title ?? '',
-      date: base.date ? dayjs(base.date, 'YYYY-MM-DD') : dayjs(),
-      startTime: base.startTime ? dayjs(base.startTime, 'HH:mm') : undefined,
-      description: base.description ?? ''
-    });
-    setImages(Array.isArray(base.images) ? base.images.slice(0, MAX_IMAGES) : []);
+    setTitle(base.title ?? '');
+    setDescription(base.description ?? '');
     setImportance(base.important ? 'important' : 'normal');
-    if (base.reminder) {
-      setRemindOn(true);
-      setRemindValue(base.reminder.value);
-      setRemindUnit(base.reminder.unit);
-    } else {
-      setRemindOn(false);
-      setRemindValue(1);
-      setRemindUnit('day');
-    }
-    // 仅依赖 open / initial
+    setImages(Array.isArray(base.images) ? base.images.slice(0, MAX_IMAGES) : []);
+    const d = base.date ? dayjs(base.date, 'YYYY-MM-DD') : dayjs();
+    setDateValues([d.year(), d.month() + 1, d.date()]);
+    const ad = !base.startTime;
+    setAllDay(ad);
+    if (!ad && base.startTime) {
+      const [h, m] = base.startTime.split(':').map(Number);
+      setTimeValues([h, m]);
+    } else setTimeValues([9, 0]);
+    setRemindOffsets(
+      base.reminder && base.reminder.length ? base.reminder.map((r) => ({ ...r })) : []
+    );
+    setCustomValue(1);
+    setCustomUnit('day');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initial]);
-
-  const startTime = Form.useWatch('startTime', form);
 
   const handleImgChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
@@ -81,42 +104,71 @@ export default function EventModal() {
       )
     ).then((dataUrls) => setImages((prev) => [...prev, ...dataUrls].slice(0, MAX_IMAGES)));
   };
-
   const removeImg = (i: number) => setImages((prev) => prev.filter((_, idx) => idx !== i));
 
-  const handleOk = async () => {
-    let v: any;
-    try {
-      v = await form.validateFields();
-    } catch {
-      message.warning('请填写完整信息');
+  const onDateChange = (vals: number[]) => {
+    let [y, m, day] = vals as [number, number, number];
+    const max = daysInMonth(y, m);
+    if (day > max) day = max;
+    setDateValues([y, m, day]);
+  };
+
+  const isActive = (p: PresetReminder) =>
+    remindOffsets.some((o) => o.unit === p.unit && o.value === p.value);
+  const togglePreset = (p: PresetReminder) => {
+    if (isActive(p))
+      setRemindOffsets(remindOffsets.filter((o) => !(o.unit === p.unit && o.value === p.value)));
+    else setRemindOffsets([...remindOffsets, { unit: p.unit, value: p.value }]);
+  };
+  const addCustom = () => {
+    if (customValue <= 0) return;
+    const off: ReminderOffset = { unit: customUnit, value: customValue };
+    if (!remindOffsets.some((o) => o.unit === off.unit && o.value === off.value))
+      setRemindOffsets([...remindOffsets, off]);
+  };
+  const removeOffset = (o: ReminderOffset) =>
+    setRemindOffsets(remindOffsets.filter((x) => !(x.unit === o.unit && x.value === o.value)));
+
+  const handleOk = () => {
+    if (!title.trim()) {
+      message.warning('请输入事件标题');
       return;
     }
-    // 时间留空 → 自动作为全天事件
-    const allDay = !v.startTime;
+    const [y, m, day] = dateValues;
+    const date = dayjs(`${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
     const payload: Omit<CalendarEvent, 'id'> = {
-      title: v.title.trim(),
-      date: v.date.format('YYYY-MM-DD'),
+      title: title.trim(),
+      date: date.format('YYYY-MM-DD'),
       allDay,
-      startTime: allDay ? '' : v.startTime.format('HH:mm'),
-      endTime: '', // 预留字段，暂不使用
-      description: v.description?.trim() ?? '',
+      startTime: allDay
+        ? ''
+        : `${String(timeValues[0]).padStart(2, '0')}:${String(timeValues[1]).padStart(2, '0')}`,
+      endTime: '',
+      description: description.trim(),
       tag: 'purple',
       important: importance === 'important',
       images,
-      reminder: remindOn && remindValue > 0 ? { unit: remindUnit, value: remindValue } : null
+      reminder: remindOffsets
     };
-    if (mode === 'edit' && base.id) {
-      updateEvent(base.id, payload);
-    } else {
-      addEvent(payload);
-    }
+    if (mode === 'edit' && base.id) updateEvent(base.id, payload);
+    else addEvent(payload);
     closeEventModal();
   };
 
+  /** 删除需二次确认 */
   const handleDelete = () => {
-    if (mode === 'edit' && base.id) deleteEvent(base.id);
-    closeEventModal();
+    if (!(mode === 'edit' && base.id)) return;
+    Modal.confirm({
+      title: '确认删除该事件？',
+      content: `「${base.title ?? title}」删除后将从所有设备移除，确定删除吗？`,
+      okText: '删除',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      onOk: () => {
+        deleteEvent(base.id as string);
+        closeEventModal();
+      }
+    });
   };
 
   if (!open) return null;
@@ -132,142 +184,196 @@ export default function EventModal() {
         </div>
 
         <div className="ev-body">
-          <Form form={form} layout="vertical">
-            <Form.Item
-              name="title"
-              label="事件标题"
-              rules={[{ required: true, message: '请输入事件标题' }]}
-            >
-              <Input placeholder="例如：团队周会" maxLength={50} />
-            </Form.Item>
+          <div className="ev-field">
+            <label className="ev-label">事件标题</label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="例如：团队周会"
+              maxLength={50}
+            />
+          </div>
 
-            <div className="form-row-2">
-              <Form.Item name="date" label="日期" rules={[{ required: true }]}>
-                <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
-              </Form.Item>
-              <Form.Item name="startTime" label="时间（留空=全天）">
-                <TimePicker style={{ width: '100%' }} format="HH:mm" minuteStep={5} placeholder="全天" />
-              </Form.Item>
+          <div className="ev-field">
+            <label className="ev-label">日期</label>
+            <WheelPicker
+              columns={dateColumns(dateValues[0], dateValues[1])}
+              selected={dateValues}
+              onChange={onDateChange}
+            />
+          </div>
+
+          <div className="ev-field">
+            <div className="remind-head-row">
+              <label className="ev-label" style={{ marginBottom: 0 }}>
+                时间
+              </label>
+              <button
+                type="button"
+                className={`switch-mini${allDay ? ' on' : ''}`}
+                onClick={() => setAllDay((v) => !v)}
+                aria-label="全天"
+              >
+                <span className="knob" />
+              </button>
+              <span className="ev-all-day-tip">{allDay ? '全天' : '指定时间'}</span>
             </div>
+            {!allDay && (
+              <WheelPicker
+                columns={timeColumns()}
+                selected={timeValues}
+                onChange={(v) => setTimeValues(v as [number, number])}
+              />
+            )}
+          </div>
 
-            <div className="imp-block">
-              <div className="imp-label">事件级别</div>
-              <div className="imp-btns">
+          <div className="imp-block">
+            <div className="imp-label">事件级别</div>
+            <div className="imp-btns">
+              <button
+                type="button"
+                className={`imp-btn${importance === 'normal' ? ' active' : ''}`}
+                onClick={() => setImportance('normal')}
+              >
+                普通事件
+              </button>
+              <button
+                type="button"
+                className={`imp-btn danger${importance === 'important' ? ' active' : ''}`}
+                onClick={() => setImportance('important')}
+                style={
+                  importance === 'important'
+                    ? { borderColor: IMPORTANT_COLOR, color: '#fff', background: IMPORTANT_COLOR }
+                    : undefined
+                }
+              >
+                重要事件
+              </button>
+            </div>
+          </div>
+
+          <div className="remind-block">
+            <div className="imp-label">提前提醒（可多选，通过微信推送）</div>
+            <div className="remind-presets">
+              {PRESET_REMINDERS.map((p) => (
+                <button
+                  key={`${p.unit}-${p.value}`}
+                  type="button"
+                  className={`tag-chip-select${isActive(p) ? ' active' : ''}`}
+                  onClick={() => togglePreset(p)}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <div className="remind-custom">
+              <span>自定义：提前</span>
+              <input
+                type="number"
+                min={1}
+                max={365}
+                value={customValue}
+                onChange={(e) => setCustomValue(Math.max(1, Number(e.target.value) || 1))}
+                className="remind-num"
+              />
+              <div className="remind-unit">
                 <button
                   type="button"
-                  className={`imp-btn${importance === 'normal' ? ' active' : ''}`}
-                  onClick={() => setImportance('normal')}
+                  className={`ru-btn${customUnit === 'day' ? ' active' : ''}`}
+                  onClick={() => setCustomUnit('day')}
                 >
-                  普通事件
+                  天
                 </button>
                 <button
                   type="button"
-                  className={`imp-btn danger${importance === 'important' ? ' active' : ''}`}
-                  onClick={() => setImportance('important')}
-                  style={importance === 'important' ? { borderColor: IMPORTANT_COLOR, color: '#fff', background: IMPORTANT_COLOR } : undefined}
+                  className={`ru-btn${customUnit === 'hour' ? ' active' : ''}`}
+                  onClick={() => setCustomUnit('hour')}
                 >
-                  重要事件
+                  小时
                 </button>
-              </div>
-            </div>
-
-            <div className="remind-block">
-              <div className="remind-head-row">
-                <span className="remind-label2">提前提醒</span>
                 <button
                   type="button"
-                  className={`switch-mini${remindOn ? ' on' : ''}`}
-                  onClick={() => setRemindOn((v) => !v)}
-                  aria-label="开启提醒"
+                  className={`ru-btn${customUnit === 'minute' ? ' active' : ''}`}
+                  onClick={() => setCustomUnit('minute')}
                 >
-                  <span className="knob" />
+                  分钟
                 </button>
               </div>
-              {remindOn && (
-                <div className="remind-set">
-                  <span>提前</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={60}
-                    value={remindValue}
-                    onChange={(e) => setRemindValue(Math.max(1, Number(e.target.value) || 1))}
-                    className="remind-num"
-                  />
-                  <div className="remind-unit">
-                    <button
-                      type="button"
-                      className={`ru-btn${remindUnit === 'day' ? ' active' : ''}`}
-                      onClick={() => setRemindUnit('day')}
-                    >
-                      天
-                    </button>
-                    <button
-                      type="button"
-                      className={`ru-btn${remindUnit === 'hour' ? ' active' : ''}`}
-                      onClick={() => setRemindUnit('hour')}
-                    >
-                      小时
-                    </button>
-                  </div>
-                  <span className="remind-via">通过微信提醒</span>
-                </div>
-              )}
+              <button type="button" className="remind-add" onClick={addCustom}>
+                添加
+              </button>
             </div>
-
-            <Form.Item name="description" label="描述">
-              <TextArea rows={2} placeholder="补充说明（可选，最多 200 字）" maxLength={200} showCount />
-            </Form.Item>
-
-            <div className="img-upload-block">
-              <div className="img-upload-head">
-                <span>图片（最多 {MAX_IMAGES} 张）</span>
-                <span className="img-count">
-                  {images.length}/{MAX_IMAGES}
-                </span>
-              </div>
-              <div className="img-thumbs">
-                {images.map((src, i) => (
-                  <div className="img-thumb" key={i}>
-                    <img src={src} alt="" />
-                    <button
-                      type="button"
-                      className="img-del"
-                      onClick={() => removeImg(i)}
-                      aria-label="删除图片"
-                    >
-                      ×
-                    </button>
-                  </div>
+            {remindOffsets.length > 0 && (
+              <div className="remind-selected">
+                {remindOffsets.map((o, i) => (
+                  <span key={i} className="remind-chip" onClick={() => removeOffset(o)}>
+                    提前 {o.value} {o.unit === 'day' ? '天' : o.unit === 'hour' ? '小时' : '分钟'}{' '}
+                    <span className="x">×</span>
+                  </span>
                 ))}
-                {images.length < MAX_IMAGES && (
+              </div>
+            )}
+          </div>
+
+          <div className="ev-field">
+            <label className="ev-label">描述</label>
+            <TextArea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+              placeholder="补充说明（可选，最多 200 字）"
+              maxLength={200}
+              showCount
+            />
+          </div>
+
+          <div className="img-upload-block">
+            <div className="img-upload-head">
+              <span>图片（最多 {MAX_IMAGES} 张）</span>
+              <span className="img-count">
+                {images.length}/{MAX_IMAGES}
+              </span>
+            </div>
+            <div className="img-thumbs">
+              {images.map((src, i) => (
+                <div className="img-thumb" key={i}>
+                  <img src={src} alt="" />
                   <button
                     type="button"
-                    className="img-add"
-                    onClick={() => fileRef.current?.click()}
-                    aria-label="添加图片"
+                    className="img-del"
+                    onClick={() => removeImg(i)}
+                    aria-label="删除图片"
                   >
-                    <PlusOutlined />
+                    ×
                   </button>
-                )}
-              </div>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                multiple
-                hidden
-                onChange={handleImgChange}
-              />
+                </div>
+              ))}
+              {images.length < MAX_IMAGES && (
+                <button
+                  type="button"
+                  className="img-add"
+                  onClick={() => fileRef.current?.click()}
+                  aria-label="添加图片"
+                >
+                  <PlusOutlined />
+                </button>
+              )}
             </div>
-          </Form>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+              onChange={handleImgChange}
+            />
+          </div>
         </div>
 
         <div className="ev-foot">
           {mode === 'edit' && (
             <button className="ev-del" onClick={handleDelete}>
-              <DeleteOutlined />
-              删除
+              <DeleteOutlined /> 删除
             </button>
           )}
           <button className="ev-cancel" onClick={closeEventModal}>
