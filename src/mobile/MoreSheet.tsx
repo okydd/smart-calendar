@@ -7,13 +7,24 @@ import {
   CopyOutlined,
   MobileOutlined,
   CloudSyncOutlined,
-  CloseOutlined
+  CloseOutlined,
+  MailOutlined,
+  WechatOutlined,
+  SaveOutlined
 } from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
 import { useSync } from '../context/SyncContext';
-import { TAG_COLORS, TAG_ORDER } from '../constants';
 import { sanitizeImported } from '../utils/storage';
 import { dayjs } from '../utils/date';
+import {
+  getNotifySettings,
+  saveNotifySettings,
+  emailConfigured,
+  wechatConfigured,
+  sendEmail,
+  buildConciseText,
+  type NotifySettings
+} from '../utils/notify';
 import ExportModal from '../components/ExportModal';
 
 export default function MoreSheet({
@@ -29,13 +40,16 @@ export default function MoreSheet({
   installable: boolean;
   onInstall: () => void;
 }) {
-  const { message, modal } = App.useApp();
-  const { events, activeTags, toggleTag, clearTags, importEvents } = useCalendar();
+  const { message } = App.useApp();
+  const { events, importEvents } = useCalendar();
   const { status, email, lastSyncAt, configured } = useSync();
   const [exportOpen, setExportOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs());
   const [endDate, setEndDate] = useState(dayjs().add(1, 'month'));
+  const [notifyOpen, setNotifyOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const [ns, setNs] = useState<NotifySettings>(() => getNotifySettings());
 
   const syncLabel = !configured
     ? '未开启 · 点此设置'
@@ -51,10 +65,12 @@ export default function MoreSheet({
               ? `已同步 ${dayjs(lastSyncAt).format('MM-DD HH:mm')}`
               : '已登录';
 
-  const handleExportJSON = () => {
-    const blob = new Blob([JSON.stringify(events, null, 2)], {
-      type: 'application/json'
-    });
+  const rangeText = `${startDate.format('YYYY/MM/DD')} - ${endDate.format('YYYY/MM/DD')}`;
+  const exportTime = dayjs().format('MM-DD HH:mm');
+
+  const handleExportJSON = async () => {
+    const json = JSON.stringify(events, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -62,24 +78,23 @@ export default function MoreSheet({
     a.click();
     URL.revokeObjectURL(url);
     message.success(`已导出 ${events.length} 条事件`);
+    // 自动发送到邮箱
+    const r = await sendEmail('日历事件备份', `共 ${events.length} 条事件（导出时间 ${exportTime}）：\n\n${json}`);
+    if (r.ok) message.success('备份已发送到邮箱');
+    else if (r.msg !== '未配置邮箱，仅本地操作') message.info(r.msg);
   };
 
   const handleCopyEvents = async () => {
-    const lines = events
-      .filter((e) => !e.deleted)
-      .sort((a, b) => (a.date < b.date ? -1 : 1))
-      .map((e) => {
-        const tag = TAG_COLORS[e.tag].label;
-        const time = e.allDay || !e.startTime ? '全天' : e.startTime;
-        return `${e.date} ${time} ${e.title} [${tag}]`;
-      });
-    const text = lines.join('\n') || '暂无事件';
+    const text = buildConciseText(events, `全部事件（导出时间 ${exportTime}）`);
     try {
       await navigator.clipboard.writeText(text);
-      message.success('事件列表已复制到剪贴板');
+      message.success('事件清单已复制到剪贴板');
     } catch {
-      message.error('复制失败，请手动复制');
+      message.warning('复制失败，已尝试发送到邮箱');
     }
+    const r = await sendEmail('日历事件清单', text);
+    if (r.ok) message.success('清单已发送到邮箱');
+    else if (r.msg !== '未配置邮箱，仅本地操作') message.info(r.msg);
   };
 
   const handleImportFile = (file: File) => {
@@ -96,6 +111,12 @@ export default function MoreSheet({
       }
     };
     reader.readAsText(file);
+  };
+
+  const saveNotify = () => {
+    saveNotifySettings(ns);
+    message.success('通知设置已保存');
+    setNotifyOpen(false);
   };
 
   return (
@@ -119,31 +140,9 @@ export default function MoreSheet({
         </div>
 
         <div className="sheet-section">
-          <h4>按标签筛选</h4>
-          <div className="tag-filters">
-            {TAG_ORDER.map((t) => {
-              const active = activeTags.includes(t);
-              return (
-                <button
-                  key={t}
-                  className={`tag-pill${active ? ' active' : ''}`}
-                  onClick={() => toggleTag(t)}
-                >
-                  <span
-                    className="tag-pill-dot"
-                    style={{ background: TAG_COLORS[t].color }}
-                  />
-                  {TAG_COLORS[t].label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="sheet-section">
           <h4>数据与导出</h4>
           <div className="export-range">
-            <div className="export-range-label">选择时间范围</div>
+            <div className="export-range-label">选择时间范围（用于导出图片 / 复制 / 备份）</div>
             <div className="export-range-pickers">
               <DatePicker
                 value={startDate}
@@ -162,28 +161,100 @@ export default function MoreSheet({
                 allowClear={false}
               />
             </div>
+            <div className="export-meta">
+              所选范围：{rangeText} ｜ 导出时间：{exportTime}
+            </div>
           </div>
 
           <div className="sheet-actions-row">
-            <button className="sheet-btn-v2 primary" onClick={() => setExportOpen(true)}>
-              <PictureOutlined className="ico" />
-              导出图片
-            </button>
-            <button className="sheet-btn-v2 success" onClick={handleCopyEvents}>
-              <CopyOutlined className="ico" />
-              复制事件
-            </button>
+            <div className="btn-wrap">
+              <button className="sheet-btn-v2 primary" onClick={() => setExportOpen(true)}>
+                <PictureOutlined className="ico" />
+                导出图片
+              </button>
+              <div className="btn-note">把所选范围的事件生成长图，可保存或分享</div>
+            </div>
+            <div className="btn-wrap">
+              <button className="sheet-btn-v2 success" onClick={handleCopyEvents}>
+                <CopyOutlined className="ico" />
+                复制事件
+              </button>
+              <div className="btn-note">复制简洁事件清单到剪贴板，并发送到邮箱</div>
+            </div>
           </div>
           <div className="sheet-actions-row">
-            <button className="sheet-btn-v2" onClick={handleExportJSON}>
-              <DownloadOutlined className="ico" />
-              导出JSON
-            </button>
-            <button className="sheet-btn-v2" onClick={() => fileRef.current?.click()}>
-              <UploadOutlined className="ico" />
-              导入JSON
-            </button>
+            <div className="btn-wrap">
+              <button className="sheet-btn-v2" onClick={handleExportJSON}>
+                <DownloadOutlined className="ico" />
+                导出JSON
+              </button>
+              <div className="btn-note">下载全部事件备份文件，并发送到邮箱</div>
+            </div>
+            <div className="btn-wrap">
+              <button className="sheet-btn-v2" onClick={() => fileRef.current?.click()}>
+                <UploadOutlined className="ico" />
+                导入JSON
+              </button>
+              <div className="btn-note">从备份文件恢复事件数据</div>
+            </div>
           </div>
+        </div>
+
+        <div className="sheet-section">
+          <h4>通知设置（邮件 / 微信提醒）</h4>
+          <button
+            className="notify-toggle"
+            onClick={() => setNotifyOpen((v) => !v)}
+          >
+            <span>
+              <MailOutlined /> 邮箱：{emailConfigured(ns) ? ns.emailTarget : '未配置'}
+              {'　'}
+              <WechatOutlined /> 微信：{wechatConfigured(ns) ? '已配置' : '未配置'}
+            </span>
+            <span className="chev">{notifyOpen ? '收起' : '展开'}</span>
+          </button>
+          {notifyOpen && (
+            <div className="notify-form">
+              <label>接收邮箱</label>
+              <input
+                type="email"
+                value={ns.emailTarget}
+                placeholder="例如 me@example.com"
+                onChange={(e) => setNs({ ...ns, emailTarget: e.target.value })}
+              />
+              <label>EmailJS 服务 ID（邮件发送）</label>
+              <input
+                value={ns.emailjsServiceId}
+                placeholder="service_xxx"
+                onChange={(e) => setNs({ ...ns, emailjsServiceId: e.target.value })}
+              />
+              <label>EmailJS 模板 ID</label>
+              <input
+                value={ns.emailjsTemplateId}
+                placeholder="template_xxx"
+                onChange={(e) => setNs({ ...ns, emailjsTemplateId: e.target.value })}
+              />
+              <label>EmailJS Public Key</label>
+              <input
+                value={ns.emailjsPublicKey}
+                placeholder="public_xxx"
+                onChange={(e) => setNs({ ...ns, emailjsPublicKey: e.target.value })}
+              />
+              <label>微信推送 SendKey（ServerChan 方糖）</label>
+              <input
+                value={ns.wechatSendKey}
+                placeholder="SCTxxxxx"
+                onChange={(e) => setNs({ ...ns, wechatSendKey: e.target.value })}
+              />
+              <div className="notify-tip">
+                事件提前提醒通过微信推送；导出/复制数据通过邮件发送。需自行注册
+                EmailJS 与 ServerChan 后填入。
+              </div>
+              <button className="notify-save" onClick={saveNotify}>
+                <SaveOutlined /> 保存通知设置
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="sheet-section">
