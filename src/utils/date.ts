@@ -22,16 +22,16 @@ export const toDateStr = (d: Dayjs): string => d.format('YYYY-MM-DD');
 export const parseDateStr = (s: string): Dayjs => dayjs(s, 'YYYY-MM-DD', true);
 
 /** 当前周的开始（周一） */
-export const startOfWeek = (d: Dayjs): Dayjs => d.weekday(0);
+export const startOfWeek = (d: Dayjs): Dayjs => d.isoWeekday(1);
 
 /** 当前月的开始（1 号） */
 export const startOfMonth = (d: Dayjs): Dayjs => d.date(1);
 
-/** 给定日期所处日历网格的起始日（用于月视图：包含上个月的填充周） */
+/** 给定日期所处日历网格的起始日（用于月视图：以周一为每周第一天） */
 export const monthGridStart = (d: Dayjs): Dayjs => {
   const first = startOfMonth(d);
-  // 以周日为每周第一天
-  return first.subtract(first.day(), 'day');
+  // 以周一为每周第一天：周日(0) -> 偏移 6，周一(1) -> 0，… 周六(6) -> 5
+  return first.subtract((first.day() + 6) % 7, 'day');
 };
 
 /** 生成月视图 6 行 × 7 列 = 42 天的日期数组 */
@@ -46,11 +46,11 @@ export const weekDays = (d: Dayjs): Dayjs[] => {
   return Array.from({ length: 7 }, (_, i) => start.add(i, 'day'));
 };
 
-/** 周 X（中文） */
-export const weekdayCN = (d: Dayjs): string => `周${WEEK_CN[d.day()]}`;
+/** 星期 X（中文，如「星期三」） */
+export const weekdayCN = (d: Dayjs): string => `星期${WEEK_CN[d.day()]}`;
 
-/** 导出图片用的日期列文案：MM月DD日 周X */
-export const exportDateLabel = (d: Dayjs): string => `${d.format('MM')}月${d.format('DD')}日 ${weekdayCN(d)}`;
+/** 导出图片用的日期列文案：MM月DD日（精简，避免与时间列重叠） */
+export const exportDateLabel = (d: Dayjs): string => `${d.format('MM')}月${d.format('DD')}日`;
 
 /** 时间范围文案，全天显示“全天” */
 export const timeRangeLabel = (e: { allDay: boolean; startTime: string; endTime: string }): string => {
