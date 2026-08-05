@@ -21,8 +21,8 @@ import { eventToRow, mergeEvents, rowToEvent, type RemoteRow } from '../sync/mer
 
 const TABLE = 'calendar_events';
 const LAST_SYNC_KEY = 'calendarLastSync';
-/** 轮询间隔：60 秒拉一次云端 */
-const POLL_MS = 60_000;
+/** 轮询间隔：30 秒拉一次云端，保证跨设备尽快拿到最新数据 */
+const POLL_MS = 30_000;
 /** 本地变更后延迟推送，合并高频操作 */
 const PUSH_DEBOUNCE_MS = 1500;
 
