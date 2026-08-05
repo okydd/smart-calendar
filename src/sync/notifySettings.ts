@@ -16,6 +16,8 @@ interface Row {
   emailjs_template_id: string;
   emailjs_public_key: string;
   wechat_send_key: string;
+  auto_send: boolean;
+  auto_send_time: string;
   updated_at?: string;
 }
 
@@ -26,7 +28,9 @@ export function settingsToRow(s: NotifySettings, userId: string): Row {
     emailjs_service_id: s.emailjsServiceId ?? '',
     emailjs_template_id: s.emailjsTemplateId ?? '',
     emailjs_public_key: s.emailjsPublicKey ?? '',
-    wechat_send_key: s.wechatSendKey ?? ''
+    wechat_send_key: s.wechatSendKey ?? '',
+    auto_send: !!s.autoSend,
+    auto_send_time: s.autoSendTime ?? '04:00'
   };
 }
 
@@ -36,7 +40,9 @@ function rowToSettings(r: Row): NotifySettings {
     emailjsServiceId: r.emailjs_service_id ?? '',
     emailjsTemplateId: r.emailjs_template_id ?? '',
     emailjsPublicKey: r.emailjs_public_key ?? '',
-    wechatSendKey: r.wechat_send_key ?? ''
+    wechatSendKey: r.wechat_send_key ?? '',
+    autoSend: !!r.auto_send,
+    autoSendTime: r.auto_send_time ?? '04:00'
   };
 }
 
