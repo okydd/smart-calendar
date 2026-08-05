@@ -1,12 +1,13 @@
 import { useRef, useState } from 'react';
-import { Drawer, App, Modal } from 'antd';
+import { Drawer, App, Modal, DatePicker, Space } from 'antd';
 import {
   PictureOutlined,
   DownloadOutlined,
   UploadOutlined,
-  ReloadOutlined,
+  CopyOutlined,
   MobileOutlined,
-  CloudSyncOutlined
+  CloudSyncOutlined,
+  CloseOutlined
 } from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
 import { useSync } from '../context/SyncContext';
@@ -15,9 +16,6 @@ import { sanitizeImported } from '../utils/storage';
 import { dayjs } from '../utils/date';
 import ExportModal from '../components/ExportModal';
 
-/**
- * 移动端「更多」底部面板：标签筛选、导出长图、JSON 备份、安装说明。
- */
 export default function MoreSheet({
   open,
   onClose,
@@ -28,13 +26,13 @@ export default function MoreSheet({
   onOpenSync: () => void;
 }) {
   const { message, modal } = App.useApp();
-  const { events, activeTags, toggleTag, clearTags, importEvents, resetSample } =
-    useCalendar();
+  const { events, activeTags, toggleTag, clearTags, importEvents } = useCalendar();
   const { status, email, lastSyncAt, configured } = useSync();
   const [exportOpen, setExportOpen] = useState(false);
+  const [startDate, setStartDate] = useState(dayjs());
+  const [endDate, setEndDate] = useState(dayjs().add(1, 'month'));
   const fileRef = useRef<HTMLInputElement>(null);
 
-  /** 云同步区块的副标题文案 */
   const syncLabel = !configured
     ? '未开启 · 点此设置'
     : !email
@@ -62,6 +60,24 @@ export default function MoreSheet({
     message.success(`已导出 ${events.length} 条事件`);
   };
 
+  const handleCopyEvents = async () => {
+    const lines = events
+      .filter((e) => !e.deleted)
+      .sort((a, b) => (a.date < b.date ? -1 : 1))
+      .map((e) => {
+        const tag = TAG_COLORS[e.tag].label;
+        const time = e.allDay || !e.startTime ? '全天' : e.startTime;
+        return `${e.date} ${time} ${e.title} [${tag}]`;
+      });
+    const text = lines.join('\n') || '暂无事件';
+    try {
+      await navigator.clipboard.writeText(text);
+      message.success('事件列表已复制到剪贴板');
+    } catch {
+      message.error('复制失败，请手动复制');
+    }
+  };
+
   const handleImportFile = (file: File) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -78,21 +94,6 @@ export default function MoreSheet({
     reader.readAsText(file);
   };
 
-  const handleReset = () => {
-    modal.confirm({
-      title: '恢复示例数据？',
-      content: '当前所有事件将被替换为示例事件，此操作不可撤销。',
-      okText: '确认恢复',
-      cancelText: '取消',
-      okButtonProps: { danger: true },
-      onOk: () => {
-        resetSample();
-        message.success('已恢复示例数据');
-        onClose();
-      }
-    });
-  };
-
   return (
     <>
       <Drawer
@@ -100,11 +101,87 @@ export default function MoreSheet({
         open={open}
         onClose={onClose}
         height="auto"
-        title="更多功能"
-        styles={{ body: { paddingBottom: 28 } }}
+        closable={false}
+        styles={{
+          body: { padding: '20px 16px 28px' },
+          content: { borderRadius: '20px 20px 0 0' }
+        }}
       >
+        <div className="sheet-title">
+          <span>更多功能</span>
+          <button className="sheet-close" onClick={onClose} aria-label="关闭">
+            <CloseOutlined />
+          </button>
+        </div>
+
         <div className="sheet-section">
-          <h4>数据同步</h4>
+          <h4>按标签筛选</h4>
+          <div className="tag-filters">
+            {TAG_ORDER.map((t) => {
+              const active = activeTags.includes(t);
+              return (
+                <button
+                  key={t}
+                  className={`tag-pill${active ? ' active' : ''}`}
+                  onClick={() => toggleTag(t)}
+                >
+                  <span
+                    className="tag-pill-dot"
+                    style={{ background: TAG_COLORS[t].color }}
+                  />
+                  {TAG_COLORS[t].label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="sheet-section">
+          <h4>数据与导出</h4>
+          <div className="export-range">
+            <div className="export-range-label">选择时间范围</div>
+            <Space className="export-range-pickers">
+              <DatePicker
+                value={startDate}
+                onChange={(v) => v && setStartDate(v)}
+                format="YYYY/MM/DD"
+                placeholder="开始日期"
+                suffixIcon={null}
+                allowClear={false}
+              />
+              <DatePicker
+                value={endDate}
+                onChange={(v) => v && setEndDate(v)}
+                format="YYYY/MM/DD"
+                placeholder="结束日期"
+                suffixIcon={null}
+                allowClear={false}
+              />
+            </Space>
+          </div>
+
+          <div className="sheet-actions-v2">
+            <button className="sheet-btn-v2 primary" onClick={() => setExportOpen(true)}>
+              <PictureOutlined className="ico" />
+              导出图片
+            </button>
+            <button className="sheet-btn-v2 success" onClick={handleCopyEvents}>
+              <CopyOutlined className="ico" />
+              复制事件
+            </button>
+            <button className="sheet-btn-v2" onClick={handleExportJSON}>
+              <DownloadOutlined className="ico" />
+              导出JSON
+            </button>
+            <button className="sheet-btn-v2" onClick={() => fileRef.current?.click()}>
+              <UploadOutlined className="ico" />
+              导入JSON
+            </button>
+          </div>
+        </div>
+
+        <div className="sheet-section">
+          <h4>云同步</h4>
           <button
             className={`sync-entry${email && status !== 'error' ? ' on' : ''}`}
             onClick={() => {
@@ -121,94 +198,31 @@ export default function MoreSheet({
           </button>
         </div>
 
-        <div className="sheet-section">
-          <h4>按标签筛选</h4>
-          <div className="tag-filters">
-            {TAG_ORDER.map((t) => {
-              const active = activeTags.includes(t);
-              return (
-                <button
-                  key={t}
-                  className={`tag-btn${active ? ' active' : ''}`}
-                  style={active ? { background: TAG_COLORS[t].color } : undefined}
-                  onClick={() => toggleTag(t)}
-                >
-                  {!active && (
-                    <span
-                      className="swatch"
-                      style={{ background: TAG_COLORS[t].color }}
-                    />
-                  )}
-                  {TAG_COLORS[t].label}
-                </button>
-              );
-            })}
-            {activeTags.length > 0 && (
-              <button className="tag-btn" onClick={clearTags}>
-                清除筛选
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="sheet-section">
-          <h4>数据与导出</h4>
-          <div className="sheet-actions">
-            <button
-              className="sheet-btn primary"
-              onClick={() => setExportOpen(true)}
-            >
-              <PictureOutlined className="ico" />
-              导出为长图
-            </button>
-            <button className="sheet-btn" onClick={handleExportJSON}>
-              <DownloadOutlined className="ico" />
-              导出 JSON 备份
-            </button>
-            <button className="sheet-btn" onClick={() => fileRef.current?.click()}>
-              <UploadOutlined className="ico" />
-              导入 JSON
-            </button>
-            <button className="sheet-btn" onClick={handleReset}>
-              <ReloadOutlined className="ico" />
-              恢复示例数据
-            </button>
-            <button
-              className="sheet-btn"
-              onClick={() =>
-                Modal.info({
-                  title: '安装到手机桌面',
-                  content: (
-                    <div style={{ fontSize: 13, lineHeight: 1.9 }}>
-                      <b>安卓 / 鸿蒙：</b>用浏览器打开本网址，点右上角菜单 →「添加到主屏幕 / 安装应用」。
-                      <br />
-                      <b>iPhone：</b>用 Safari 打开本网址，点底部分享按钮 →「添加到主屏幕」。
-                      <br />
-                      安装后会生成独立图标，全屏运行，断网也能使用。
-                    </div>
-                  ),
-                  okText: '知道了'
-                })
-              }
-            >
-              <MobileOutlined className="ico" />
-              安装到桌面
-            </button>
-          </div>
-        </div>
+        <button
+          className="install-hint-btn"
+          onClick={() =>
+            Modal.info({
+              title: '安装到手机桌面',
+              content: (
+                <div style={{ fontSize: 13, lineHeight: 1.9 }}>
+                  <b>安卓 / 鸿蒙：</b>用浏览器打开本网址，点右上角菜单 →「添加到主屏幕 / 安装应用」。
+                  <br />
+                  <b>iPhone：</b>用 Safari 打开本网址，点底部分享按钮 →「添加到主屏幕」。
+                  <br />
+                  安装后会生成独立图标，全屏运行，断网也能使用。
+                </div>
+              ),
+              okText: '知道了'
+            })
+          }
+        >
+          <MobileOutlined />
+          安装到桌面
+        </button>
 
         <div className="install-tip">
-          共 <b>{events.length}</b> 条事件。
-          {email ? (
-            <>
-              已开启云同步，数据保存在你自己的 Supabase 数据库中，手机与电脑登录同一账号自动互通。
-            </>
-          ) : (
-            <>
-              目前仅保存在本机浏览器中，换设备或清理浏览器数据会丢失。建议开启
-              <b>云同步</b>，或定期用「导出 JSON 备份」保存一份。
-            </>
-          )}
+          共 <b>{events.length}</b> 条事件，保存在本机，建议定期导出JSON备份。
+          {email && <> 已开启云同步，登录同一账号自动互通。</>}
         </div>
 
         <input
@@ -224,7 +238,12 @@ export default function MoreSheet({
         />
       </Drawer>
 
-      <ExportModal open={exportOpen} onClose={() => setExportOpen(false)} />
+      <ExportModal
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        initialStart={startDate}
+        initialEnd={endDate}
+      />
     </>
   );
 }
