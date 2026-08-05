@@ -107,7 +107,8 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
 
   // 日 / 周 / 月 分组（周一为每周第一天）
   const { dayEvents, weekEvents, monthEvents, monthRangeLabel, weekRangeLabel } = useMemo(() => {
-    const mondayThis = currentDate.isoWeekday(1);
+    // 周/月提醒范围固定在「今天所在周」，切换选中日期不会让周/月提醒消失
+    const mondayThis = today.isoWeekday(1);
     const weekStart = mondayThis;
     const weekEnd = mondayThis.add(6, 'day');
     const nextWeekStart = weekStart.add(7, 'day');
@@ -276,12 +277,18 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
           <BellOutlined className="remind-ico" />
           <span className="remind-label">日提醒</span>
           <span className="remind-range">{selDateText}</span>
-          {isToday && <span className="today-tag">今</span>}
+          <span
+            className={`today-tag${isToday ? ' active' : ''}`}
+            onClick={goToday}
+            aria-label="返回今天"
+          >
+            今
+          </span>
         </div>
         {dayEvents.length === 0 ? (
           <div className="empty-remind" onClick={() => openCreate({ date: selectedKey })}>
             <CheckOutlined className="empty-check" />
-            {selDateText} 暂无安排
+            暂无安排
             <PlusOutlined className="empty-plus" />
           </div>
         ) : (
