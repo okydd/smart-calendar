@@ -1689,6 +1689,32 @@ body {
   flex-shrink: 0;
 }
 
+/* --- 通知设置：云端同步状态提示 --- */
+.notify-cloud-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #8a8f9e;
+  background: #f4f5f9;
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+  padding: 9px 11px;
+  margin-bottom: 14px;
+}
+
+.notify-cloud-hint.on {
+  color: #1f9d57;
+  background: #ecfaf1;
+  border-color: #b7e8c9;
+}
+
+.notify-cloud-hint .anticon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
 .notify-form {
   display: flex;
   flex-direction: column;
