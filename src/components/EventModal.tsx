@@ -13,10 +13,10 @@ const MAX_IMAGES = 10;
 
 const YEARS = Array.from({ length: 16 }, (_, i) => 2020 + i);
 const HOURS = Array.from({ length: 24 }, (_, i) => ({ label: `${i}时`, value: i }));
-const MINUTES = Array.from({ length: 60 }, (_, i) => ({
-  label: `${String(i).padStart(2, '0')}分`,
-  value: i
-}));
+const MINUTES = Array.from({ length: 12 }, (_, i) => {
+  const v = i * 5;
+  return { label: `${String(v).padStart(2, '0')}分`, value: v };
+});
 
 function daysInMonth(y: number, m: number): number {
   return new Date(y, m, 0).getDate();
@@ -84,7 +84,8 @@ export default function EventModal() {
     setAllDay(ad);
     if (!ad && base.startTime) {
       const [h, m] = base.startTime.split(':').map(Number);
-      setTimeValues([h, m]);
+      // 分钟对齐到 5 的倍数（滚轮仅支持 5 分钟间隔）
+      setTimeValues([h, Math.min(55, Math.max(0, Math.round(m / 5) * 5))]);
     } else setTimeValues([9, 0]);
     setRemindOffsets(
       base.reminder && base.reminder.length ? base.reminder.map((r) => ({ ...r })) : []
@@ -99,7 +100,11 @@ export default function EventModal() {
     e.target.value = '';
     if (!files.length) return;
     const room = MAX_IMAGES - images.length;
-    const slice = files.slice(0, room);
+    if (files.length > room) {
+      message.warning(`最多添加 ${MAX_IMAGES} 张图片，已为您保留前 ${room} 张`);
+    }
+    const slice = files.slice(0, Math.max(0, room));
+    if (slice.length === 0) return;
     Promise.all(
       slice.map(
         (f) =>
@@ -233,7 +238,8 @@ export default function EventModal() {
                 type="button"
                 className={`ev-datetime-card${allDay ? ' muted' : ''}`}
                 onClick={() => {
-                  setDraftTimeValues(timeValues);
+                  const m = Math.min(55, Math.max(0, Math.round(timeValues[1] / 5) * 5));
+                  setDraftTimeValues([timeValues[0], m]);
                   setDraftAllDay(allDay);
                   setTimePickerOpen(true);
                 }}
@@ -289,11 +295,13 @@ export default function EventModal() {
             <div className="remind-custom">
               <span>自定义：提前</span>
               <input
-                type="number"
-                min={1}
-                max={365}
-                value={customValue}
-                onChange={(e) => setCustomValue(Math.max(1, Number(e.target.value) || 1))}
+                type="text"
+                inputMode="numeric"
+                value={String(customValue)}
+                onChange={(e) => {
+                  const n = parseInt(e.target.value.replace(/[^0-9]/g, ''), 10);
+                  setCustomValue(Number.isNaN(n) || n < 1 ? 1 : Math.min(365, n));
+                }}
                 className="remind-num"
               />
               <div className="remind-unit">
@@ -323,16 +331,6 @@ export default function EventModal() {
                 添加
               </button>
             </div>
-            {remindOffsets.length > 0 && (
-              <div className="remind-selected">
-                {remindOffsets.map((o, i) => (
-                  <span key={i} className="remind-chip" onClick={() => removeOffset(o)}>
-                    提前 {o.value} {o.unit === 'day' ? '天' : o.unit === 'hour' ? '小时' : '分钟'}{' '}
-                    <span className="x">×</span>
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="ev-field">
@@ -491,7 +489,7 @@ export default function EventModal() {
                 确定
               </button>
             </div>
-            <div className="ev-time-no-time">
+            <div className="ev-time-tabs">
               <button
                 type="button"
                 className={draftAllDay ? 'active' : ''}
@@ -501,6 +499,16 @@ export default function EventModal() {
                 }}
               >
                 不选择时间
+              </button>
+              <button
+                type="button"
+                className={!draftAllDay ? 'active' : ''}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDraftAllDay(false);
+                }}
+              >
+                选择时间
               </button>
             </div>
             <div className={`ev-time-wheels${draftAllDay ? ' disabled' : ''}`}>
