@@ -30,11 +30,28 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>
 );
 
-// 移除首屏加载遮罩
+// 移除首屏加载遮罩：一旦 React 首帧渲染出内容立刻淡出，不再固定停留
 const boot = document.getElementById('boot');
 if (boot) {
-  boot.style.opacity = '0';
-  window.setTimeout(() => boot.remove(), 320);
+  const root = document.getElementById('root');
+  let removed = false;
+  const hide = () => {
+    if (removed) return;
+    removed = true;
+    boot.style.opacity = '0';
+    window.setTimeout(() => boot.remove(), 140);
+  };
+  const waitPaint = () => {
+    if (root && root.childElementCount > 0) {
+      // 已渲染出内容，下一帧移除，避免白闪
+      requestAnimationFrame(hide);
+    } else {
+      requestAnimationFrame(waitPaint);
+    }
+  };
+  requestAnimationFrame(waitPaint);
+  // 兜底：最多 1.2 秒后强制移除
+  window.setTimeout(hide, 1200);
 }
 
 // 注册 Service Worker，实现离线可用
