@@ -1325,13 +1325,21 @@ body {
   opacity: 0.92;
 }
 
-/* ===================== 有事件的日期：边框包围 ===================== */
+/* ===================== 有事件的日期：与今天色块同尺寸的淡色圆框 ===================== */
 .mcell.has-event {
-  border: 1.5px solid #c2c6e0;
+  border: none;
 }
 
-.mcell.has-event.today {
-  border-color: var(--c-primary);
+.mcell.has-event .dnum {
+  border: 1.5px solid #c2c6e0;
+  background: #f3f4fb;
+  font-weight: 600;
+}
+
+/* 今天 / 选中日期已有底色时，不再叠加额外方框 */
+.mcell.today .dnum,
+.mcell.selected .dnum {
+  border-width: 2px;
 }
 
 /* ===================== 重要标记 / 月提醒导航 ===================== */
@@ -1718,4 +1726,443 @@ body {
 .remind-hint {
   font-size: 13.5px;
   font-weight: 600;
+}
+
+/* ===================== 第四轮改版新增样式 ===================== */
+
+/* --- 可拖动悬浮按钮 --- */
+.fab {
+  touch-action: none;
+}
+
+.fab.dragging {
+  transform: scale(1.06);
+  box-shadow: 0 12px 30px rgba(59, 124, 255, 0.5);
+  opacity: 0.94;
+  transition: none;
+}
+
+/* --- 事件弹窗：字段与内联滚轮 --- */
+.ev-field {
+  margin-bottom: 14px;
+}
+
+.ev-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text);
+  margin-bottom: 6px;
+}
+
+.ev-all-day-tip {
+  font-size: 12px;
+  color: var(--c-text-gray);
+}
+
+.wheel-picker {
+  display: flex;
+  gap: 8px;
+  background: #f7f8fc;
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  padding: 6px 8px;
+  overflow: hidden;
+}
+
+.wheel-col {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.wheel-scroll {
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  position: relative;
+  z-index: 2;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 22%,
+    #000 78%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(to bottom, transparent 0, #000 22%, #000 78%, transparent 100%);
+}
+
+.wheel-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.wheel-item {
+  scroll-snap-align: start;
+  text-align: center;
+  font-size: 14px;
+  color: #9aa0b4;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s, font-size 0.15s;
+}
+
+.wheel-item.active {
+  color: var(--c-primary);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.wheel-hl {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid #dfe2f0;
+  border-bottom: 1px solid #dfe2f0;
+  background: rgba(59, 124, 255, 0.06);
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* --- 提醒预设标签 --- */
+.remind-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.remind-custom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--c-text-gray);
+}
+
+.remind-add {
+  border: none;
+  background: var(--c-primary);
+  color: #fff;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.remind-selected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.remind-chip {
+  background: #eef3ff;
+  color: var(--c-primary);
+  border-radius: 10px;
+  padding: 3px 9px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.remind-chip .x {
+  color: #9aa0b4;
+  font-size: 13px;
+}
+
+/* --- 事件查看页 --- */
+.ev-view .ev-foot {
+  gap: 8px;
+}
+
+.evv-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.evv-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--c-text);
+  word-break: break-word;
+}
+
+.evv-title.done {
+  color: #b0b4c3;
+  text-decoration: line-through;
+}
+
+.evv-done-tag {
+  background: #e8f8ee;
+  color: var(--c-success);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 1px 7px;
+}
+
+.evv-meta {
+  background: #f7f8fc;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13.5px;
+  color: var(--c-text);
+}
+
+.evv-label {
+  display: inline-block;
+  min-width: 42px;
+  color: var(--c-text-gray);
+  font-size: 12px;
+  margin-right: 8px;
+}
+
+.evv-flags {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.evv-flag {
+  background: #f2f3f8;
+  border-radius: 8px;
+  padding: 3px 9px;
+  font-size: 12px;
+  color: var(--c-text-gray);
+}
+
+.evv-block {
+  margin-top: 14px;
+}
+
+.evv-desc {
+  margin-top: 4px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--c-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.evv-imgs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.evv-img {
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--c-border);
+}
+
+.evv-done-btn {
+  margin-top: 16px;
+  width: 100%;
+  border: 1px solid var(--c-success);
+  background: #fff;
+  color: var(--c-success);
+  border-radius: 12px;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* --- 备注 / 图片小图标 --- */
+.ev-flags-mini {
+  display: inline-flex;
+  gap: 3px;
+  font-size: 12px;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+/* --- 办事清单：左侧彩色边框（与日历一致） --- */
+.todo-bar {
+  width: 4px;
+  align-self: stretch;
+  min-height: 34px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.todo-item {
+  align-items: stretch;
+  gap: 10px;
+}
+
+.todo-item .todo-check,
+.todo-item .todo-hint {
+  align-self: center;
+}
+
+/* --- 已完成事项：年月筛选 --- */
+.done-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 2px 10px;
+}
+
+.done-month-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+.done-all-btn {
+  margin-left: auto;
+  border: 1px solid var(--c-border);
+  background: #fff;
+  border-radius: 12px;
+  padding: 3px 12px;
+  font-size: 12px;
+  color: var(--c-text-gray);
+  cursor: pointer;
+}
+
+.done-all-btn.active {
+  border-color: var(--c-primary);
+  color: var(--c-primary);
+  background: #eef3ff;
+}
+
+/* --- 更多面板：搜索框 --- */
+.sheet-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  padding: 9px 12px;
+  background: #f7f8fc;
+}
+
+.sheet-search .ico {
+  color: #9aa0b4;
+}
+
+.sheet-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  color: var(--c-text);
+}
+
+.sheet-search .clr {
+  border: none;
+  background: transparent;
+  color: #9aa0b4;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* --- 更多面板：三按钮一行 --- */
+.tri-row {
+  display: flex;
+  gap: 8px;
+}
+
+.tri-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  border: 1px solid var(--c-border);
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px 6px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.18s;
+}
+
+.tri-btn .ico {
+  font-size: 19px;
+  color: var(--c-primary);
+}
+
+.tri-btn .t {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text);
+  white-space: nowrap;
+}
+
+.tri-btn .s {
+  font-size: 11px;
+  color: var(--c-text-gray);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.tri-btn.active {
+  border-color: var(--c-primary);
+  background: #eef3ff;
+}
+
+.tri-btn.on .ico {
+  color: var(--c-success);
+}
+
+/* --- 更多面板：返回按钮 --- */
+.sheet-back-btn {
+  width: 100%;
+  margin-top: 14px;
+  border: 1px solid var(--c-border);
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-text);
+  cursor: pointer;
+}
+
+.sheet-back-btn:hover {
+  border-color: var(--c-primary);
+  color: var(--c-primary);
+}
+
+/* --- 通知设置：多邮箱输入 --- */
+.notify-form textarea {
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+  padding: 9px 11px;
+  font-size: 13.5px;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  color: var(--c-text);
+}
+
+.notify-form textarea:focus {
+  border-color: var(--c-primary);
 }
