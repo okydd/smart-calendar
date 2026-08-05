@@ -16,12 +16,12 @@ import TodoPage from './mobile/TodoPage';
 import MoreSheet from './mobile/MoreSheet';
 import SyncPanel from './mobile/SyncPanel';
 import { dayjs, lunarDateLabel, weekdayCN } from './utils/date';
-import { checkDueReminders } from './utils/notify';
+import { checkDueReminders, getNotifySettings, emailConfigured, sendDailyDigest } from './utils/notify';
 
 function Shell() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { activeTags, clearTags, events } = useCalendar();
+  const { activeTags, clearTags, events, search, setSearch, filteredEvents } = useCalendar();
   const [moreOpen, setMoreOpen] = useState(false);
   const [syncOpen, setSyncOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -97,15 +97,56 @@ function Shell() {
 
   const tab = location.pathname.startsWith('/todos') ? 'todos' : 'calendar';
 
-  /** 待办角标：今天当天的事件数量 */
+  /** 待办角标：今天当天、且未完成的待办数量（与清单「今天」组一致） */
   const pending = useMemo(
     () =>
       events.filter((e) => {
         const d = dayjs(e.date);
-        return d.isValid() && d.isSame(today, 'day');
+        return d.isValid() && d.isSame(today, 'day') && !e.done;
       }).length,
     [events, today]
   );
+
+  /** 每日定时发送：在设定时间自动把数据发到邮箱（应用打开期间触发，最佳努力） */
+  useEffect(() => {
+    let timer: number | undefined;
+    let cancelled = false;
+    const LAST_KEY = 'calendarLastAutoSend';
+    const trySend = async () => {
+      if (cancelled) return;
+      const s = getNotifySettings();
+      if (!s.autoSend) return;
+      if (!emailConfigured(s)) return;
+      const todayStr = dayjs().format('YYYY-MM-DD');
+      const last = localStorage.getItem(LAST_KEY);
+      if (last === todayStr) return; // 今天已发送
+      const [h, m] = (s.autoSendTime || '04:00').split(':').map(Number);
+      const now = dayjs();
+      const target = now
+        .startOf('day')
+        .hour(h)
+        .minute(m)
+        .second(0);
+      if (now.isBefore(target)) {
+        // 还没到发送时间，等到达时再发
+        const ms = target.diff(now);
+        timer = window.setTimeout(trySend, Math.min(ms, 24 * 3600 * 1000));
+        return;
+      }
+      localStorage.setItem(LAST_KEY, todayStr);
+      const r = await sendDailyDigest(eventsRef.current);
+      if (!r.ok && r.msg !== '未配置邮箱，仅本地操作') {
+        // 发送失败：允许今天稍后重试
+        localStorage.removeItem(LAST_KEY);
+        console.warn('[auto-send] 每日发送失败:', r.msg);
+      }
+    };
+    trySend();
+    return () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+    };
+  }, []);
 
   return (
     <div className="app-shell">
@@ -137,6 +178,16 @@ function Shell() {
       </header>
 
       <div className="app-content">
+        {search && (
+          <div className="search-banner">
+            <span className="search-banner-text">
+              搜索「{search}」共 {filteredEvents.length} 条
+            </span>
+            <button className="search-banner-back" onClick={() => setSearch('')}>
+              返回
+            </button>
+          </div>
+        )}
         <div className="app-content-inner">
           <Routes>
             <Route path="/" element={<Navigate to="/calendar" replace />} />
