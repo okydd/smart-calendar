@@ -812,9 +812,7 @@ body {
 }
 
 .done-section {
-  margin-top: 6px;
-  border-top: 1px dashed #e2e3ee;
-  padding-top: 12px;
+  /* 已改为 .remind-card 卡片结构，去掉原先的虚线分隔 */
 }
 
 .empty-todo {
@@ -1675,7 +1673,7 @@ body {
 .ev-btn-gray {
   background: #f2f3f8;
   color: var(--c-text);
-  border: 1px solid #c2c6d4;
+  border: 1.5px solid #8e95b8;
 }
 
 .ev-btn-new:active,
@@ -2666,6 +2664,23 @@ body {
   color: #9aa0b4;
   cursor: pointer;
   font-size: 12px;
+}
+
+.sheet-search-btn {
+  flex-shrink: 0;
+  border: none;
+  background: var(--c-gradient);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 9px;
+  padding: 6px 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(59, 124, 255, 0.22);
+}
+
+.sheet-search-btn:active {
+  opacity: 0.9;
 }
 
 /* --- 更多面板：三按钮一行 --- */
