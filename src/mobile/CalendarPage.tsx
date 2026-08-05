@@ -18,6 +18,7 @@ import {
   type Dayjs
 } from '../utils/date';
 import { IMPORTANT_COLOR } from '../constants';
+import Fab from '../components/Fab';
 import type { CalendarEvent } from '../types';
 
 const WEEK_DAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
@@ -63,7 +64,7 @@ function timeHint(d: Dayjs, e: CalendarEvent): string {
 
 export default function CalendarPage({ showFab = true }: { showFab?: boolean }) {
   const { filteredEvents, currentDate, setCurrentDate } = useCalendar();
-  const { openCreate, openEdit } = useUI();
+  const { openCreate, openView } = useUI();
   const [slide, setSlide] = useState<'' | 'slide-left' | 'slide-right'>('');
   const [monthView, setMonthView] = useState<Dayjs | null>(null);
   const touchRef = useRef<{ x: number; y: number } | null>(null);
@@ -104,7 +105,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
   };
 
   // 日 / 周 / 月 分组（周一为每周第一天）
-  const { dayEvents, weekEvents, monthEvents, monthRangeLabel } = useMemo(() => {
+  const { dayEvents, weekEvents, monthEvents, monthRangeLabel, weekRangeLabel } = useMemo(() => {
     const mondayThis = currentDate.isoWeekday(1);
     const weekStart = mondayThis;
     const weekEnd = mondayThis.add(6, 'day');
@@ -151,8 +152,9 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
     week.sort(sorter);
     month.sort(sorter);
 
-    const label = `第3周 ${wk3Start.month() + 1}/${wk3Start.date()} - 第4周 ${wk4End.month() + 1}/${wk4End.date()}`;
-    return { dayEvents: day, weekEvents: week, monthEvents: month, monthRangeLabel: label };
+    const monthRangeLabel = `${wk3Start.month() + 1}月${wk3Start.date()}日 - ${wk4End.month() + 1}月${wk4End.date()}日`;
+    const weekRangeLabel = `${weekStart.month() + 1}月${weekStart.date()}日 - ${nextWeekEnd.month() + 1}月${nextWeekEnd.date()}日`;
+    return { dayEvents: day, weekEvents: week, monthEvents: month, monthRangeLabel, weekRangeLabel };
   }, [filteredEvents, currentDate]);
 
   /** 按月查看：该月所有事件（按天归组） */
@@ -182,8 +184,9 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
       showDate && d.isValid()
         ? `${d.month() + 1}月${d.date()}日 ${WEEK_DAYS[(d.day() + 6) % 7]}`
         : '';
+    const hasExtra = !!(e.description || (e.images && e.images.length > 0));
     return (
-      <div key={e.id} className="remind-row" onClick={() => openEdit(e)}>
+      <div key={e.id} className="remind-row" onClick={() => openView(e)}>
         <span
           className="remind-bar"
           style={{ background: e.important ? IMPORTANT_COLOR : 'var(--c-border)' }}
@@ -191,6 +194,12 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
         <div className="remind-main">
           <div className="remind-title-line">
             <span className={`remind-title${e.done ? ' done' : ''}`}>{e.title}</span>
+            {hasExtra && (
+              <span className="ev-flags-mini">
+                {e.description ? <span title="有备注">📝</span> : null}
+                {e.images && e.images.length > 0 ? <span title="有图片">🖼</span> : null}
+              </span>
+            )}
             {e.important && <span className="imp-flag">重要</span>}
           </div>
           <div className="remind-time-line">
@@ -243,13 +252,17 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
             const evts = byDate.get(key) ?? [];
             const isOut = d.month() !== currentDate.month();
             const isWeekend = d.day() === 0 || d.day() === 6;
+            const isTodayCell = d.isSame(today, 'day');
             const cls = [
               'mcell',
               isOut ? 'out' : '',
               isWeekend ? 'weekend' : '',
-              d.isSame(today, 'day') ? 'today' : '',
+              isTodayCell ? 'today' : '',
               key === selectedKey ? 'selected' : '',
-              evts.length > 0 && !isOut ? 'has-event' : ''
+              // 需求6：与今天色块同尺寸的淡色圆框；今天/选中已有底色时不再叠加边框
+              evts.length > 0 && !isOut && !isTodayCell && key !== selectedKey
+                ? 'has-event'
+                : ''
             ]
               .filter(Boolean)
               .join(' ');
@@ -287,6 +300,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
           <div className="remind-header">
             <AppstoreOutlined className="remind-ico" />
             <span className="remind-label">周提醒</span>
+            <span className="remind-range">{weekRangeLabel}</span>
             <span className="remind-count">{weekEvents.length}</span>
           </div>
           <div className="remind-list">{weekEvents.map((e) => renderEventRow(e, true))}</div>
@@ -363,15 +377,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
         )}
       </section>
 
-      {showFab && (
-        <button
-          className="fab"
-          onClick={() => openCreate({ date: selectedKey })}
-          aria-label="新建日程"
-        >
-          <PlusOutlined />
-        </button>
-      )}
+      {showFab && <Fab onClick={() => openCreate({ date: selectedKey })} />}
     </div>
   );
 }
