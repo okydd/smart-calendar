@@ -178,7 +178,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
   const selDateText = `${currentDate.month() + 1}月${currentDate.date()}日 ${selWeekday}`;
 
   /** 渲染一条提醒：两行（标题 / 时间），左侧灰边、重要才红色；不在日历内提供完成勾选 */
-  const renderEventRow = (e: CalendarEvent, showDate: boolean) => {
+  const renderEventRow = (e: CalendarEvent, showDate: boolean, isDay = false) => {
     const d = dayjs(e.date);
     const expired = !e.done && d.isValid() && d.isBefore(today, 'day');
     const timeText = e.allDay || !e.startTime ? '全天' : e.startTime;
@@ -187,7 +187,11 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
         ? `${d.month() + 1}月${d.date()}日 ${WEEK_DAYS[(d.day() + 6) % 7]}`
         : '';
     return (
-      <div key={e.id} className="remind-row" onClick={() => openView(e)}>
+      <div
+        key={e.id}
+        className={`remind-row${isDay ? ' remind-row-day' : ''}`}
+        onClick={() => openView(e)}
+      >
         <span
           className="remind-bar"
           style={{ background: e.important ? IMPORTANT_COLOR : 'var(--c-border)' }}
@@ -292,7 +296,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
             <PlusOutlined className="empty-plus" />
           </div>
         ) : (
-          <div className="remind-list">{dayEvents.map((e) => renderEventRow(e, false))}</div>
+          <div className="remind-list">{dayEvents.map((e) => renderEventRow(e, false, true))}</div>
         )}
       </section>
 
