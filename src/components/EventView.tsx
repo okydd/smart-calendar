@@ -26,7 +26,8 @@ export default function EventView() {
   const d = parseDateStr(e.date);
   const dateText = d.isValid() ? `${d.month() + 1}月${d.date()}日 ${weekdayCN(d)}` : e.date;
   const timeText = timeRangeLabel(e);
-  const hasExtra = !!(e.description || (e.images && e.images.length > 0));
+  const hasNote = !!(e.description && e.description.trim());
+  const hasImg = !!(e.images && e.images.length > 0);
 
   const handleDelete = () => {
     Modal.confirm({
@@ -53,63 +54,77 @@ export default function EventView() {
         </div>
 
         <div className="ev-body">
-          <div className="evv-title-row">
-            <span className={`evv-title${e.done ? ' done' : ''}`}>{e.title}</span>
-            {e.important && (
-              <span className="imp-flag" style={{ background: '#ffe9e8', color: IMPORTANT_COLOR }}>
-                重要
-              </span>
-            )}
-            {e.done && <span className="evv-done-tag">已完成</span>}
+          {/* 主卡片：标题 + 标签 + 日期/时间/提醒 */}
+          <div className="evv-card evv-main">
+            <div className="evv-title-row">
+              <span className={`evv-title${e.done ? ' done' : ''}`}>{e.title}</span>
+              {e.important && (
+                <span className="imp-flag" style={{ background: '#ffe9e8', color: IMPORTANT_COLOR }}>
+                  重要
+                </span>
+              )}
+              {e.done && <span className="evv-done-tag">已完成</span>}
+            </div>
+            <div className="evv-meta2">
+              <div className="evv-meta-item">
+                <span className="evv-ico">📅</span>
+                <span>{dateText}</span>
+              </div>
+              <div className="evv-meta-item">
+                <span className="evv-ico">🕒</span>
+                <span>{timeText}</span>
+              </div>
+              <div className="evv-meta-item">
+                <span className="evv-ico">🔔</span>
+                <span>{reminderText(e.reminder)}</span>
+              </div>
+            </div>
           </div>
 
-          <div className="evv-meta">
-            <div>
-              <span className="evv-label">日期</span>
-              {dateText}
-            </div>
-            <div>
-              <span className="evv-label">时间</span>
-              {timeText}
-            </div>
-            <div>
-              <span className="evv-label">提醒</span>
-              {reminderText(e.reminder)}
-            </div>
-          </div>
-
-          {hasExtra && (
-            <div className="evv-flags">
-              {e.description ? <span className="evv-flag">📝 有备注</span> : null}
-              {e.images && e.images.length > 0 ? (
-                <span className="evv-flag">🖼 有图片 {e.images.length} 张</span>
-              ) : null}
-            </div>
-          )}
-
-          {e.description && (
-            <div className="evv-block">
-              <div className="evv-label">备注</div>
+          {/* 备注卡片 */}
+          {hasNote && (
+            <div className="evv-card">
+              <div className="evv-card-label">备注</div>
               <div className="evv-desc">{e.description}</div>
             </div>
           )}
 
-          {e.images && e.images.length > 0 && (
-            <div className="evv-block">
-              <div className="evv-label">图片（{e.images.length}）</div>
+          {/* 图片卡片 */}
+          {hasImg && (
+            <div className="evv-card">
+              <div className="evv-card-label">图片（{e.images!.length}）</div>
               <div className="evv-imgs">
-                {e.images.map((src, i) => (
+                {e.images!.map((src, i) => (
                   <img key={i} src={src} alt="" className="evv-img" />
                 ))}
               </div>
             </div>
           )}
 
-          {!e.done && (
-            <button className="evv-done-btn" onClick={() => toggleDone(e.id)}>
-              <CheckOutlined /> 标记为已完成
-            </button>
-          )}
+          {/* 完成状态：小切换，不占整行 */}
+          <div className="evv-status-row">
+            <span className="evv-status-label">完成状态</span>
+            <div className="evv-toggle">
+              <button
+                type="button"
+                className={`opt${!e.done ? ' active' : ''}`}
+                onClick={() => {
+                  if (e.done) toggleDone(e.id);
+                }}
+              >
+                未完成
+              </button>
+              <button
+                type="button"
+                className={`opt done${e.done ? ' active' : ''}`}
+                onClick={() => {
+                  if (!e.done) toggleDone(e.id);
+                }}
+              >
+                已完成
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="ev-foot">
