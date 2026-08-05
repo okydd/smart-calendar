@@ -65,6 +65,13 @@ export default function EventModal() {
   const [customValue, setCustomValue] = useState(1);
   const [customUnit, setCustomUnit] = useState<'day' | 'hour' | 'minute'>('day');
 
+  /** 日期/时间滚轮弹窗的临时草稿值 */
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [timePickerOpen, setTimePickerOpen] = useState(false);
+  const [draftDateValues, setDraftDateValues] = useState<[number, number, number]>(dateValues);
+  const [draftTimeValues, setDraftTimeValues] = useState<[number, number]>(timeValues);
+  const [draftAllDay, setDraftAllDay] = useState(allDay);
+
   useEffect(() => {
     if (!open) return;
     setTitle(base.title ?? '');
@@ -111,6 +118,18 @@ export default function EventModal() {
     const max = daysInMonth(y, m);
     if (day > max) day = max;
     setDateValues([y, m, day]);
+  };
+
+  const onDraftDateChange = (vals: number[]) => {
+    let [y, m, day] = vals as [number, number, number];
+    const max = daysInMonth(y, m);
+    if (day > max) day = max;
+    setDraftDateValues([y, m, day]);
+  };
+
+  const resetDraftToToday = () => {
+    const now = dayjs();
+    setDraftDateValues([now.year(), now.month() + 1, now.date()]);
   };
 
   const isActive = (p: PresetReminder) =>
@@ -194,39 +213,38 @@ export default function EventModal() {
             />
           </div>
 
-          <div className="ev-datetime-row">
-            <div className="ev-field">
-              <label className="ev-label">日期</label>
-              <WheelPicker
-                columns={dateColumns(dateValues[0], dateValues[1])}
-                selected={dateValues}
-                onChange={onDateChange}
-              />
+          <div className="ev-field">
+            <label className="ev-label">日期与时间</label>
+            <div className="ev-datetime-row">
+              <button
+                type="button"
+                className="ev-datetime-card"
+                onClick={() => {
+                  setDraftDateValues(dateValues);
+                  setDatePickerOpen(true);
+                }}
+              >
+                <span className="ev-dt-label">日期</span>
+                <span className="ev-dt-value">
+                  {`${dateValues[0]}/${String(dateValues[1]).padStart(2, '0')}/${String(dateValues[2]).padStart(2, '0')}`}
+                </span>
+              </button>
+              <button
+                type="button"
+                className={`ev-datetime-card${allDay ? ' muted' : ''}`}
+                onClick={() => {
+                  setDraftTimeValues(timeValues);
+                  setDraftAllDay(allDay);
+                  setTimePickerOpen(true);
+                }}
+              >
+                <span className="ev-dt-label">时间</span>
+                <span className="ev-dt-value">
+                  {allDay ? '不选' : `${String(timeValues[0]).padStart(2, '0')}:${String(timeValues[1]).padStart(2, '0')}`}
+                </span>
+              </button>
             </div>
-
-            <div className="ev-field">
-              <div className="remind-head-row">
-                <label className="ev-label" style={{ marginBottom: 0 }}>
-                  时间
-                </label>
-                <button
-                  type="button"
-                  className={`switch-mini${allDay ? ' on' : ''}`}
-                  onClick={() => setAllDay((v) => !v)}
-                  aria-label="全天"
-                >
-                  <span className="knob" />
-                </button>
-                <span className="ev-all-day-tip">{allDay ? '全天' : '指定时间'}</span>
-              </div>
-              {!allDay && (
-                <WheelPicker
-                  columns={timeColumns()}
-                  selected={timeValues}
-                  onChange={(v) => setTimeValues(v as [number, number])}
-                />
-              )}
-            </div>
+            <div className="ev-dt-hint">时间可选，分钟间隔为1分钟</div>
           </div>
 
           <div className="imp-block">
@@ -386,6 +404,118 @@ export default function EventModal() {
           </button>
         </div>
       </div>
+
+      {/* 日期选择弹窗（居中） */}
+      {datePickerOpen && (
+        <div
+          className="ev-picker-overlay"
+          onClick={(e) => {
+            e.stopPropagation();
+            setDatePickerOpen(false);
+          }}
+        >
+          <div className="ev-picker-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="ev-picker-body">
+              <WheelPicker
+                columns={dateColumns(draftDateValues[0], draftDateValues[1])}
+                selected={draftDateValues}
+                onChange={onDraftDateChange}
+              />
+            </div>
+            <div className="ev-picker-foot three">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDatePickerOpen(false);
+                }}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  resetDraftToToday();
+                }}
+              >
+                清除
+              </button>
+              <button
+                type="button"
+                className="primary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDateValues(draftDateValues);
+                  setDatePickerOpen(false);
+                }}
+              >
+                设置
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 时间选择弹窗（底部抽屉） */}
+      {timePickerOpen && (
+        <div
+          className="ev-picker-overlay ev-time-overlay"
+          onClick={(e) => {
+            e.stopPropagation();
+            setTimePickerOpen(false);
+          }}
+        >
+          <div className="ev-time-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="ev-time-head">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setTimePickerOpen(false);
+                }}
+              >
+                取消
+              </button>
+              <span className="ev-time-title">选择时间</span>
+              <button
+                type="button"
+                className="primary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setTimeValues(draftTimeValues);
+                  setAllDay(draftAllDay);
+                  setTimePickerOpen(false);
+                }}
+              >
+                确定
+              </button>
+            </div>
+            <div className="ev-time-no-time">
+              <button
+                type="button"
+                className={draftAllDay ? 'active' : ''}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDraftAllDay(true);
+                }}
+              >
+                不选择时间
+              </button>
+            </div>
+            <div className={`ev-time-wheels${draftAllDay ? ' disabled' : ''}`}>
+              <WheelPicker
+                columns={timeColumns()}
+                selected={draftTimeValues}
+                onChange={(v) => {
+                  setDraftAllDay(false);
+                  setDraftTimeValues(v as [number, number]);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
