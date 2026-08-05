@@ -10,5 +10,5 @@
   font-size: 17px;
   letter-spacing: 2px;
   z-index: 9999;
-  transition: opacity 0.3s;
+  transition: opacity 0.14s linear;
 }
