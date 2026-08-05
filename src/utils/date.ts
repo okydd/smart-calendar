@@ -3,6 +3,7 @@ import 'dayjs/locale/zh-cn';
 import weekday from 'dayjs/plugin/weekday';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import { Solar } from 'lunar-javascript';
 
 dayjs.extend(weekday);
 dayjs.extend(isoWeek);
@@ -80,3 +81,14 @@ export const genId = (): string => {
 
 /** 当前时间戳 YYYY-MM-DD HH:mm:ss */
 export const nowStamp = (): string => dayjs().format('YYYY-MM-DD HH:mm:ss');
+
+/** 公历转农历：返回「六月廿三」形式 */
+export const lunarDateLabel = (d: Dayjs): string => {
+  try {
+    const solar = Solar.fromYmd(d.year(), d.month() + 1, d.date());
+    const lunar = solar.getLunar();
+    return `${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`;
+  } catch {
+    return '';
+  }
+};
