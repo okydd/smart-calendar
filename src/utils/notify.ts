@@ -24,6 +24,10 @@ export interface NotifySettings {
   emailjsPublicKey: string;
   /** 微信推送 SendKey（ServerChan 方糖） */
   wechatSendKey: string;
+  /** 钉钉机器人 Webhook 完整地址（含 access_token） */
+  dingtalkWebhook: string;
+  /** 钉钉机器人「加签」密钥（安全设置选了「加签」时必填） */
+  dingtalkSecret: string;
   /** 是否开启每日定时发送（到邮箱） */
   autoSend: boolean;
   /** 每日发送时间 HH:mm（默认 04:00） */
@@ -36,6 +40,8 @@ const DEFAULT: NotifySettings = {
   emailjsTemplateId: '',
   emailjsPublicKey: '',
   wechatSendKey: '',
+  dingtalkWebhook: '',
+  dingtalkSecret: '',
   autoSend: false,
   autoSendTime: '04:00'
 };
@@ -62,6 +68,10 @@ export function wechatConfigured(s: NotifySettings = getNotifySettings()): boole
   return !!s.wechatSendKey;
 }
 
+export function dingtalkConfigured(s: NotifySettings = getNotifySettings()): boolean {
+  return !!(s.dingtalkWebhook && s.dingtalkWebhook.includes('access_token='));
+}
+
 /** 生成简洁事件文本：含选取时间范围与导出时间说明，每行「日期 时间 标题」 */
 export function buildConciseText(
   events: CalendarEvent[],
@@ -82,6 +92,42 @@ export function buildConciseText(
     `事件总数：${lines.length} 条`
   ].join('\n');
   return header + '\n' + (lines.join('\n') || '（无事件）');
+}
+
+/**
+ * 生成「完整版」纯文本报告：含每条事件的标题、日期、时间、备注、图片数量，
+ * 用于作为邮件正文（保证备注文字一定送达，不依赖附件/HTML 渲染）。
+ */
+export function buildFullText(
+  events: CalendarEvent[],
+  opts: { rangeStart: string; rangeEnd: string; exportTime: string }
+): string {
+  const list = events
+    .filter((e) => !e.deleted)
+    .sort((a, b) => (a.date < b.date ? -1 : 1));
+  const items = list
+    .map((e, i) => {
+      const d = parseDateStr(e.date);
+      const date = d.isValid()
+        ? `${d.year()}年${d.month() + 1}月${d.date()}日 ${weekdayCN(d)}`
+        : e.date;
+      const lines = [
+        `${i + 1}. ${e.title}${e.important ? '【重要】' : ''}${e.done ? '【已完成】' : ''}`,
+        `   时间：${date} ｜ ${timeRangeLabel(e)}`,
+        e.description ? `   备注：${e.description}` : '',
+        e.images && e.images.length ? `   图片：${e.images.length} 张` : ''
+      ];
+      return lines.filter(Boolean).join('\n');
+    })
+    .join('\n');
+  return [
+    '【日历事件清单（完整版）】',
+    `选取时间范围：${opts.rangeStart} 至 ${opts.rangeEnd}`,
+    `导出数据时间：${opts.exportTime}`,
+    `事件总数：${list.length} 条`,
+    '',
+    items || '（无事件）'
+  ].join('\n');
 }
 
 function escapeHtml(s: string): string {
@@ -205,12 +251,13 @@ export interface EmailAttachment {
 /**
  * 通过 EmailJS 发送邮件（无需后端，浏览器直发）。
  * - 支持多个收件邮箱（逗号 / 换行分隔）；
+ * - 可选 html 正文（完整版，含排版与内联图片，需模板用 {{{html}}} 渲染）；
  * - 可选附件（如 .json 备份）：付费计划生效；免费计划自动降级为仅正文发送。
  */
 export async function sendEmail(
   subject: string,
   body: string,
-  attachment?: EmailAttachment
+  opts?: { attachment?: EmailAttachment; html?: string }
 ): Promise<{ ok: boolean; msg: string }> {
   const s = getNotifySettings();
   if (!emailConfigured(s)) return { ok: false, msg: '未配置邮箱，仅本地操作' };
@@ -230,6 +277,7 @@ export async function sendEmail(
         subject,
         title: subject,
         message: body,
+        ...(opts?.html ? { html: opts.html } : {}),
         ...(att
           ? { attachments: [{ name: att.name, data: att.data, mimeType: att.mimeType }] }
           : {})
@@ -237,14 +285,14 @@ export async function sendEmail(
     });
 
   try {
-    if (attachment) {
+    if (opts?.attachment) {
       const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: payload(attachment)
+        body: payload(opts.attachment)
       });
       if (res.ok) return { ok: true, msg: '已发送到邮箱（含附件）' };
-      // 免费计划不支持附件，降级重试（仅正文）
+      // 免费计划不支持附件，降级重试（仅正文 / html）
     }
     const res2 = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
       method: 'POST',
@@ -279,6 +327,48 @@ export async function sendWechat(
   }
 }
 
+/** 通过钉钉机器人推送（Webhook，支持「加签」安全设置） */
+export async function sendDingtalk(
+  title: string,
+  text: string
+): Promise<{ ok: boolean; msg: string }> {
+  const s = getNotifySettings();
+  if (!dingtalkConfigured(s)) return { ok: false, msg: '未配置钉钉推送' };
+  try {
+    let url = s.dingtalkWebhook;
+    const secret = s.dingtalkSecret?.trim();
+    if (secret) {
+      const timestamp = Date.now();
+      const stringToSign = `${timestamp}\n${secret}`;
+      const enc = new TextEncoder().encode(stringToSign);
+      const key = await crypto.subtle.importKey(
+        'raw',
+        new TextEncoder().encode(secret),
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign']
+      );
+      const sigBuf = await crypto.subtle.sign('HMAC', key, enc);
+      const sig = btoa(String.fromCharCode(...new Uint8Array(sigBuf)));
+      const q = `&timestamp=${timestamp}&sign=${encodeURIComponent(sig)}`;
+      url += url.includes('?') ? q : `?${q.replace(/^&/, '')}`;
+    }
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        msgtype: 'text',
+        text: { content: `${title}\n${text}` }
+      })
+    });
+    const j = (await res.json().catch(() => ({}))) as { errcode?: number; errmsg?: string };
+    if (j && j.errcode === 0) return { ok: true, msg: '钉钉提醒已发送' };
+    return { ok: false, msg: '钉钉推送失败：' + (j?.errmsg ?? '未知错误') };
+  } catch (e) {
+    return { ok: false, msg: '钉钉推送失败：' + ((e as Error)?.message ?? '') };
+  }
+}
+
 /** 到期提醒已发送记录（防重复推送） */
 const SENT_KEY = 'calendarReminderSent';
 function getSent(): Set<string> {
@@ -299,7 +389,7 @@ function addSent(sig: string): void {
  * 且未超出事件后 2 小时窗口、且本次未曾推送过时，通过微信推送。需在应用打开期间运行。
  */
 export async function checkDueReminders(events: CalendarEvent[]): Promise<void> {
-  if (!wechatConfigured()) return;
+  if (!wechatConfigured() && !dingtalkConfigured()) return;
   const now = dayjs();
   const sent = getSent();
   for (const e of events) {
@@ -323,12 +413,13 @@ export async function checkDueReminders(events: CalendarEvent[]): Promise<void> 
       if (now.isAfter(start.add(2, 'hour'))) continue; // 已超过事件时间，不再提醒
       const sig = `${e.id}:${r.unit}:${r.value}`;
       if (sent.has(sig)) continue;
-      await sendWechat(
-        `事件提醒：${e.title}`,
-        `时间：${d.month() + 1}月${d.date()}日 ${time}\n${
-          e.description ? '备注：' + e.description : ''
-        }`
-      );
+      const desp = `时间：${d.month() + 1}月${d.date()}日 ${time}\n${
+        e.description ? '备注：' + e.description : ''
+      }`;
+      const tasks: Promise<{ ok: boolean; msg: string }>[] = [];
+      if (wechatConfigured()) tasks.push(sendWechat(`事件提醒：${e.title}`, desp));
+      if (dingtalkConfigured()) tasks.push(sendDingtalk(`事件提醒：${e.title}`, desp));
+      await Promise.all(tasks);
       addSent(sig);
     }
   }
