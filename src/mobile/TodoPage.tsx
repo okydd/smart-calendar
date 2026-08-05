@@ -1,5 +1,10 @@
 import { useMemo, useState } from 'react';
-import { CheckOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
+import {
+  CheckOutlined,
+  LeftOutlined,
+  RightOutlined,
+  UnorderedListOutlined
+} from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
 import { useUI } from '../context/UIContext';
 import {
@@ -106,9 +111,9 @@ export default function TodoPage() {
     done.sort((a, b) => sortEvents(b, a));
 
     const gs: Group[] = [
-      { key: 'today', label: '今天', items: todayItems, alwaysShow: true },
-      { key: 'week', label: '本周', items: week },
-      { key: 'nextWeek', label: '下周', items: nextWeek },
+      { key: 'today', label: '今天待办', items: todayItems, alwaysShow: true },
+      { key: 'week', label: '本周待办', items: week },
+      { key: 'nextWeek', label: '下周待办', items: nextWeek },
       { key: 'other', label: '其它时间', items: other }
     ].filter((g) => g.items.length > 0 || g.alwaysShow);
 
@@ -157,24 +162,26 @@ export default function TodoPage() {
   return (
     <div className="page">
       {groups.map((g) => (
-        <section className="todo-group" key={g.key}>
-          <div className="group-head">
-            <h4>{g.label}</h4>
-            <span className="count">{g.items.length}</span>
+        <section className="remind-card" key={g.key}>
+          <div className="remind-header">
+            <UnorderedListOutlined className="remind-ico" />
+            <span className="remind-label">{g.label}</span>
+            <span className="remind-count">{g.items.length}</span>
           </div>
           {g.items.length === 0 ? (
             <div className="todo-empty">无事件，或事件已全部完成</div>
           ) : (
-            g.items.map(renderItem)
+            <div className="remind-list">{g.items.map(renderItem)}</div>
           )}
         </section>
       ))}
 
       {doneItems.length > 0 && (
-        <section className="todo-group done-section">
-          <div className="group-head done-head">
-            <h4>已完成事项</h4>
-            <span className="count">{doneItems.length}</span>
+        <section className="remind-card done-section">
+          <div className="remind-header">
+            <UnorderedListOutlined className="remind-ico" />
+            <span className="remind-label">已完成事项</span>
+            <span className="remind-count">{doneItems.length}</span>
             <div className="done-filter-inline">
               <button
                 className="nav-btn"
@@ -204,7 +211,7 @@ export default function TodoPage() {
           {doneFiltered.length === 0 ? (
             <div className="empty-remind">本月暂无已完成事项</div>
           ) : (
-            doneFiltered.map(renderItem)
+            <div className="remind-list">{doneFiltered.map(renderItem)}</div>
           )}
         </section>
       )}
