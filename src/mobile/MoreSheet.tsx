@@ -13,7 +13,8 @@ import {
   SaveOutlined,
   SearchOutlined,
   BellOutlined,
-  NotificationOutlined
+  NotificationOutlined,
+  ClockCircleOutlined
 } from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
 import { useSync } from '../context/SyncContext';
@@ -26,6 +27,7 @@ import {
   wechatConfigured,
   sendEmail,
   buildConciseText,
+  buildFullHtml,
   type NotifySettings
 } from '../utils/notify';
 import ExportModal from '../components/ExportModal';
@@ -137,8 +139,13 @@ export default function MoreSheet({
     } catch {
       message.warning('复制失败，已尝试发送到邮箱');
     }
-    const r = await sendEmail('智能日历 事件清单', text);
-    if (r.ok) message.success('清单已发送到邮箱');
+    const html = buildFullHtml(list, { rangeStart, rangeEnd, exportTime });
+    const r = await sendEmail('智能日历 事件清单（完整版）', text, {
+      name: `Calendar_Events_${dayjs().format('YYYYMMDD')}.html`,
+      data: toBase64(html),
+      mimeType: 'text/html'
+    });
+    if (r.ok) message.success('清单已发送（含完整版附件）到邮箱');
     else if (r.msg !== '未配置邮箱，仅本地操作') message.info(r.msg);
   };
 
@@ -317,6 +324,35 @@ export default function MoreSheet({
 
               <div className="notify-panel">
                 <div className="notify-panel-head">
+                  <ClockCircleOutlined />
+                  <span>每日定时发送</span>
+                </div>
+                <label>每天定时把全部事件发送到上面的「接收邮箱」（需先配置 EmailJS）</label>
+                <div className="auto-send-row">
+                  <span className="auto-send-label">开启每日发送</span>
+                  <button
+                    type="button"
+                    className={`switch-mini${ns.autoSend ? ' on' : ''}`}
+                    onClick={() => setNs({ ...ns, autoSend: !ns.autoSend })}
+                    aria-label="开启每日发送"
+                  >
+                    <span className="knob" />
+                  </button>
+                  <span className="auto-send-time-label">发送时间</span>
+                  <input
+                    type="time"
+                    className="auto-send-time"
+                    value={ns.autoSendTime}
+                    onChange={(e) => setNs({ ...ns, autoSendTime: e.target.value || '04:00' })}
+                  />
+                </div>
+                <div className="notify-tip">
+                  默认每天 04:00 发送。应用需处于打开状态才会触发；若打开时已过了发送时间且今日尚未发送，会立即补发。
+                </div>
+              </div>
+
+              <div className="notify-panel">
+                <div className="notify-panel-head">
                   <WechatOutlined />
                   <span>微信推送</span>
                 </div>
@@ -342,27 +378,29 @@ export default function MoreSheet({
         <div className="sheet-section">
           <h4>数据与导出</h4>
           <div className="export-range">
-            <div className="export-range-label">选择时间范围（用于导出图片 / 复制事件）</div>
             <div className="export-range-pickers">
-              <DatePicker
-                value={startDate}
-                onChange={(v) => v && setStartDate(v)}
-                format="YYYY/MM/DD"
-                placeholder="开始日期"
-                suffixIcon={null}
-                allowClear={false}
-              />
-              <DatePicker
-                value={endDate}
-                onChange={(v) => v && setEndDate(v)}
-                format="YYYY/MM/DD"
-                placeholder="结束日期"
-                suffixIcon={null}
-                allowClear={false}
-              />
-            </div>
-            <div className="export-meta">
-              所选范围：{rangeText} ｜ 导出时间：{exportTime}
+              <div className="export-range-col">
+                <label>开始日期</label>
+                <DatePicker
+                  value={startDate}
+                  onChange={(v) => v && setStartDate(v)}
+                  format="YYYY/MM/DD"
+                  placeholder="开始日期"
+                  suffixIcon={null}
+                  allowClear={false}
+                />
+              </div>
+              <div className="export-range-col">
+                <label>结束日期</label>
+                <DatePicker
+                  value={endDate}
+                  onChange={(v) => v && setEndDate(v)}
+                  format="YYYY/MM/DD"
+                  placeholder="结束日期"
+                  suffixIcon={null}
+                  allowClear={false}
+                />
+              </div>
             </div>
           </div>
 
