@@ -58,6 +58,30 @@ create policy "delete own" on public.calendar_events
 
 create index if not exists calendar_events_user_updated_idx
   on public.calendar_events (user_id, updated_at desc);
+
+-- 通知设置（每用户一份，跨设备云端同步）
+create table if not exists public.user_notify_settings (
+  user_id            uuid        primary key references auth.users(id) on delete cascade,
+  email_target       text        not null default '',
+  emailjs_service_id text        not null default '',
+  emailjs_template_id text       not null default '',
+  emailjs_public_key text        not null default '',
+  wechat_send_key    text        not null default '',
+  updated_at         timestamptz not null default now()
+);
+
+alter table public.user_notify_settings enable row level security;
+
+drop policy if exists "notify read own"   on public.user_notify_settings;
+drop policy if exists "notify insert own" on public.user_notify_settings;
+drop policy if exists "notify update own" on public.user_notify_settings;
+
+create policy "notify read own"   on public.user_notify_settings
+  for select using (auth.uid() = user_id);
+create policy "notify insert own" on public.user_notify_settings
+  for insert with check (auth.uid() = user_id);
+create policy "notify update own" on public.user_notify_settings
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 `;
 
 /* ---------- 工具 ---------- */
