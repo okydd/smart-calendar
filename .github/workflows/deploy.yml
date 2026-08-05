@@ -3,6 +3,9 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main, master]
+    paths-ignore:
+      # 保活工作流每天写入的心跳文件，与网站内容无关，不触发重新部署
+      - '.github/last-keepalive.txt'
   workflow_dispatch:
 
 permissions:
