@@ -24,6 +24,12 @@ export interface CalendarEvent {
   description?: string;
   /** 标签/颜色分类 */
   tag: TagColor;
+  /** 是否标记为重点/重要事件（重要事件在提醒列表显示彩色左边框） */
+  important?: boolean;
+  /** 关联图片（dataURL 数组，最多 10 张） */
+  images?: string[];
+  /** 提前提醒设置（null 表示不提醒）；通过微信推送 */
+  reminder?: { unit: 'day' | 'hour'; value: number } | null;
   /** 是否已完成（办事清单勾选状态） */
   done?: boolean;
   /** 最后修改时间（ISO 字符串），云同步冲突判定依据 */
