@@ -379,6 +379,16 @@ body {
   border-color: var(--c-primary);
 }
 
+/* 有事件的日期：淡色圆形边框（非实心小圆点） */
+.event-ring {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1.5px solid #c8cbe0;
+  background: transparent;
+  flex-shrink: 0;
+}
+
 .dots {
   display: flex;
   gap: 3px;
@@ -671,8 +681,8 @@ body {
 }
 
 .todo-check {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
   border-radius: 50%;
   border: 2px solid #d3d6e2;
@@ -682,7 +692,7 @@ body {
   align-items: center;
   justify-content: center;
   color: transparent;
-  font-size: 11px;
+  font-size: 9px;
   transition: all 0.2s;
   padding: 0;
 }
@@ -854,10 +864,13 @@ body {
 
 .export-range-pickers {
   width: 100%;
+  display: flex;
+  gap: 10px;
 }
 
 .export-range-pickers .ant-picker {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   border-radius: 8px;
   border: none;
   background: #fff;
@@ -1103,4 +1116,211 @@ body {
     margin: 10px auto;
     top: 20px;
   }
+}
+
+/* ===================== 提醒两行布局 ===================== */
+.remind-title-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.remind-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--c-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.remind-title.done {
+  color: #b0b4c3;
+  text-decoration: line-through;
+}
+
+.remind-time-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--c-text-gray);
+}
+
+.remind-date {
+  color: var(--c-text-gray);
+}
+
+.remind-time {
+  color: #3b7cff;
+  font-weight: 500;
+}
+
+.remind-time.all-day {
+  color: var(--c-text-gray);
+}
+
+.remind-hint {
+  margin-left: auto;
+  color: var(--c-text-gray);
+  font-size: 12px;
+}
+
+.remind-hint.expired {
+  color: var(--c-text-gray);
+  opacity: 0.7;
+}
+
+/* 标签色块：放在事件名称后 */
+.tag-chip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+/* ===================== 更多面板：按钮行 ===================== */
+.sheet-actions-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.sheet-actions-row .sheet-btn-v2 {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ===================== 新建/编辑弹窗 ===================== */
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+/* 标签平铺选择（非下拉） */
+.tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tag-chip-select {
+  border: 1.5px solid var(--c-border);
+  background: #fff;
+  border-radius: 18px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.18s;
+}
+
+.tag-chip-select.active {
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.tag-chip-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* 图片上传 */
+.img-upload-block {
+  border-top: 1px solid #f0f1f5;
+  padding-top: 14px;
+}
+
+.img-upload-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--c-text-gray);
+  margin-bottom: 10px;
+}
+
+.img-count {
+  font-weight: 600;
+  color: var(--c-primary);
+}
+
+.img-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.img-thumb {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #eee;
+}
+
+.img-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.img-del {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.img-add {
+  width: 64px;
+  height: 64px;
+  border: 1.5px dashed #c8cbe0;
+  border-radius: 10px;
+  background: #fafbfc;
+  color: var(--c-primary);
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* 弹窗保存按钮渐变 */
+.btn-gradient {
+  background: var(--c-gradient) !important;
+  border-color: transparent !important;
+}
+
+.btn-gradient:hover {
+  opacity: 0.92;
 }
