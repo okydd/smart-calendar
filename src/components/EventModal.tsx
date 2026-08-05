@@ -194,37 +194,39 @@ export default function EventModal() {
             />
           </div>
 
-          <div className="ev-field">
-            <label className="ev-label">日期</label>
-            <WheelPicker
-              columns={dateColumns(dateValues[0], dateValues[1])}
-              selected={dateValues}
-              onChange={onDateChange}
-            />
-          </div>
-
-          <div className="ev-field">
-            <div className="remind-head-row">
-              <label className="ev-label" style={{ marginBottom: 0 }}>
-                时间
-              </label>
-              <button
-                type="button"
-                className={`switch-mini${allDay ? ' on' : ''}`}
-                onClick={() => setAllDay((v) => !v)}
-                aria-label="全天"
-              >
-                <span className="knob" />
-              </button>
-              <span className="ev-all-day-tip">{allDay ? '全天' : '指定时间'}</span>
-            </div>
-            {!allDay && (
+          <div className="ev-datetime-row">
+            <div className="ev-field">
+              <label className="ev-label">日期</label>
               <WheelPicker
-                columns={timeColumns()}
-                selected={timeValues}
-                onChange={(v) => setTimeValues(v as [number, number])}
+                columns={dateColumns(dateValues[0], dateValues[1])}
+                selected={dateValues}
+                onChange={onDateChange}
               />
-            )}
+            </div>
+
+            <div className="ev-field">
+              <div className="remind-head-row">
+                <label className="ev-label" style={{ marginBottom: 0 }}>
+                  时间
+                </label>
+                <button
+                  type="button"
+                  className={`switch-mini${allDay ? ' on' : ''}`}
+                  onClick={() => setAllDay((v) => !v)}
+                  aria-label="全天"
+                >
+                  <span className="knob" />
+                </button>
+                <span className="ev-all-day-tip">{allDay ? '全天' : '指定时间'}</span>
+              </div>
+              {!allDay && (
+                <WheelPicker
+                  columns={timeColumns()}
+                  selected={timeValues}
+                  onChange={(v) => setTimeValues(v as [number, number])}
+                />
+              )}
+            </div>
           </div>
 
           <div className="imp-block">
