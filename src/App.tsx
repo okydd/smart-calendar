@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { Input } from 'antd';
+import { Input, Modal } from 'antd';
 import {
   SearchOutlined,
   MoreOutlined,
@@ -30,6 +30,42 @@ function Shell() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [syncOpen, setSyncOpen] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const installable = !!deferredPrompt;
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      // 阻止浏览器默认的安装提示，保留下来由按钮触发
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) {
+      Modal.info({
+        title: '安装到手机桌面',
+        content: (
+          <div style={{ fontSize: 13, lineHeight: 1.9 }}>
+            <b>安卓 / 鸿蒙：</b>用浏览器打开本网址，点右上角菜单 →「添加到主屏幕 / 安装应用」。
+            <br />
+            <b>iPhone：</b>用 Safari 打开本网址，点底部分享按钮 →「添加到主屏幕」。
+            <br />
+            安装后会生成独立图标，全屏运行，断网也能使用。
+          </div>
+        ),
+        okText: '知道了'
+      });
+      return;
+    }
+    deferredPrompt.prompt();
+    const choice = await deferredPrompt.userChoice;
+    if (choice.outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   const today = dayjs();
   const lunar = useMemo(() => lunarDateLabel(today), [today]);
@@ -161,6 +197,8 @@ function Shell() {
         open={moreOpen}
         onClose={() => setMoreOpen(false)}
         onOpenSync={() => setSyncOpen(true)}
+        installable={installable}
+        onInstall={handleInstall}
       />
       <SyncPanel open={syncOpen} onClose={() => setSyncOpen(false)} />
     </div>
