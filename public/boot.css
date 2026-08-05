@@ -1,0 +1,14 @@
+#boot {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #3b7cff, #5e60ff);
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 17px;
+  letter-spacing: 2px;
+  z-index: 9999;
+  transition: opacity 0.3s;
+}
