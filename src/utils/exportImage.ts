@@ -75,12 +75,12 @@ function buildCanvas(events: CalendarEvent[], opts: ExportImageOptions) {
   ctx.fillStyle = headerGrad;
   ctx.fillRect(PAD_X, CARD_TOP, cardW, HEADER_H);
 
-  const colDateX = PAD_X + 30;
-  const colTimeX = PAD_X + Math.round(cardW * 0.36);
-  const colEventX = PAD_X + Math.round(cardW * 0.52);
+  const colDateX = PAD_X + 28;
+  const colTimeX = PAD_X + 188;
+  const colEventX = PAD_X + 372;
 
   ctx.fillStyle = '#ffffff';
-  ctx.font = `bold 28px ${FONT}`;
+  ctx.font = `bold 26px ${FONT}`;
   ctx.textAlign = 'left';
   ctx.fillText('日期', colDateX, CARD_TOP + HEADER_H / 2);
   ctx.fillText('时间', colTimeX, CARD_TOP + HEADER_H / 2);
@@ -101,7 +101,7 @@ function buildCanvas(events: CalendarEvent[], opts: ExportImageOptions) {
     const d = parseDateStr(e.date);
 
     ctx.fillStyle = THEME.textDark;
-    ctx.font = `26px ${FONT}`;
+    ctx.font = `24px ${FONT}`;
     ctx.textAlign = 'left';
     ctx.fillText(exportDateLabel(d), colDateX + 16, cy);
 
