@@ -96,13 +96,54 @@ export function mergeEvents(
       pulledCount++;
       continue;
     }
-    if (ts(r.updatedAt) > ts(l.updatedAt)) {
-      map.set(r.id, r);
-      pulledCount++;
-    } else if (ts(l.updatedAt) > ts(r.updatedAt)) {
-      toPush.push(l);
+    const rT = ts(r.updatedAt);
+    const lT = ts(l.updatedAt);
+    let winner: CalendarEvent;
+    let pull: boolean;
+    let push: boolean;
+
+    if (rT > lT) {
+      winner = r;
+      pull = true;
+      push = false;
+    } else if (lT > rT) {
+      winner = l;
+      pull = false;
+      push = true;
+    } else {
+      // 时间戳相同：优先选有图片的一方，避免图片在同步中被静默丢弃
+      const rHas = Array.isArray(r.images) && r.images.length > 0;
+      const lHas = Array.isArray(l.images) && l.images.length > 0;
+      if (rHas && !lHas) {
+        winner = r;
+        pull = true;
+        push = false;
+      } else if (lHas && !rHas) {
+        winner = l;
+        pull = false;
+        push = true;
+      } else {
+        // 双方无差异（同时有图或同时无图），以云端为准
+        winner = r;
+        pull = true;
+        push = false;
+      }
     }
-    // 时间戳相同视为一致，无需处理
+
+    // 自愈：无论哪方按时间胜出，只要胜出方缺失图片而另一方有，
+    // 就把图片补回。这样可彻底杜绝「手机端图片消失 / 本地无图覆盖云端有图」的反向丢失。
+    if (!Array.isArray(winner.images) || winner.images.length === 0) {
+      const other = winner === r ? l : r;
+      if (Array.isArray(other.images) && other.images.length > 0) {
+        winner = { ...winner, images: other.images };
+        push = true; // 带图版本需要写回（本地或云端）
+        pull = false;
+      }
+    }
+
+    map.set(r.id, winner);
+    if (pull) pulledCount++;
+    if (push) toPush.push(winner);
   }
 
   const remoteIds = new Set(remote.map((r) => r.id));
