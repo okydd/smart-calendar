@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Drawer, App, Modal, DatePicker } from 'antd';
 import {
   PictureOutlined,
@@ -12,7 +12,8 @@ import {
   WechatOutlined,
   SaveOutlined,
   SearchOutlined,
-  BellOutlined
+  BellOutlined,
+  NotificationOutlined
 } from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
 import { useSync } from '../context/SyncContext';
@@ -54,7 +55,7 @@ export default function MoreSheet({
 }) {
   const { message } = App.useApp();
   const { events, importEvents, search, setSearch } = useCalendar();
-  const { status, email, lastSyncAt, configured } = useSync();
+  const { status, email, lastSyncAt, configured, userId, syncNotifySettings, notifySettingsVersion } = useSync();
   const [exportOpen, setExportOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs());
   const [endDate, setEndDate] = useState(dayjs().add(1, 'month'));
@@ -62,6 +63,11 @@ export default function MoreSheet({
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [ns, setNs] = useState<NotifySettings>(() => getNotifySettings());
+
+  /** 登录后云端通知设置拉取并覆盖本地时，重新读入本组件 state */
+  useEffect(() => {
+    setNs(getNotifySettings());
+  }, [notifySettingsVersion]);
 
   const syncLabel = !configured
     ? '未开启'
@@ -152,9 +158,14 @@ export default function MoreSheet({
     reader.readAsText(file);
   };
 
-  const saveNotify = () => {
+  const saveNotify = async () => {
     saveNotifySettings(ns);
-    message.success('通知设置已保存');
+    if (userId) {
+      const ok = await syncNotifySettings(ns);
+      message.success(ok ? '通知设置已保存并同步到云端' : '已保存到本机，云端同步失败');
+    } else {
+      message.success('通知设置已保存到本机');
+    }
     setNotifyOpen(false);
   };
 
@@ -261,6 +272,17 @@ export default function MoreSheet({
 
           {notifyOpen && (
             <div className="notify-form">
+              <div className={`notify-cloud-hint${userId ? ' on' : ''}`}>
+                {userId ? (
+                  <>
+                    <CloudSyncOutlined /> 已登录，设置自动同步到云端，登录同一账号的设备互通
+                  </>
+                ) : (
+                  <>
+                    <NotificationOutlined /> 未登录，设置仅保存在本机（在「云同步」中登录后自动同步）
+                  </>
+                )}
+              </div>
               <div className="notify-panel">
                 <div className="notify-panel-head">
                   <MailOutlined />
