@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { CheckOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
 import { useUI } from '../context/UIContext';
-import { IMPORTANT_COLOR } from '../constants';
 import {
   dayjs,
   parseDateStr,
@@ -129,11 +128,7 @@ export default function TodoPage() {
     const timeText = e.allDay || !e.startTime ? '全天' : e.startTime;
     const dateText = d.isValid() ? dateLabel(d, today) : '未设置日期';
     return (
-      <div className="todo-item" key={e.id}>
-        <span
-          className="remind-bar todo-bar"
-          style={{ background: e.important ? IMPORTANT_COLOR : 'var(--c-border)' }}
-        />
+      <div className={`todo-item${e.important ? ' important' : ''}`} key={e.id}>
         <button
           className={`todo-check${e.done ? ' checked' : ''}`}
           onClick={() => toggleDone(e.id)}
@@ -168,7 +163,7 @@ export default function TodoPage() {
             <span className="count">{g.items.length}</span>
           </div>
           {g.items.length === 0 ? (
-            <div className="todo-empty">无事件</div>
+            <div className="todo-empty">无事件，或事件已全部完成</div>
           ) : (
             g.items.map(renderItem)
           )}
