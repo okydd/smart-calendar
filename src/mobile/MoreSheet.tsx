@@ -189,7 +189,12 @@ export default function MoreSheet({
         height="auto"
         closable={false}
         styles={{
-          body: { padding: '20px 16px 28px' },
+          body: {
+            padding: '0 16px 28px',
+            maxHeight: '86vh',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch'
+          },
           content: { borderRadius: '20px 20px 0 0' }
         }}
       >
@@ -345,18 +350,12 @@ export default function MoreSheet({
                 <PictureOutlined className="ico" />
                 导出图片
               </button>
-              <div className="btn-note">
-                把所选范围（{rangeText}）的事件生成长图，可保存或分享
-              </div>
             </div>
             <div className="btn-wrap">
               <button className="sheet-btn-v2 success" onClick={handleCopyEvents}>
                 <CopyOutlined className="ico" />
                 复制事件
               </button>
-              <div className="btn-note">
-                复制所选范围的简洁清单（含时间范围与导出时间说明），并发送到邮箱
-              </div>
             </div>
           </div>
           <div className="sheet-actions-row">
@@ -365,16 +364,12 @@ export default function MoreSheet({
                 <DownloadOutlined className="ico" />
                 导出JSON
               </button>
-              <div className="btn-note">
-                下载全部事件备份（共 {events.length} 条），并以 .json 附件发送到邮箱
-              </div>
             </div>
             <div className="btn-wrap">
               <button className="sheet-btn-v2" onClick={() => fileRef.current?.click()}>
                 <UploadOutlined className="ico" />
                 导入JSON
               </button>
-              <div className="btn-note">从备份文件（含邮件附件）恢复事件数据</div>
             </div>
           </div>
         </div>
