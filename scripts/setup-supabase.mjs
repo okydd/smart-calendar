@@ -67,6 +67,8 @@ create table if not exists public.user_notify_settings (
   emailjs_template_id text       not null default '',
   emailjs_public_key text        not null default '',
   wechat_send_key    text        not null default '',
+  auto_send          boolean     not null default false,
+  auto_send_time     text        not null default '04:00',
   updated_at         timestamptz not null default now()
 );
 
