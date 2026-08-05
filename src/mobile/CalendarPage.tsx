@@ -12,18 +12,15 @@ import { useCalendar } from '../context/CalendarContext';
 import { useUI } from '../context/UIContext';
 import {
   dayjs,
-  monthGridDays,
-  timeRangeLabel,
   timeToMinutes,
   toDateStr,
-  weekdayCN,
-  WEEK_CN,
   type Dayjs
 } from '../utils/date';
 import { TAG_COLORS } from '../constants';
 import type { CalendarEvent } from '../types';
 
 const WEEK_DAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+const WEEK_HEAD = ['一', '二', '三', '四', '五', '六', '日'];
 
 /** 按日期归组事件 */
 function groupByDate(events: CalendarEvent[]) {
@@ -42,7 +39,7 @@ function groupByDate(events: CalendarEvent[]) {
   return map;
 }
 
-/** 相对时间提示：已过期 / 剩X小时 / 剩X天 */
+/** 相对时间提示：已过期 / 剩X小时 / 剩X天 / 今天 */
 function timeHint(d: Dayjs, e: CalendarEvent): string {
   const today = dayjs().startOf('day');
   const eventDay = d.startOf('day');
@@ -51,7 +48,6 @@ function timeHint(d: Dayjs, e: CalendarEvent): string {
     const days = eventDay.diff(today, 'day');
     return `剩${days}天`;
   }
-  // 今天：若还有具体开始时间，计算剩余小时
   if (!e.allDay && e.startTime) {
     const now = dayjs();
     const [h, m] = e.startTime.split(':').map(Number);
@@ -71,7 +67,10 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
   const touchRef = useRef<{ x: number; y: number } | null>(null);
 
   const today = dayjs();
-  const days = useMemo(() => monthGridDays(currentDate), [currentDate]);
+  const days = useMemo(() => {
+    const start = currentDate.startOf('month').subtract((currentDate.date(1).day() + 6) % 7, 'day');
+    return Array.from({ length: 42 }, (_, i) => start.add(i, 'day'));
+  }, [currentDate]);
   const byDate = useMemo(() => groupByDate(filteredEvents), [filteredEvents]);
 
   const goMonth = (delta: number) => {
@@ -102,13 +101,22 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
     }
   };
 
-  // 日 / 周 / 月 分组
-  const { dayEvents, weekEvents, monthEvents } = useMemo(() => {
+  // 日 / 周 / 月 分组（周一为每周第一天）
+  const { dayEvents, weekEvents, monthEvents, monthRangeLabel } = useMemo(() => {
+    const mondayThis = currentDate.isoWeekday(1);
+    const weekStart = mondayThis;
+    const weekEnd = mondayThis.add(6, 'day');
+    const nextWeekStart = weekStart.add(7, 'day');
+    const nextWeekEnd = weekEnd.add(7, 'day');
+    const wk3Start = weekStart.add(14, 'day');
+    const wk3End = weekEnd.add(14, 'day');
+    const wk4Start = weekStart.add(21, 'day');
+    const wk4End = weekEnd.add(21, 'day');
+
+    const inRange = (d: Dayjs, s: Dayjs, e: Dayjs) =>
+      !d.isBefore(s, 'day') && !d.isAfter(e, 'day');
+
     const selectedKey = toDateStr(currentDate);
-    const weekStart = currentDate.weekday(0);
-    const weekEnd = currentDate.weekday(6);
-    const monthStart = currentDate.startOf('month');
-    const monthEnd = currentDate.endOf('month');
 
     const day: CalendarEvent[] = [];
     const week: CalendarEvent[] = [];
@@ -119,10 +127,15 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
       if (!d.isValid()) continue;
       if (e.date === selectedKey) {
         day.push(e);
-      } else if (!d.isBefore(weekStart, 'day') && !d.isAfter(weekEnd, 'day')) {
+        continue;
+      }
+      if (inRange(d, weekStart, weekEnd) || inRange(d, nextWeekStart, nextWeekEnd)) {
         week.push(e);
-      } else if (!d.isBefore(monthStart, 'day') && !d.isAfter(monthEnd, 'day')) {
+        continue;
+      }
+      if (inRange(d, wk3Start, wk3End) || inRange(d, wk4Start, wk4End)) {
         month.push(e);
+        continue;
       }
     }
 
@@ -135,37 +148,43 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
     day.sort(sorter);
     week.sort(sorter);
     month.sort(sorter);
-    return { dayEvents: day, weekEvents: week, monthEvents: month };
+
+    const label = `第3周 ${wk3Start.month() + 1}/${wk3Start.date()} - 第4周 ${wk4End.month() + 1}/${wk4End.date()}`;
+    return { dayEvents: day, weekEvents: week, monthEvents: month, monthRangeLabel: label };
   }, [filteredEvents, currentDate]);
 
   const selectedKey = toDateStr(currentDate);
   const isToday = currentDate.isSame(today, 'day');
 
-  const renderEventRow = (e: CalendarEvent) => {
+  /** 渲染一条提醒：两行（标题+标签 / 时间），左侧灰边、重要才彩色 */
+  const renderEventRow = (e: CalendarEvent, showDate: boolean) => {
     const d = dayjs(e.date);
     const expired = !e.done && d.isValid() && d.isBefore(today, 'day');
+    const color = TAG_COLORS[e.tag].color;
+    const timeText = e.allDay || !e.startTime ? '全天' : e.startTime;
+    const dateText =
+      showDate && d.isValid()
+        ? `${d.month() + 1}月${d.date()}日 ${WEEK_DAYS[(d.day() + 6) % 7]}`
+        : '';
     return (
       <div key={e.id} className="remind-row" onClick={() => openEdit(e)}>
-        <span className="remind-bar" style={{ background: TAG_COLORS[e.tag].color }} />
+        <span
+          className="remind-bar"
+          style={{ background: e.important ? color : 'var(--c-border)' }}
+        />
         <div className="remind-main">
-          <div className="remind-head">
-            <span className="remind-date">
-              {d.month() + 1}月{d.date()}日 {WEEK_DAYS[(d.day() + 6) % 7]}
+          <div className="remind-title-line">
+            <span className={`remind-title${e.done ? ' done' : ''}`}>{e.title}</span>
+            <span className="tag-chip" style={{ background: `${color}22`, color }}>
+              {TAG_COLORS[e.tag].label}
             </span>
-            {!e.allDay && e.startTime ? (
-              <span className="remind-time">{e.startTime}</span>
-            ) : (
-              <span className="remind-time all-day">全天</span>
-            )}
-            <span className={`remind-hint${expired ? ' expired' : ''}`}>{timeHint(d, e)}</span>
           </div>
-          <div className={`remind-title${e.done ? ' done' : ''}`}>{e.title}</div>
-          <div className="remind-tags">
-            <span
-              className="remind-dot"
-              style={{ background: TAG_COLORS[e.tag].color }}
-            />
-            <span className="remind-tag-name">{TAG_COLORS[e.tag].label}</span>
+          <div className="remind-time-line">
+            {showDate && dateText ? <span className="remind-date">{dateText}</span> : null}
+            <span className={`remind-time${e.allDay || !e.startTime ? ' all-day' : ''}`}>
+              {timeText}
+            </span>
+            <span className={`remind-hint${expired ? ' expired' : ''}`}>{timeHint(d, e)}</span>
           </div>
         </div>
         <button
@@ -203,8 +222,8 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
         </div>
 
         <div className="week-head">
-          {WEEK_CN.map((w, i) => (
-            <span key={w} className={i === 0 || i === 6 ? 'we' : ''}>
+          {WEEK_HEAD.map((w, i) => (
+            <span key={w} className={i >= 5 ? 'we' : ''}>
               {w}
             </span>
           ))}
@@ -232,23 +251,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
             return (
               <div key={key} className={cls} onClick={() => setCurrentDate(d)}>
                 <span className="dnum">{d.date()}</span>
-                {evts.length > 0 && !isOut && (
-                  <div className="dots">
-                    {evts.slice(0, 3).map((e) => (
-                      <span
-                        key={e.id}
-                        className="dot"
-                        style={{
-                          background: TAG_COLORS[e.tag].color,
-                          opacity: e.done ? 0.35 : 1
-                        }}
-                      />
-                    ))}
-                    {evts.length > 3 && (
-                      <span className="dot mini" style={{ background: '#9aa0b4' }} />
-                    )}
-                  </div>
-                )}
+                {evts.length > 0 && !isOut && <span className="event-ring" />}
               </div>
             );
           })}
@@ -260,9 +263,6 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
         <div className="remind-header">
           <BellOutlined className="remind-ico" />
           <span className="remind-label">日提醒</span>
-          <span className="remind-range">
-            {currentDate.month() + 1}月{currentDate.date()}日 {WEEK_DAYS[(currentDate.day() + 6) % 7]}
-          </span>
           {isToday && <span className="today-tag">今</span>}
         </div>
         {dayEvents.length === 0 ? (
@@ -272,11 +272,11 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
             <PlusOutlined className="empty-plus" />
           </div>
         ) : (
-          <div className="remind-list">{dayEvents.map(renderEventRow)}</div>
+          <div className="remind-list">{dayEvents.map((e) => renderEventRow(e, false))}</div>
         )}
       </section>
 
-      {/* 周提醒 */}
+      {/* 周提醒（本周 + 下周） */}
       {weekEvents.length > 0 && (
         <section className="remind-card">
           <div className="remind-header">
@@ -284,22 +284,20 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
             <span className="remind-label">周提醒</span>
             <span className="remind-count">{weekEvents.length}</span>
           </div>
-          <div className="remind-list">{weekEvents.map(renderEventRow)}</div>
+          <div className="remind-list">{weekEvents.map((e) => renderEventRow(e, true))}</div>
         </section>
       )}
 
-      {/* 月提醒 */}
+      {/* 月提醒（第 3、4 周） */}
       {monthEvents.length > 0 && (
         <section className="remind-card">
           <div className="remind-header">
             <CalendarOutlined className="remind-ico" />
             <span className="remind-label">月提醒</span>
-            <span className="remind-range">
-              {currentDate.month() + 1}月 - {currentDate.add(1, 'month').month() + 1}月
-            </span>
+            <span className="remind-range">{monthRangeLabel}</span>
             <span className="remind-count">{monthEvents.length}</span>
           </div>
-          <div className="remind-list">{monthEvents.map(renderEventRow)}</div>
+          <div className="remind-list">{monthEvents.map((e) => renderEventRow(e, true))}</div>
         </section>
       )}
 
