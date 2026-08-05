@@ -60,7 +60,7 @@ function timeHint(d: Dayjs, e: CalendarEvent): string {
       return `剩${hours}小时`;
     }
   }
-  return '今天';
+  return '';
 }
 
 export default function CalendarPage({ showFab = true }: { showFab?: boolean }) {
@@ -316,9 +316,23 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
           <span className="remind-label">月提醒</span>
           {monthView ? (
             <>
-              <span className="remind-range">
-                {monthView.year()}年{monthView.month() + 1}月
+              <button
+                className="nav-btn month-nav-inline"
+                onClick={() => setMonthView(monthView.subtract(1, 'month'))}
+                aria-label="上个月"
+              >
+                <LeftOutlined />
+              </button>
+              <span className="remind-range month-nav-inline-label">
+                {monthView.year()}年{monthView.month() + 1}月（{monthViewEvents.length}）
               </span>
+              <button
+                className="nav-btn month-nav-inline"
+                onClick={() => setMonthView(monthView.add(1, 'month'))}
+                aria-label="下个月"
+              >
+                <RightOutlined />
+              </button>
               <button
                 className="remind-back"
                 onClick={() => setMonthView(null)}
@@ -343,25 +357,6 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
 
         {monthView ? (
           <>
-            <div className="month-nav-month">
-              <button
-                className="nav-btn"
-                onClick={() => setMonthView(monthView.subtract(1, 'month'))}
-                aria-label="上个月"
-              >
-                <LeftOutlined />
-              </button>
-              <span className="month-nav-label">
-                {monthView.year()}年{monthView.month() + 1}月（共 {monthViewEvents.length} 条）
-              </span>
-              <button
-                className="nav-btn"
-                onClick={() => setMonthView(monthView.add(1, 'month'))}
-                aria-label="下个月"
-              >
-                <RightOutlined />
-              </button>
-            </div>
             {monthViewEvents.length === 0 ? (
               <div className="empty-remind">本月暂无安排</div>
             ) : (
