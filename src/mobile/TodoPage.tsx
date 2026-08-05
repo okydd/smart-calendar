@@ -152,9 +152,9 @@ export default function TodoPage() {
             <span className={`remind-time${e.allDay || !e.startTime ? ' all-day' : ''}`}>
               {timeText}
             </span>
+            <span className={`todo-days${expired ? ' expired' : e.done ? ' done' : ''}`}>{hint}</span>
           </div>
         </div>
-        <div className={`todo-hint${expired ? ' expired' : e.done ? ' done' : ''}`}>{hint}</div>
       </div>
     );
   };
@@ -166,12 +166,9 @@ export default function TodoPage() {
           <div className="group-head">
             <h4>{g.label}</h4>
             <span className="count">{g.items.length}</span>
-            {g.key === 'today' && g.items.length === 0 && (
-              <span className="group-sub">无事件</span>
-            )}
           </div>
           {g.items.length === 0 ? (
-            <div className="empty-remind">无事件</div>
+            <div className="todo-empty">无事件</div>
           ) : (
             g.items.map(renderItem)
           )}
