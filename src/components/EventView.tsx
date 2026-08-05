@@ -1,4 +1,4 @@
-import { Modal } from 'antd';
+import { Modal, Image } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import { useUI } from '../context/UIContext';
 import { useCalendar } from '../context/CalendarContext';
@@ -19,9 +19,12 @@ function reminderText(list?: ReminderOffset[]): string {
 
 export default function EventView() {
   const { eventView, openEdit, openCreate, closeEventView } = useUI();
-  const { deleteEvent, toggleDone } = useCalendar();
+  const { deleteEvent, toggleDone, filteredEvents } = useCalendar();
   const e = eventView.event;
   if (!eventView.open || !e) return null;
+  // 从实时数据取最新状态，保证「未完成/已完成」切换即时生效
+  const live = filteredEvents.find((x) => x.id === e.id);
+  const done = live ? live.done : e.done;
 
   const d = parseDateStr(e.date);
   const dateText = d.isValid() ? `${d.month() + 1}月${d.date()}日 ${weekdayCN(d)}` : e.date;
@@ -57,13 +60,13 @@ export default function EventView() {
           {/* 主卡片：标题 + 标签 + 日期/时间/提醒 */}
           <div className="evv-card evv-main">
             <div className="evv-title-row">
-              <span className={`evv-title${e.done ? ' done' : ''}`}>{e.title}</span>
+              <span className={`evv-title${done ? ' done' : ''}`}>{e.title}</span>
               {e.important && (
                 <span className="imp-flag" style={{ background: '#ffe9e8', color: IMPORTANT_COLOR }}>
                   重要
                 </span>
               )}
-              {e.done && <span className="evv-done-tag">已完成</span>}
+              {done && <span className="evv-done-tag">已完成</span>}
             </div>
             <div className="evv-meta2">
               <div className="evv-meta-item">
@@ -73,10 +76,6 @@ export default function EventView() {
               <div className="evv-meta-item">
                 <span className="evv-ico">🕒</span>
                 <span>{timeText}</span>
-              </div>
-              <div className="evv-meta-item">
-                <span className="evv-ico">🔔</span>
-                <span>{reminderText(e.reminder)}</span>
               </div>
             </div>
           </div>
@@ -95,7 +94,7 @@ export default function EventView() {
               <div className="evv-card-label">图片（{e.images!.length}）</div>
               <div className="evv-imgs">
                 {e.images!.map((src, i) => (
-                  <img key={i} src={src} alt="" className="evv-img" />
+                  <Image key={i} src={src} className="evv-img" />
                 ))}
               </div>
             </div>
@@ -107,18 +106,18 @@ export default function EventView() {
             <div className="evv-toggle">
               <button
                 type="button"
-                className={`opt${!e.done ? ' active' : ''}`}
+                className={`opt${!done ? ' active' : ''}`}
                 onClick={() => {
-                  if (e.done) toggleDone(e.id);
+                  if (done) toggleDone(e.id);
                 }}
               >
                 未完成
               </button>
               <button
                 type="button"
-                className={`opt done${e.done ? ' active' : ''}`}
+                className={`opt done${done ? ' active' : ''}`}
                 onClick={() => {
-                  if (!e.done) toggleDone(e.id);
+                  if (!done) toggleDone(e.id);
                 }}
               >
                 已完成
