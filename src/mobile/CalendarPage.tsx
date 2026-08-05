@@ -3,9 +3,6 @@ import {
   LeftOutlined,
   RightOutlined,
   PlusOutlined,
-  CheckOutlined,
-  BellOutlined,
-  AppstoreOutlined,
   CalendarOutlined,
   EyeOutlined
 } from '@ant-design/icons';
@@ -177,7 +174,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
   const selWeekday = WEEK_DAYS[(currentDate.day() + 6) % 7];
   const selDateText = `${currentDate.month() + 1}月${currentDate.date()}日 ${selWeekday}`;
 
-  /** 渲染一条提醒：两行（标题 / 时间），左侧灰边、重要才红色；不在日历内提供完成勾选 */
+  /** 渲染一条提醒：两行（标题 / 时间），事件行做成浅灰圆角药丸；重要事件整圈红框 */
   const renderEventRow = (e: CalendarEvent, showDate: boolean, isDay = false) => {
     const d = dayjs(e.date);
     const expired = !e.done && d.isValid() && d.isBefore(today, 'day');
@@ -189,13 +186,9 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
     return (
       <div
         key={e.id}
-        className={`remind-row${isDay ? ' remind-row-day' : ''}`}
+        className={`event-pill${isDay ? ' event-pill-day' : ''}${e.important ? ' important' : ''}`}
         onClick={() => openView(e)}
       >
-        <span
-          className="remind-bar"
-          style={{ background: e.important ? IMPORTANT_COLOR : 'var(--c-border)' }}
-        />
         <div className="remind-main">
           <div className="remind-title-line">
             <span className={`remind-title${e.done ? ' done' : ''}`}>{e.title}</span>
@@ -277,8 +270,8 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
 
       {/* 日提醒 */}
       <section className="remind-card">
-        <div className="remind-header">
-          <BellOutlined className="remind-ico" />
+        <div className="remind-header today">
+          <CalendarOutlined className="remind-ico" />
           <span className="remind-label">日提醒</span>
           <span className="remind-range">{selDateText}</span>
           <span
@@ -291,7 +284,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
         </div>
         {dayEvents.length === 0 ? (
           <div className="empty-remind" onClick={() => openCreate({ date: selectedKey })}>
-            <CheckOutlined className="empty-check" />
+            <CalendarOutlined className="empty-check" />
             暂无安排
             <PlusOutlined className="empty-plus" />
           </div>
@@ -303,8 +296,8 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
       {/* 周提醒（本周 + 下周） */}
       {weekEvents.length > 0 && (
         <section className="remind-card">
-          <div className="remind-header">
-            <AppstoreOutlined className="remind-ico" />
+          <div className="remind-header week">
+            <CalendarOutlined className="remind-ico" />
             <span className="remind-label">周提醒</span>
             <span className="remind-range">{weekRangeLabel}</span>
             <span className="remind-count">{weekEvents.length}</span>
@@ -315,7 +308,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
 
       {/* 月提醒（第 3、4 周 / 或按月查看） */}
       <section className="remind-card">
-        <div className="remind-header">
+        <div className="remind-header month">
           <CalendarOutlined className="remind-ico" />
           <span className="remind-label">月提醒</span>
           {monthView ? (
