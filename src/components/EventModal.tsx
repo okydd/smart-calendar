@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
-import { Modal, Form, Input, DatePicker, TimePicker, Select, Switch, Button } from 'antd';
-import { DeleteOutlined } from '@ant-design/icons';
+import { useEffect, useRef, useState } from 'react';
+import { Modal, Form, Input, DatePicker, TimePicker, Switch, Button } from 'antd';
+import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useCalendar } from '../context/CalendarContext';
 import { useUI } from '../context/UIContext';
@@ -14,15 +14,19 @@ interface FormValues {
   date: dayjs.Dayjs;
   allDay: boolean;
   startTime?: dayjs.Dayjs;
-  endTime?: dayjs.Dayjs;
   description?: string;
-  tag: TagColor;
+  tag: TagColor | '';
+  important?: boolean;
 }
 
+const MAX_IMAGES = 10;
+
 export default function EventModal() {
-  const { eventModal, closeEventModal, openEdit } = useUI();
+  const { eventModal, closeEventModal } = useUI();
   const { addEvent, updateEvent, deleteEvent } = useCalendar();
   const [form] = Form.useForm<FormValues>();
+  const [images, setImages] = useState<string[]>([]);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const { open, mode, initial } = eventModal;
 
@@ -35,23 +39,48 @@ export default function EventModal() {
       date: base.date ? dayjs(base.date as string, 'YYYY-MM-DD') : dayjs(),
       allDay: Boolean(base.allDay),
       startTime: base.startTime ? dayjs(base.startTime as string, 'HH:mm') : undefined,
-      endTime: base.endTime ? dayjs(base.endTime as string, 'HH:mm') : undefined,
       description: (base.description as string) ?? '',
-      tag: (base.tag as TagColor) ?? 'purple'
+      tag: (base.tag as TagColor) ?? '',
+      important: Boolean(base.important)
     });
+    setImages(Array.isArray(base.images) ? base.images.slice(0, MAX_IMAGES) : []);
   }, [open, initial, form]);
+
+  const selectedTag = (form.getFieldValue('tag') as TagColor | '') ?? '';
+  const isAllDay = Form.useWatch('allDay', form);
+
+  const handleImgChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    if (!files.length) return;
+    const room = MAX_IMAGES - images.length;
+    const slice = files.slice(0, room);
+    Promise.all(
+      slice.map(
+        (f) =>
+          new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result));
+            reader.readAsDataURL(f);
+          })
+      )
+    ).then((dataUrls) => setImages((prev) => [...prev, ...dataUrls].slice(0, MAX_IMAGES)));
+  };
+
+  const removeImg = (i: number) => setImages((prev) => prev.filter((_, idx) => idx !== i));
 
   const handleOk = async () => {
     const v = await form.validateFields();
-    const dateStr = v.date.format('YYYY-MM-DD');
     const payload: Omit<CalendarEvent, 'id'> = {
       title: v.title.trim(),
-      date: dateStr,
+      date: v.date.format('YYYY-MM-DD'),
       allDay: v.allDay,
       startTime: v.allDay ? '' : v.startTime?.format('HH:mm') ?? '',
-      endTime: v.allDay ? '' : v.endTime?.format('HH:mm') ?? '',
+      endTime: '',
       description: v.description?.trim() ?? '',
-      tag: v.tag
+      tag: (v.tag || 'purple') as TagColor,
+      important: Boolean(v.important),
+      images
     };
     if (mode === 'edit' && initial && 'id' in initial && initial.id) {
       updateEvent(initial.id, payload);
@@ -67,26 +96,6 @@ export default function EventModal() {
     }
     closeEventModal();
   };
-
-  const tagOptions = TAG_ORDER.map((t) => ({
-    value: t,
-    label: (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-        <span
-          style={{
-            width: 10,
-            height: 10,
-            borderRadius: '50%',
-            background: TAG_COLORS[t].color,
-            display: 'inline-block'
-          }}
-        />
-        {TAG_COLORS[t].label}
-      </span>
-    )
-  }));
-
-  const isAllDay = Form.useWatch('allDay', form);
 
   return (
     <Modal
@@ -122,7 +131,7 @@ export default function EventModal() {
         </Button>
       ]}
     >
-      <Form form={form} layout="vertical" initialValues={{ tag: 'purple', allDay: false }}>
+      <Form form={form} layout="vertical" initialValues={{ tag: '', allDay: false, important: false }}>
         <Form.Item
           name="title"
           label="事件标题"
@@ -131,32 +140,98 @@ export default function EventModal() {
           <Input placeholder="例如：团队周会" maxLength={50} />
         </Form.Item>
 
-        <Form.Item name="date" label="日期" rules={[{ required: true }]}>
-          <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
-        </Form.Item>
+        <div className="form-row-2">
+          <Form.Item name="date" label="日期" rules={[{ required: true }]}>
+            <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
+          </Form.Item>
+          {!isAllDay && (
+            <Form.Item name="startTime" label="时间">
+              <TimePicker style={{ width: '100%' }} format="HH:mm" minuteStep={5} />
+            </Form.Item>
+          )}
+        </div>
 
         <Form.Item name="allDay" label="全天事件" valuePropName="checked">
           <Switch />
         </Form.Item>
 
-        {!isAllDay && (
-          <div style={{ display: 'flex', gap: 12 }}>
-            <Form.Item name="startTime" label="开始时间" style={{ flex: 1 }}>
-              <TimePicker style={{ width: '100%' }} format="HH:mm" minuteStep={5} />
-            </Form.Item>
-            <Form.Item name="endTime" label="结束时间" style={{ flex: 1 }}>
-              <TimePicker style={{ width: '100%' }} format="HH:mm" minuteStep={5} />
-            </Form.Item>
-          </div>
-        )}
+        <Form.Item name="important" label="重要事件（提醒中显示彩色左边框）" valuePropName="checked">
+          <Switch />
+        </Form.Item>
 
-        <Form.Item name="tag" label="标签 / 颜色分类">
-          <Select options={tagOptions} />
+        <Form.Item name="tag" label="标签 / 颜色分类（可不选）">
+          <div className="tag-chips">
+            {TAG_ORDER.map((t) => {
+              const active = selectedTag === t;
+              const color = TAG_COLORS[t].color;
+              return (
+                <button
+                  type="button"
+                  key={t}
+                  className={`tag-chip-select${active ? ' active' : ''}`}
+                  style={
+                    active
+                      ? { background: color, borderColor: color, color: '#fff' }
+                      : { borderColor: color, color }
+                  }
+                  onClick={() => form.setFieldValue('tag', active ? '' : t)}
+                >
+                  <span
+                    className="tag-chip-dot"
+                    style={{ background: active ? '#fff' : color }}
+                  />
+                  {TAG_COLORS[t].label}
+                </button>
+              );
+            })}
+          </div>
         </Form.Item>
 
         <Form.Item name="description" label="描述">
           <TextArea rows={3} placeholder="补充说明（可选）" maxLength={200} showCount />
         </Form.Item>
+
+        <div className="img-upload-block">
+          <div className="img-upload-head">
+            <span>图片（最多 {MAX_IMAGES} 张）</span>
+            <span className="img-count">
+              {images.length}/{MAX_IMAGES}
+            </span>
+          </div>
+          <div className="img-thumbs">
+            {images.map((src, i) => (
+              <div className="img-thumb" key={i}>
+                <img src={src} alt="" />
+                <button
+                  type="button"
+                  className="img-del"
+                  onClick={() => removeImg(i)}
+                  aria-label="删除图片"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            {images.length < MAX_IMAGES && (
+              <button
+                type="button"
+                className="img-add"
+                onClick={() => fileRef.current?.click()}
+                aria-label="添加图片"
+              >
+                <PlusOutlined />
+              </button>
+            )}
+          </div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            multiple
+            hidden
+            onChange={handleImgChange}
+          />
+        </div>
       </Form>
     </Modal>
   );
