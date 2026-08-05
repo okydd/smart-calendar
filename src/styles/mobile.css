@@ -468,6 +468,12 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+}
+
+.today-tag.active {
+  background: var(--c-primary);
+  box-shadow: 0 0 0 3px rgba(59, 124, 255, 0.25);
 }
 
 .empty-remind {
@@ -783,13 +789,19 @@ body {
 
 /* ===================== 更多面板 ===================== */
 .sheet-title {
+  position: sticky;
+  top: 0;
+  z-index: 5;
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 17px;
   font-weight: 700;
   color: var(--c-text);
-  margin-bottom: 20px;
+  padding: 16px 0 12px;
+  margin-bottom: 8px;
+  background: #fff;
+  border-bottom: 1px solid #f0f1f5;
 }
 
 .sheet-close {
@@ -1229,7 +1241,10 @@ body {
 
 .tag-chip-select.active {
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: var(--c-primary);
+  background: var(--c-primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(59, 124, 255, 0.28);
 }
 
 .tag-chip-dot {
@@ -1331,7 +1346,7 @@ body {
 }
 
 .mcell.has-event .dnum {
-  border: 1px solid #e3e6f2;
+  border: 1.5px solid #a9afd4;
   background: transparent;
   font-weight: 500;
   color: var(--c-text);
@@ -2019,24 +2034,26 @@ body {
   color: var(--c-text);
 }
 
-.ev-time-no-time {
+.ev-time-tabs {
+  display: flex;
+  gap: 8px;
   padding: 12px 16px 0;
 }
 
-.ev-time-no-time > button {
-  width: 100%;
-  text-align: left;
+.ev-time-tabs > button {
+  flex: 1;
+  text-align: center;
   border: 1px solid var(--c-border);
   background: #fff;
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 11px 0;
   font-size: 14px;
   color: var(--c-text);
   cursor: pointer;
   transition: all 0.15s;
 }
 
-.ev-time-no-time > button.active {
+.ev-time-tabs > button.active {
   border-color: var(--c-primary);
   background: #f0f4ff;
   color: var(--c-primary);
@@ -2256,7 +2273,7 @@ body {
   color: var(--c-success);
 }
 
-/* --- 备注 / 图片色块标注（注 / 图）--- */
+/* --- 备注 / 图片标签标注（注 / 图）：灰色小标签，极细不加粗 --- */
 .ev-flags-mini {
   display: inline-flex;
   align-items: center;
@@ -2269,22 +2286,20 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 5px;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-  color: #fff;
+  padding: 1px 7px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  background: #eceef4;
+  color: #8a8f9e;
   flex-shrink: 0;
 }
 
-.ev-chip-note {
-  background: #3b7cff;
-}
-
+.ev-chip-note,
 .ev-chip-img {
-  background: #8b5cf6;
+  background: #eceef4;
+  color: #8a8f9e;
 }
 
 /* --- 办事清单：左侧彩色边框（与日历一致） --- */
@@ -2461,19 +2476,19 @@ body {
 .sheet-back-btn {
   width: 100%;
   margin-top: 14px;
-  border: 1px solid var(--c-border);
-  background: #fff;
+  border: none;
+  background: var(--c-primary);
   border-radius: 14px;
-  padding: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--c-text);
+  padding: 13px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
   cursor: pointer;
+  box-shadow: 0 6px 16px rgba(59, 124, 255, 0.32);
 }
 
 .sheet-back-btn:hover {
-  border-color: var(--c-primary);
-  color: var(--c-primary);
+  filter: brightness(1.04);
 }
 
 /* --- 通知设置：多邮箱输入（沿用 .notify-panel textarea 高级样式） --- */
