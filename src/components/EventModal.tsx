@@ -11,6 +11,47 @@ import WheelPicker, { WheelColumn } from './WheelPicker';
 const { TextArea } = Input;
 const MAX_IMAGES = 10;
 
+/**
+ * 把图片压缩到合适尺寸并转 dataURL，显著减小 localStorage / 云同步体积。
+ * 这是「手机端不丢图」的关键之一：原图动辄数百 KB～数 MB，极易撑爆移动端
+ * 约 5MB 的 localStorage 配额导致保存静默失败；压缩后单张通常 < 150KB。
+ */
+function compressImage(file: File, maxDim = 1280, quality = 0.72): Promise<string> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onerror = () => resolve('');
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => resolve('');
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const scale = Math.min(maxDim / width, maxDim / height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve('');
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        const isPng = (file.type || '').toLowerCase() === 'image/png';
+        try {
+          resolve(canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', quality));
+        } catch {
+          resolve('');
+        }
+      };
+      img.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 const YEARS = Array.from({ length: 16 }, (_, i) => 2020 + i);
 const HOURS = Array.from({ length: 24 }, (_, i) => ({ label: `${i}时`, value: i }));
 const MINUTES = Array.from({ length: 12 }, (_, i) => {
@@ -101,16 +142,10 @@ export default function EventModal() {
     }
     const slice = files.slice(0, Math.max(0, room));
     if (slice.length === 0) return;
-    Promise.all(
-      slice.map(
-        (f) =>
-          new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result));
-            reader.readAsDataURL(f);
-          })
-      )
-    ).then((dataUrls) => setImages((prev) => [...prev, ...dataUrls].slice(0, MAX_IMAGES)));
+    Promise.all(slice.map((f) => compressImage(f)))
+      .then((dataUrls) =>
+        setImages((prev) => [...prev, ...dataUrls.filter(Boolean)].slice(0, MAX_IMAGES))
+      );
   };
   const removeImg = (i: number) => setImages((prev) => prev.filter((_, idx) => idx !== i));
 
