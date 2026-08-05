@@ -66,7 +66,18 @@ export function sanitizeImported(raw: unknown): CalendarEvent[] {
       updatedAt: typeof o.updatedAt === 'string' ? o.updatedAt : nowIso,
       tag: (['purple', 'green', 'orange', 'red', 'blue', 'pink'].includes(tag)
         ? tag
-        : 'purple') as CalendarEvent['tag']
+        : 'purple') as CalendarEvent['tag'],
+      important: Boolean(o.important),
+      images: Array.isArray(o.images)
+        ? (o.images as unknown[]).filter((x) => typeof x === 'string').slice(0, 10)
+        : [],
+      reminder: (() => {
+        const rem = o.reminder as { unit?: unknown; value?: unknown } | null | undefined;
+        if (rem && (rem.unit === 'day' || rem.unit === 'hour') && typeof rem.value === 'number') {
+          return { unit: rem.unit as 'day' | 'hour', value: rem.value as number };
+        }
+        return null;
+      })()
     });
   }
   return valid;
