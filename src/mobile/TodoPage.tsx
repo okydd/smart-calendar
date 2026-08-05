@@ -10,12 +10,15 @@ import {
   weekdayCN,
   type Dayjs
 } from '../utils/date';
+import EventFlags from '../components/EventFlags';
 import type { CalendarEvent } from '../types';
 
 interface Group {
   key: string;
   label: string;
   items: CalendarEvent[];
+  /** 即使为空也始终展示（如「今天」） */
+  alwaysShow?: boolean;
 }
 
 /** 按日期与时间排序 */
@@ -55,7 +58,7 @@ function statusHint(d: Dayjs, e: CalendarEvent, today: Dayjs): string {
 }
 
 /**
- * 办事清单页：按 本周 / 下周 / 其它时间 / 已完成 分组（周一为每周第一天）。
+ * 办事清单页：按 今天 / 本周 / 下周 / 其它时间 / 已完成 分组（周一为每周第一天）。
  */
 export default function TodoPage() {
   const { filteredEvents, toggleDone } = useCalendar();
@@ -64,6 +67,7 @@ export default function TodoPage() {
   const [doneShowAll, setDoneShowAll] = useState(false);
 
   const today = useMemo(() => dayjs().startOf('day'), []);
+  const todayStr = today.format('YYYY-MM-DD');
 
   const { groups, doneItems } = useMemo(() => {
     const weekStart = today.isoWeekday(1);
@@ -71,6 +75,7 @@ export default function TodoPage() {
     const nextWeekStart = weekStart.add(7, 'day');
     const nextWeekEnd = weekEnd.add(7, 'day');
 
+    const todayItems: CalendarEvent[] = [];
     const week: CalendarEvent[] = [];
     const nextWeek: CalendarEvent[] = [];
     const other: CalendarEvent[] = [];
@@ -79,6 +84,11 @@ export default function TodoPage() {
     for (const e of filteredEvents) {
       if (e.done) {
         done.push(e);
+        continue;
+      }
+      // 今天单独成组；避免与「本周」重复
+      if (e.date === todayStr) {
+        todayItems.push(e);
         continue;
       }
       const d = parseDateStr(e.date);
@@ -93,17 +103,18 @@ export default function TodoPage() {
       }
     }
 
-    [week, nextWeek, other].forEach((a) => a.sort(sortEvents));
+    [todayItems, week, nextWeek, other].forEach((a) => a.sort(sortEvents));
     done.sort((a, b) => sortEvents(b, a));
 
     const gs: Group[] = [
+      { key: 'today', label: '今天', items: todayItems, alwaysShow: true },
       { key: 'week', label: '本周', items: week },
       { key: 'nextWeek', label: '下周', items: nextWeek },
       { key: 'other', label: '其它时间', items: other }
-    ].filter((g) => g.items.length > 0);
+    ].filter((g) => g.items.length > 0 || g.alwaysShow);
 
     return { groups: gs, doneItems: done };
-  }, [filteredEvents, today]);
+  }, [filteredEvents, today, todayStr]);
 
   const doneFiltered = useMemo(() => {
     if (doneShowAll) return doneItems;
@@ -117,7 +128,6 @@ export default function TodoPage() {
     const expired = !e.done && d.isValid() && d.isBefore(today, 'day');
     const timeText = e.allDay || !e.startTime ? '全天' : e.startTime;
     const dateText = d.isValid() ? dateLabel(d, today) : '未设置日期';
-    const hasExtra = !!(e.description || (e.images && e.images.length > 0));
     return (
       <div className="todo-item" key={e.id}>
         <span
@@ -134,13 +144,8 @@ export default function TodoPage() {
         <div className="todo-body" onClick={() => openView(e)}>
           <div className="remind-title-line">
             <span className={`remind-title${e.done ? ' done' : ''}`}>{e.title}</span>
-            {hasExtra && (
-              <span className="ev-flags-mini">
-                {e.description ? <span title="有备注">📝</span> : null}
-                {e.images && e.images.length > 0 ? <span title="有图片">🖼</span> : null}
-              </span>
-            )}
             {e.important && <span className="imp-flag">重要</span>}
+            <EventFlags e={e} />
           </div>
           <div className="remind-time-line">
             <span className="remind-date">{dateText}</span>
@@ -154,68 +159,60 @@ export default function TodoPage() {
     );
   };
 
-  const total = groups.reduce((n, g) => n + g.items.length, 0);
-
   return (
     <div className="page">
-      {total === 0 && doneItems.length === 0 ? (
-        <div className="empty-todo">
-          <span className="big">✅</span>
-          还没有待办事项
-          <br />
-          点击右下角 + 添加一条吧
-        </div>
-      ) : null}
-
       {groups.map((g) => (
         <section className="todo-group" key={g.key}>
           <div className="group-head">
             <h4>{g.label}</h4>
             <span className="count">{g.items.length}</span>
+            {g.key === 'today' && g.items.length === 0 && (
+              <span className="group-sub">无事件</span>
+            )}
           </div>
-          {g.items.map(renderItem)}
+          {g.items.length === 0 ? (
+            <div className="empty-remind">无事件</div>
+          ) : (
+            g.items.map(renderItem)
+          )}
         </section>
       ))}
 
       {doneItems.length > 0 && (
         <section className="todo-group done-section">
-          <div className="group-head">
+          <div className="group-head done-head">
             <h4>已完成事项</h4>
             <span className="count">{doneItems.length}</span>
+            <div className="done-filter-inline">
+              <button
+                className="nav-btn"
+                onClick={() => setDoneMonth(doneMonth.subtract(1, 'month'))}
+                aria-label="上月"
+              >
+                <LeftOutlined />
+              </button>
+              <span className="done-month-label">
+                {doneMonth.year()}年{doneMonth.month() + 1}月
+              </span>
+              <button
+                className="nav-btn"
+                onClick={() => setDoneMonth(doneMonth.add(1, 'month'))}
+                aria-label="下月"
+              >
+                <RightOutlined />
+              </button>
+              <button
+                className={`done-all-btn${doneShowAll ? ' active' : ''}`}
+                onClick={() => setDoneShowAll((v) => !v)}
+              >
+                {doneShowAll ? '按月份' : '全部'}
+              </button>
+            </div>
           </div>
-          {(
-            <>
-              <div className="done-filter">
-                <button
-                  className="nav-btn"
-                  onClick={() => setDoneMonth(doneMonth.subtract(1, 'month'))}
-                  aria-label="上月"
-                >
-                  <LeftOutlined />
-                </button>
-                <span className="done-month-label">
-                  {doneMonth.year()}年{doneMonth.month() + 1}月
-                </span>
-                <button
-                  className="nav-btn"
-                  onClick={() => setDoneMonth(doneMonth.add(1, 'month'))}
-                  aria-label="下月"
-                >
-                  <RightOutlined />
-                </button>
-                <button
-                  className={`done-all-btn${doneShowAll ? ' active' : ''}`}
-                  onClick={() => setDoneShowAll((v) => !v)}
-                >
-                  {doneShowAll ? '按月份' : '全部'}
-                </button>
-              </div>
-              {doneFiltered.length === 0 ? (
-                <div className="empty-remind">本月暂无已完成事项</div>
-              ) : (
-                doneFiltered.map(renderItem)
-              )}
-            </>
+          {doneFiltered.length === 0 ? (
+            <div className="empty-remind">本月暂无已完成事项</div>
+          ) : (
+            doneFiltered.map(renderItem)
           )}
         </section>
       )}
