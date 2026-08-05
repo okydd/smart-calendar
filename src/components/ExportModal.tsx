@@ -73,7 +73,7 @@ export default function ExportModal({ open, onClose, initialStart, initialEnd }:
       return `${start.year()}年${String(start.month() + 1).padStart(2, '0')}月事件提醒`;
     }
     if (rangeType === 'week') {
-      return `${start.year()}年第${start.week()}周事件提醒`;
+      return `${start.year()}年第${start.isoWeek()}周事件提醒`;
     }
     return '日历事件提醒';
   }, [rangeType, start]);
