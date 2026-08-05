@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
-import { Modal, Radio, DatePicker, Button, App, Empty } from 'antd';
+import { useMemo, useState, useEffect } from 'react';
+import { Modal, Radio, DatePicker, App, Empty } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
 import {
   dayjs,
@@ -9,23 +10,36 @@ import {
   timeToMinutes,
   type Dayjs
 } from '../utils/date';
-import { exportEventsToImage } from '../utils/exportImage';
+import { renderExportImage, exportEventsToImage } from '../utils/exportImage';
 import type { ExportRange } from '../types';
 
 const { RangePicker } = DatePicker;
 
-export default function ExportModal({
-  open,
-  onClose
-}: {
+interface ExportModalProps {
   open: boolean;
   onClose: () => void;
-}) {
+  initialStart?: Dayjs;
+  initialEnd?: Dayjs;
+}
+
+export default function ExportModal({ open, onClose, initialStart, initialEnd }: ExportModalProps) {
   const { message } = App.useApp();
   const { filteredEvents, currentDate } = useCalendar();
-  const [rangeType, setRangeType] = useState<ExportRange>('month');
-  const [custom, setCustom] = useState<[Dayjs, Dayjs] | null>(null);
+  const [rangeType, setRangeType] = useState<ExportRange>(
+    initialStart && initialEnd ? 'custom' : 'month'
+  );
+  const [custom, setCustom] = useState<[Dayjs, Dayjs] | null>(
+    initialStart && initialEnd ? [initialStart, initialEnd] : null
+  );
+  const [dataUrl, setDataUrl] = useState<string>('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (initialStart && initialEnd) {
+      setRangeType('custom');
+      setCustom([initialStart, initialEnd]);
+    }
+  }, [initialStart, initialEnd]);
 
   const { start, end } = useMemo(() => {
     if (rangeType === 'week') {
@@ -56,27 +70,48 @@ export default function ExportModal({
 
   const title = useMemo(() => {
     if (rangeType === 'month') {
-      return `${start.year()}年${String(start.month() + 1).padStart(2, '0')}月事件汇总`;
+      return `${start.year()}年${String(start.month() + 1).padStart(2, '0')}月事件提醒`;
     }
     if (rangeType === 'week') {
-      return `${start.year()}年 第${start.week()}周事件汇总`;
+      return `${start.year()}年第${start.week()}周事件提醒`;
     }
-    return `${start.format('YYYY.MM.DD')} - ${end.format('YYYY.MM.DD')} 事件汇总`;
-  }, [rangeType, start, end]);
+    return '日历事件提醒';
+  }, [rangeType, start]);
 
-  const handleExport = () => {
+  const subtitle = useMemo(
+    () => `${start.format('YYYY-MM-DD')} 至 ${end.format('YYYY-MM-DD')}`,
+    [start, end]
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    if (!rangeEvents.length) {
+      setDataUrl('');
+      return;
+    }
+    // 延迟生成避免阻塞 UI
+    const id = window.setTimeout(() => {
+      try {
+        setDataUrl(renderExportImage(rangeEvents, { title, subtitle, total: rangeEvents.length }));
+      } catch {
+        setDataUrl('');
+      }
+    }, 50);
+    return () => window.clearTimeout(id);
+  }, [open, rangeEvents, title, subtitle]);
+
+  const handleSave = () => {
     if (!rangeEvents.length) {
       message.warning('所选范围内没有事件');
       return;
     }
     setLoading(true);
-    // 让按钮先进入 loading 态，再做同步绘制
-    setTimeout(() => {
+    window.setTimeout(() => {
       try {
-        exportEventsToImage(rangeEvents, { title });
-        message.success(`已生成 ${rangeEvents.length} 个事件的图片`);
+        exportEventsToImage(rangeEvents, { title, subtitle, total: rangeEvents.length });
+        message.success('图片已保存');
       } catch {
-        message.error('图片生成失败');
+        message.error('保存失败');
       } finally {
         setLoading(false);
       }
@@ -85,77 +120,64 @@ export default function ExportModal({
 
   return (
     <Modal
-      title="导出为图片"
+      title="导出图片预览"
       open={open}
       onCancel={onClose}
-      footer={[
-        <Button key="cancel" onClick={onClose}>
-          取消
-        </Button>,
-        <Button
-          key="ok"
-          className="btn-gradient"
-          type="primary"
-          loading={loading}
-          disabled={!rangeEvents.length}
-          onClick={handleExport}
-        >
-          生成并下载
-        </Button>
-      ]}
+      footer={null}
+      width={420}
+      centered
+      styles={{ body: { padding: '0 16px 16px' } }}
     >
-      <div style={{ marginBottom: 16 }}>
-        <Radio.Group
-          value={rangeType}
-          onChange={(e) => setRangeType(e.target.value)}
-          optionType="button"
-          buttonStyle="solid"
-          style={{ marginBottom: 14 }}
-        >
-          <Radio.Button value="week">本周</Radio.Button>
-          <Radio.Button value="month">本月</Radio.Button>
-          <Radio.Button value="custom">自定义</Radio.Button>
-        </Radio.Group>
+      <div className="export-preview-body">
+        <div className="export-range-select">
+          <Radio.Group
+            value={rangeType}
+            onChange={(e) => setRangeType(e.target.value)}
+            optionType="button"
+            buttonStyle="solid"
+            size="small"
+          >
+            <Radio.Button value="week">本周</Radio.Button>
+            <Radio.Button value="month">本月</Radio.Button>
+            <Radio.Button value="custom">自定义</Radio.Button>
+          </Radio.Group>
 
-        {rangeType === 'custom' && (
-          <RangePicker
-            style={{ width: '100%' }}
-            value={custom}
-            onChange={(v) => setCustom(v as [Dayjs, Dayjs] | null)}
-          />
-        )}
+          {rangeType === 'custom' && (
+            <RangePicker
+              style={{ width: '100%', marginTop: 10 }}
+              value={custom}
+              onChange={(v) => setCustom(v as [Dayjs, Dayjs] | null)}
+              allowClear={false}
+            />
+          )}
+        </div>
+
+        <div className="export-preview-card">
+          {dataUrl ? (
+            <img src={dataUrl} alt="导出预览" />
+          ) : (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description="该范围内暂无事件"
+              style={{ padding: '40px 0' }}
+            />
+          )}
+        </div>
+
+        <div className="export-preview-actions">
+          <button
+            className="export-save-btn"
+            onClick={handleSave}
+            disabled={!rangeEvents.length || loading}
+          >
+            <DownloadOutlined />
+            保存到相册
+          </button>
+          <button className="export-close-btn" onClick={onClose}>
+            关闭
+          </button>
+        </div>
       </div>
-
-      <div
-        style={{
-          background: '#fafafa',
-          borderRadius: 10,
-          padding: 14,
-          fontSize: 13,
-          color: '#666'
-        }}
-      >
-        <div>
-          范围：
-          <b style={{ color: '#6d5dfc' }}>
-            {start.format('YYYY-MM-DD')} ~ {end.format('YYYY-MM-DD')}
-          </b>
-        </div>
-        <div style={{ marginTop: 6 }}>
-          标题：<b>{title}</b>
-        </div>
-        <div style={{ marginTop: 6 }}>
-          包含事件：<b style={{ color: '#6d5dfc' }}>{rangeEvents.length}</b> 个
-        </div>
-      </div>
-
-      {!rangeEvents.length && (
-        <Empty
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description="该范围内暂无事件"
-          style={{ marginTop: 12 }}
-        />
-      )}
     </Modal>
   );
 }
