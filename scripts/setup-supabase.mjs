@@ -36,6 +36,8 @@ create table if not exists public.calendar_events (
   tag         text        not null default 'purple',
   done        boolean     not null default false,
   deleted     boolean     not null default false,
+  important   boolean     not null default false,
+  images      jsonb       not null default '[]'::jsonb,
   updated_at  timestamptz not null default now(),
   primary key (user_id, id)
 );
