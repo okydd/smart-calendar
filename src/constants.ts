@@ -37,3 +37,8 @@ export const TAG_COLORS: Record<TagColor, { label: string; color: string }> = {
 
 /** 标签顺序（用于筛选按钮组渲染） */
 export const TAG_ORDER: TagColor[] = ['purple', 'green', 'orange', 'red', 'blue', 'pink'];
+
+/** 重要事件左边框 / 标记色 */
+export const IMPORTANT_COLOR = '#ff3b30';
+/** 普通事件左边框色（灰色） */
+export const NORMAL_BORDER = '#e5e5ea';
