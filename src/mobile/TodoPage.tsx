@@ -5,7 +5,6 @@ import { useUI } from '../context/UIContext';
 import {
   dayjs,
   parseDateStr,
-  timeRangeLabel,
   timeToMinutes,
   weekdayCN,
   type Dayjs
@@ -56,7 +55,7 @@ function statusHint(d: Dayjs, e: CalendarEvent, today: Dayjs): string {
 }
 
 /**
- * 办事清单页：按 本周 / 下周 / 其它时间 / 已完成 分组。
+ * 办事清单页：按 本周 / 下周 / 其它时间 / 已完成 分组（周一为每周第一天）。
  */
 export default function TodoPage() {
   const { filteredEvents, toggleDone } = useCalendar();
@@ -66,8 +65,8 @@ export default function TodoPage() {
   const today = useMemo(() => dayjs().startOf('day'), []);
 
   const { groups, doneItems } = useMemo(() => {
-    const weekStart = today.weekday(0);
-    const weekEnd = today.weekday(6);
+    const weekStart = today.isoWeekday(1);
+    const weekEnd = today.isoWeekday(7);
     const nextWeekStart = weekStart.add(7, 'day');
     const nextWeekEnd = weekEnd.add(7, 'day');
 
@@ -109,6 +108,9 @@ export default function TodoPage() {
     const d = parseDateStr(e.date);
     const hint = d.isValid() ? statusHint(d, e, today) : '未设置日期';
     const expired = !e.done && d.isValid() && d.isBefore(today, 'day');
+    const color = TAG_COLORS[e.tag].color;
+    const timeText = e.allDay || !e.startTime ? '全天' : e.startTime;
+    const dateText = d.isValid() ? dateLabel(d, today) : '未设置日期';
     return (
       <div className="todo-item" key={e.id}>
         <button
@@ -119,16 +121,17 @@ export default function TodoPage() {
           <CheckOutlined />
         </button>
         <div className="todo-body" onClick={() => openEdit(e)}>
-          <div className={`todo-title${e.done ? ' done' : ''}`}>{e.title}</div>
-          <div className="todo-meta">
-            <span
-              className="todo-dot"
-              style={{ background: TAG_COLORS[e.tag].color }}
-            />
-            <span className={expired ? 'overdue-txt' : ''}>
-              {d.isValid() ? dateLabel(d, today) : '未设置日期'}
+          <div className="remind-title-line">
+            <span className={`remind-title${e.done ? ' done' : ''}`}>{e.title}</span>
+            <span className="tag-chip" style={{ background: `${color}22`, color }}>
+              {TAG_COLORS[e.tag].label}
             </span>
-            {!e.allDay && e.startTime ? <span>{timeRangeLabel(e)}</span> : null}
+          </div>
+          <div className="remind-time-line">
+            <span className="remind-date">{dateText}</span>
+            <span className={`remind-time${e.allDay || !e.startTime ? ' all-day' : ''}`}>
+              {timeText}
+            </span>
           </div>
         </div>
         <div className={`todo-hint${expired ? ' expired' : e.done ? ' done' : ''}`}>{hint}</div>
