@@ -19,6 +19,7 @@ import {
 } from '../utils/date';
 import { IMPORTANT_COLOR } from '../constants';
 import Fab from '../components/Fab';
+import EventFlags from '../components/EventFlags';
 import type { CalendarEvent } from '../types';
 
 const WEEK_DAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
@@ -184,7 +185,6 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
       showDate && d.isValid()
         ? `${d.month() + 1}月${d.date()}日 ${WEEK_DAYS[(d.day() + 6) % 7]}`
         : '';
-    const hasExtra = !!(e.description || (e.images && e.images.length > 0));
     return (
       <div key={e.id} className="remind-row" onClick={() => openView(e)}>
         <span
@@ -194,13 +194,8 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
         <div className="remind-main">
           <div className="remind-title-line">
             <span className={`remind-title${e.done ? ' done' : ''}`}>{e.title}</span>
-            {hasExtra && (
-              <span className="ev-flags-mini">
-                {e.description ? <span title="有备注">📝</span> : null}
-                {e.images && e.images.length > 0 ? <span title="有图片">🖼</span> : null}
-              </span>
-            )}
             {e.important && <span className="imp-flag">重要</span>}
+            <EventFlags e={e} />
           </div>
           <div className="remind-time-line">
             {showDate && dateText ? <span className="remind-date">{dateText}</span> : null}
