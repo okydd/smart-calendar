@@ -1,4 +1,4 @@
-import type { TagColor } from './types';
+import type { TagColor, ReminderOffset } from './types';
 
 /** localStorage 存储键名 */
 export const STORAGE_KEY = 'calendarEvents';
@@ -42,3 +42,16 @@ export const TAG_ORDER: TagColor[] = ['purple', 'green', 'orange', 'red', 'blue'
 export const IMPORTANT_COLOR = '#ff3b30';
 /** 普通事件左边框色（灰色） */
 export const NORMAL_BORDER = '#e5e5ea';
+
+/** 提前提醒常用预设（标签可多选） */
+export const PRESET_REMINDERS: { label: string; unit: ReminderOffset['unit']; value: number }[] = [
+  { label: '14天', unit: 'day', value: 14 },
+  { label: '7天', unit: 'day', value: 7 },
+  { label: '3天', unit: 'day', value: 3 },
+  { label: '2天', unit: 'day', value: 2 },
+  { label: '1天', unit: 'day', value: 1 },
+  { label: '2小时', unit: 'hour', value: 2 },
+  { label: '1小时', unit: 'hour', value: 1 },
+  { label: '30分钟', unit: 'minute', value: 30 },
+  { label: '15分钟', unit: 'minute', value: 15 }
+];
