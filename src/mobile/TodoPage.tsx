@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
-import { CheckOutlined, DownOutlined } from '@ant-design/icons';
+import { CheckOutlined, DownOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
 import { useUI } from '../context/UIContext';
+import { IMPORTANT_COLOR } from '../constants';
 import {
   dayjs,
   parseDateStr,
@@ -58,8 +59,10 @@ function statusHint(d: Dayjs, e: CalendarEvent, today: Dayjs): string {
  */
 export default function TodoPage() {
   const { filteredEvents, toggleDone } = useCalendar();
-  const { openEdit } = useUI();
-  const [doneOpen, setDoneOpen] = useState(false);
+  const { openView } = useUI();
+  const [doneOpen, setDoneOpen] = useState(true);
+  const [doneMonth, setDoneMonth] = useState(() => dayjs().startOf('month'));
+  const [doneShowAll, setDoneShowAll] = useState(false);
 
   const today = useMemo(() => dayjs().startOf('day'), []);
 
@@ -103,14 +106,25 @@ export default function TodoPage() {
     return { groups: gs, doneItems: done };
   }, [filteredEvents, today]);
 
+  const doneFiltered = useMemo(() => {
+    if (doneShowAll) return doneItems;
+    const ym = doneMonth.format('YYYY-MM');
+    return doneItems.filter((e) => e.date.startsWith(ym));
+  }, [doneItems, doneMonth, doneShowAll]);
+
   const renderItem = (e: CalendarEvent) => {
     const d = parseDateStr(e.date);
     const hint = d.isValid() ? statusHint(d, e, today) : '未设置日期';
     const expired = !e.done && d.isValid() && d.isBefore(today, 'day');
     const timeText = e.allDay || !e.startTime ? '全天' : e.startTime;
     const dateText = d.isValid() ? dateLabel(d, today) : '未设置日期';
+    const hasExtra = !!(e.description || (e.images && e.images.length > 0));
     return (
       <div className="todo-item" key={e.id}>
+        <span
+          className="remind-bar todo-bar"
+          style={{ background: e.important ? IMPORTANT_COLOR : 'var(--c-border)' }}
+        />
         <button
           className={`todo-check${e.done ? ' checked' : ''}`}
           onClick={() => toggleDone(e.id)}
@@ -118,9 +132,15 @@ export default function TodoPage() {
         >
           <CheckOutlined />
         </button>
-        <div className="todo-body" onClick={() => openEdit(e)}>
+        <div className="todo-body" onClick={() => openView(e)}>
           <div className="remind-title-line">
             <span className={`remind-title${e.done ? ' done' : ''}`}>{e.title}</span>
+            {hasExtra && (
+              <span className="ev-flags-mini">
+                {e.description ? <span title="有备注">📝</span> : null}
+                {e.images && e.images.length > 0 ? <span title="有图片">🖼</span> : null}
+              </span>
+            )}
             {e.important && <span className="imp-flag">重要</span>}
           </div>
           <div className="remind-time-line">
@@ -168,7 +188,40 @@ export default function TodoPage() {
             <span className="count">{doneItems.length}</span>
             <DownOutlined className={`chev${doneOpen ? ' open' : ''}`} />
           </div>
-          {doneOpen && doneItems.map(renderItem)}
+          {doneOpen && (
+            <>
+              <div className="done-filter">
+                <button
+                  className="nav-btn"
+                  onClick={() => setDoneMonth(doneMonth.subtract(1, 'month'))}
+                  aria-label="上月"
+                >
+                  <LeftOutlined />
+                </button>
+                <span className="done-month-label">
+                  {doneMonth.year()}年{doneMonth.month() + 1}月
+                </span>
+                <button
+                  className="nav-btn"
+                  onClick={() => setDoneMonth(doneMonth.add(1, 'month'))}
+                  aria-label="下月"
+                >
+                  <RightOutlined />
+                </button>
+                <button
+                  className={`done-all-btn${doneShowAll ? ' active' : ''}`}
+                  onClick={() => setDoneShowAll((v) => !v)}
+                >
+                  {doneShowAll ? '按月份' : '全部'}
+                </button>
+              </div>
+              {doneFiltered.length === 0 ? (
+                <div className="empty-remind">本月暂无已完成事项</div>
+              ) : (
+                doneFiltered.map(renderItem)
+              )}
+            </>
+          )}
         </section>
       )}
     </div>
