@@ -9,7 +9,6 @@ import {
   weekdayCN,
   type Dayjs
 } from '../utils/date';
-import { TAG_COLORS } from '../constants';
 import type { CalendarEvent } from '../types';
 
 interface Group {
@@ -108,7 +107,6 @@ export default function TodoPage() {
     const d = parseDateStr(e.date);
     const hint = d.isValid() ? statusHint(d, e, today) : '未设置日期';
     const expired = !e.done && d.isValid() && d.isBefore(today, 'day');
-    const color = TAG_COLORS[e.tag].color;
     const timeText = e.allDay || !e.startTime ? '全天' : e.startTime;
     const dateText = d.isValid() ? dateLabel(d, today) : '未设置日期';
     return (
@@ -123,9 +121,7 @@ export default function TodoPage() {
         <div className="todo-body" onClick={() => openEdit(e)}>
           <div className="remind-title-line">
             <span className={`remind-title${e.done ? ' done' : ''}`}>{e.title}</span>
-            <span className="tag-chip" style={{ background: `${color}22`, color }}>
-              {TAG_COLORS[e.tag].label}
-            </span>
+            {e.important && <span className="imp-flag">重要</span>}
           </div>
           <div className="remind-time-line">
             <span className="remind-date">{dateText}</span>
