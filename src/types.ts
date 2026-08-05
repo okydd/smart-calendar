@@ -6,6 +6,12 @@ export type TagColor = 'purple' | 'green' | 'orange' | 'red' | 'blue' | 'pink';
 /** 视图模式 */
 export type ViewMode = 'month' | 'week' | 'day';
 
+/** 提前提醒的一个时间偏移（天 / 小时 / 分钟） */
+export interface ReminderOffset {
+  unit: 'day' | 'hour' | 'minute';
+  value: number;
+}
+
 /** 单个日历事件 */
 export interface CalendarEvent {
   /** 唯一 ID */
@@ -28,8 +34,8 @@ export interface CalendarEvent {
   important?: boolean;
   /** 关联图片（dataURL 数组，最多 10 张） */
   images?: string[];
-  /** 提前提醒设置（null 表示不提醒）；通过微信推送 */
-  reminder?: { unit: 'day' | 'hour'; value: number } | null;
+  /** 提前提醒偏移量列表（可多个）；通过微信推送。空数组表示不提醒 */
+  reminder?: ReminderOffset[];
   /** 是否已完成（办事清单勾选状态） */
   done?: boolean;
   /** 最后修改时间（ISO 字符串），云同步冲突判定依据 */
