@@ -3,7 +3,9 @@ import {
   CheckOutlined,
   LeftOutlined,
   RightOutlined,
-  UnorderedListOutlined
+  CalendarOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined
 } from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
 import { useUI } from '../context/UIContext';
@@ -133,7 +135,7 @@ export default function TodoPage() {
     const timeText = e.allDay || !e.startTime ? '全天' : e.startTime;
     const dateText = d.isValid() ? dateLabel(d, today) : '未设置日期';
     return (
-      <div className={`todo-item${e.important ? ' important' : ''}`} key={e.id}>
+      <div className={`event-pill todo-item${e.important ? ' important' : ''}`} key={e.id}>
         <button
           className={`todo-check${e.done ? ' checked' : ''}`}
           onClick={() => toggleDone(e.id)}
@@ -159,12 +161,25 @@ export default function TodoPage() {
     );
   };
 
+  const headerIcon = (key: string) => {
+    switch (key) {
+      case 'today':
+      case 'week':
+      case 'nextWeek':
+        return <CalendarOutlined className="remind-ico" />;
+      case 'other':
+        return <ClockCircleOutlined className="remind-ico" />;
+      default:
+        return <CalendarOutlined className="remind-ico" />;
+    }
+  };
+
   return (
     <div className="page">
       {groups.map((g) => (
         <section className="remind-card" key={g.key}>
-          <div className="remind-header">
-            <UnorderedListOutlined className="remind-ico" />
+          <div className={`remind-header ${g.key}`}>
+            {headerIcon(g.key)}
             <span className="remind-label">{g.label}</span>
             <span className="remind-count">{g.items.length}</span>
           </div>
@@ -178,8 +193,8 @@ export default function TodoPage() {
 
       {doneItems.length > 0 && (
         <section className="remind-card done-section">
-          <div className="remind-header">
-            <UnorderedListOutlined className="remind-ico" />
+          <div className="remind-header done">
+            <CheckCircleOutlined className="remind-ico" />
             <span className="remind-label">已完成事项</span>
             <span className="remind-count">{doneItems.length}</span>
             <div className="done-filter-inline">
