@@ -59,6 +59,8 @@ export default function MoreSheet({
   const { message } = App.useApp();
   const { events, importEvents, search, setSearch } = useCalendar();
   const { status, email, lastSyncAt, configured, userId, syncNotifySettings, notifySettingsVersion } = useSync();
+  /** 搜索框本地输入值：仅在点「搜索」或回车时，才写入全局 search 触发筛选 */
+  const [searchInput, setSearchInput] = useState(search);
   const [exportOpen, setExportOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs());
   const [endDate, setEndDate] = useState(dayjs().add(1, 'month'));
@@ -236,15 +238,34 @@ export default function MoreSheet({
           <div className="sheet-search">
             <SearchOutlined className="ico" />
             <input
-              value={search}
+              value={searchInput}
               placeholder="输入标题或备注关键词…"
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') setSearch(searchInput.trim());
+              }}
             />
-            {search && (
-              <button className="clr" onClick={() => setSearch('')} aria-label="清除">
+            {searchInput && (
+              <button
+                className="clr"
+                onClick={() => {
+                  setSearchInput('');
+                  setSearch('');
+                }}
+                aria-label="清除"
+              >
                 <CloseOutlined />
               </button>
             )}
+            <button
+              className="sheet-search-btn"
+              onClick={() => {
+                setSearch(searchInput.trim());
+                onClose();
+              }}
+            >
+              搜索
+            </button>
           </div>
           {search && (
             <div className="btn-note">
