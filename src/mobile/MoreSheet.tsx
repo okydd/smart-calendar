@@ -27,21 +27,9 @@ import {
   dingtalkConfigured,
   sendEmail,
   buildConciseText,
-  buildFullText,
-  buildFullHtml,
   type NotifySettings
 } from '../utils/notify';
 import ExportModal from '../components/ExportModal';
-
-/** UTF-8 字符串转 base64（用于邮件附件） */
-function toBase64(str: string): string {
-  const bytes = new TextEncoder().encode(str);
-  let bin = '';
-  bytes.forEach((b) => {
-    bin += String.fromCharCode(b);
-  });
-  return btoa(bin);
-}
 
 export default function MoreSheet({
   open,
@@ -115,47 +103,32 @@ export default function MoreSheet({
     URL.revokeObjectURL(url);
     message.success(`已导出 ${events.length} 条事件`);
 
-    // 自动发送到邮箱：优先以 .json 附件形式（EmailJS 需模板启用附件）
+    // 自动发送到邮箱：仅发送简要说明，JSON 文件（尤其含图片 base64 时）容易超过 EmailJS 50KB 变量限制，故不再作为附件
     const body = [
       '【智能日历 · 数据备份】',
       `选取时间范围：${rangeStart} 至 ${rangeEnd}`,
       `导出数据时间：${exportTime}`,
       `事件总数：${events.length} 条`,
       '',
-      `附件文件：${fileName}（可直接下载后在「更多功能 → 导入JSON」中恢复）`
+      `JSON 文件：${fileName} 已下载到本地（可直接在「更多功能 → 导入JSON」中恢复）。`
     ].join('\n');
-    const r = await sendEmail('智能日历 数据备份', body, {
-      name: fileName,
-      data: toBase64(json),
-      mimeType: 'application/json'
-    });
-    if (r.ok) message.success(r.msg);
+    const r = await sendEmail('智能日历 数据备份', body);
+    if (r.ok) message.success('备份说明已发送到邮箱');
     else if (r.msg !== '未配置邮箱，仅本地操作') message.info(r.msg);
   };
 
   const handleCopyEvents = async () => {
     const list = rangedEvents();
     const text = buildConciseText(list, { rangeStart, rangeEnd, exportTime });
-    const fullText = buildFullText(list, { rangeStart, rangeEnd, exportTime });
-    const html = buildFullHtml(list, { rangeStart, rangeEnd, exportTime });
     try {
       await navigator.clipboard.writeText(text);
       message.success(`已复制 ${list.length} 条事件清单`);
     } catch {
-      message.warning('复制失败，已尝试发送到邮箱');
+      message.warning('复制失败');
     }
-    // 邮件：正文同时包含「简洁版 + 完整版文字」，并附完整版 HTML（含排版与图片）附件，
-    // 通过 html 参数把完整版直接渲染进邮件正文，彻底解决免费计划收不到附件的问题。
-    const body = `${text}\n\n──────────\n\n${fullText}`;
-    const r = await sendEmail('智能日历 事件清单（完整版）', body, {
-      attachment: {
-        name: `Calendar_Events_${dayjs().format('YYYYMMDD')}.html`,
-        data: toBase64(html),
-        mimeType: 'text/html'
-      },
-      html
-    });
-    if (r.ok) message.success('清单已发送（含完整版正文与附件）到邮箱');
+    // 邮件仅发送简洁清单正文；完整版 HTML / 附件含图片 base64，极易超过 EmailJS 50KB 变量限制，导致 413/50KB 报错。
+    const r = await sendEmail('智能日历 事件清单', text);
+    if (r.ok) message.success('清单已发送到邮箱');
     else if (r.msg !== '未配置邮箱，仅本地操作') message.info(r.msg);
   };
 
@@ -414,8 +387,8 @@ export default function MoreSheet({
               </div>
 
               <div className="notify-tip">
-                事件提前提醒同时推送到微信与钉钉（已配置才发送）；导出/复制数据通过邮件发送。完整版报告会
-                直接写入邮件正文并附 <b>.html 附件</b>（正文确保送达，附件在 EmailJS 付费计划下更稳）。
+                事件提前提醒同时推送到微信与钉钉（已配置才发送）；导出/复制数据通过邮件发送。
+                由于 EmailJS 免费计划单封请求变量上限 50KB，复制/导出邮件仅发送简洁正文，不再附带含图片 base64 的 HTML 附件。
               </div>
               <button className="notify-save" onClick={saveNotify}>
                 <SaveOutlined /> 保存通知设置
