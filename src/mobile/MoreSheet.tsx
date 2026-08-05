@@ -103,17 +103,32 @@ export default function MoreSheet({
     URL.revokeObjectURL(url);
     message.success(`已导出 ${events.length} 条事件`);
 
-    // 自动发送到邮箱：仅发送简要说明，JSON 文件（尤其含图片 base64 时）容易超过 EmailJS 50KB 变量限制，故不再作为附件
+    // 自动发送到邮箱：EmailJS 免费计划不支持附件，因此把 JSON 内容直接嵌入正文。
+    // 为避开 50KB 变量限制，正文里的 JSON 最多放约 38KB；超过时截断并提示用户下载完整文件。
+    const jsonBytes = new TextEncoder().encode(json).length;
+    const maxJsonChars = 38000;
+    const truncated = json.length > maxJsonChars;
+    const jsonBody = truncated
+      ? json.slice(0, maxJsonChars) +
+        `\n...（内容过长，后续已截断；完整文件请使用上方浏览器下载的 ${fileName}）`
+      : json;
+
     const body = [
       '【智能日历 · 数据备份】',
       `选取时间范围：${rangeStart} 至 ${rangeEnd}`,
       `导出数据时间：${exportTime}`,
       `事件总数：${events.length} 条`,
+      `JSON 大小：约 ${(jsonBytes / 1024).toFixed(1)} KB`,
       '',
-      `JSON 文件：${fileName} 已下载到本地（可直接在「更多功能 → 导入JSON」中恢复）。`
+      '由于 EmailJS 免费计划不支持附件，JSON 内容已直接附在下方。',
+      `请复制下方全部内容，保存为「${fileName}」，再在「更多功能 → 导入JSON」中恢复：`,
+      '',
+      '```json',
+      jsonBody,
+      '```'
     ].join('\n');
     const r = await sendEmail('智能日历 数据备份', body);
-    if (r.ok) message.success('备份说明已发送到邮箱');
+    if (r.ok) message.success('备份内容已发送到邮箱');
     else if (r.msg !== '未配置邮箱，仅本地操作') message.info(r.msg);
   };
 
