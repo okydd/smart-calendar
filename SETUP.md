@@ -76,20 +76,43 @@ App 内右上角 **⋯ 更多**：
 
 ---
 
-## 五、日常维护须知
+## 五、使用期限一览（已全部自动化，无需人工维护）
 
-**1. Supabase 免费项目会休眠**
-连续 **7 天**完全没有访问，项目会自动暂停。日常用日历不会触发；若长假不用，回来第一次打开可能要等几十秒唤醒，或到数据库后台点一下 **Restore**。
+两个平台确实各有一条隐藏的「闲置回收」规则，都已用自动任务消除。**你不需要定期登录任何网站做任何事。**
 
-**2. GitHub Pages 偶发访问慢**
-`github.io` 在国内偶尔出现连接超时（实测约 10% 概率，刷新即可）。若某段时间完全打不开，可把网站另外发布到腾讯云 EdgeOne Pages（可直连本仓库自动部署），拿一个国内加速域名作为备用。
+| 潜在期限 | 平台规则 | 现状 |
+|---|---|---|
+| 数据库休眠 | Supabase 免费项目连续 **7 天**无访问自动暂停 | ✅ 每天自动访问一次，永不触发 |
+| 数据库删除 | 暂停超过 90 天可能被清理 | ✅ 永不进入暂停状态 |
+| 定时任务被停用 | GitHub 仓库连续 **60 天**无提交，定时任务会被自动关闭 | ✅ 保活任务每天写入一次心跳提交，仓库始终活跃 |
+| 数据库密钥 | anon key 为 JWT，有有效期 | ✅ 有效期至 **2036-08-03**（10 年） |
+| 网站托管 | GitHub Pages / 免费仓库 | ✅ 无期限，无需续费或续期 |
+| 构建额度 | GitHub Actions | ✅ 公开仓库免费无限量 |
 
-**3. 访问令牌**
-配置用的两个令牌保存在本机 `.secrets.json`（已排除出版本库，不会上传）。
-- Supabase 令牌：`https://supabase.com/dashboard/account/tokens` 可随时 Revoke
-- GitHub 令牌：`https://github.com/settings/tokens` 可随时 Revoke，本身也会在 30 天后自动过期
+### 自动保活是怎么做的
 
-撤销令牌**不影响**已完成的配置和正在运行的应用，只是以后要再自动更新代码时需要重新生成。
+`.github/workflows/keepalive.yml`，每天北京时间 **05:30** 自动运行，两步：
+
+1. 向数据库发一次真实查询 → 重置 Supabase 的「7 天闲置」计时；
+2. 往仓库写一行心跳时间戳并提交 → 重置 GitHub 的「60 天无活动」计时，保证第 1 步能一直跑下去。
+
+心跳提交带 `[skip ci]` 标记且已在部署工作流中排除，不会造成无谓的重新构建。
+最近一次运行时间可在 `.github/last-keepalive.txt` 查看，历史记录见仓库 **Actions** 页。
+
+> 保活任务使用 GitHub Actions 内置凭据运行，**与你的个人令牌无关**，令牌过期也照常工作。
+
+### 唯一还有期限的东西：你的 GitHub 令牌
+
+- 到期时间：**2026-09-03**
+- 影响范围：**仅影响「我帮你更新代码」这一件事**。网站访问、数据同步、自动保活全都不依赖它。
+- 过期后要做什么：什么都不用做。除非哪天要改功能，届时花 1 分钟到 `https://github.com/settings/tokens/new` 重新生成一个填进 `.secrets.json` 即可。
+- 若希望以后永远免操作，可现在就换成 **Expiration: No expiration** 的令牌（一次性，之后再不用碰）。
+
+Supabase 令牌同理，配置已完成，随时可在 `https://supabase.com/dashboard/account/tokens` 撤销，不影响运行。
+
+### 已知的小瑕疵
+
+`github.io` 在国内偶尔出现连接超时（实测约 10% 概率，刷新即可）。若某段时间完全打不开，可把网站另外发布到腾讯云 EdgeOne Pages（能直连本仓库自动部署），拿一个国内加速域名作为备用。
 
 ---
 
@@ -104,12 +127,25 @@ node scripts/setup-github.mjs
 脚本会自动提交、推送、触发云端构建并发布，约 2 分钟后网址上就是新版本。
 （需要 `.secrets.json` 里的 GitHub 令牌仍然有效。）
 
+> **网络不稳时的备选通道**：本机 git 走 Windows 的 schannel，网络被干扰时会报
+> `schannel: failed to receive handshake`。此时改用 HTTPS API 直接提交文件：
+> ```bash
+> node scripts/push-files.mjs 文件路径1 文件路径2 -m "提交说明"
+> ```
+
 想确认线上一切正常，随时运行体检脚本：
 
 ```bash
 node scripts/verify.mjs      # 网址 + 注册登录 + 读写 + 安全隔离，全流程自检
 node scripts/netcheck.mjs    # 换网络时测国内裸连可达性
 ```
+
+检查自动保活是否正常（正常情况下你不用管）：
+
+```
+https://github.com/okydd/smart-calendar/actions/workflows/keepalive.yml
+```
+每天应有一条绿色 ✓ 记录。
 
 ---
 
