@@ -97,11 +97,10 @@ function Shell() {
 
   const tab = location.pathname.startsWith('/todos') ? 'todos' : 'calendar';
 
-  /** 待办角标：今天当天的未完成事项数量 */
+  /** 待办角标：今天当天的事件数量 */
   const pending = useMemo(
     () =>
       events.filter((e) => {
-        if (e.done) return false;
         const d = dayjs(e.date);
         return d.isValid() && d.isSame(today, 'day');
       }).length,
