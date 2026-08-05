@@ -1,8 +1,18 @@
 import type { CalendarEvent } from '../types';
-import { parseDateStr, timeRangeLabel, dayjs } from './date';
+import { parseDateStr, timeRangeLabel, weekdayCN, dayjs } from './date';
 
 /** 通知相关设置（保存在本机 localStorage） */
 const KEY = 'calendarNotify';
+
+/** UTF-8 字符串转 base64（用于邮件附件） */
+function toBase64(str: string): string {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  bytes.forEach((b) => {
+    bin += String.fromCharCode(b);
+  });
+  return btoa(bin);
+}
 export interface NotifySettings {
   /** 接收邮件的邮箱 */
   emailTarget: string;
@@ -14,6 +24,10 @@ export interface NotifySettings {
   emailjsPublicKey: string;
   /** 微信推送 SendKey（ServerChan 方糖） */
   wechatSendKey: string;
+  /** 是否开启每日定时发送（到邮箱） */
+  autoSend: boolean;
+  /** 每日发送时间 HH:mm（默认 04:00） */
+  autoSendTime: string;
 }
 
 const DEFAULT: NotifySettings = {
@@ -21,7 +35,9 @@ const DEFAULT: NotifySettings = {
   emailjsServiceId: '',
   emailjsTemplateId: '',
   emailjsPublicKey: '',
-  wechatSendKey: ''
+  wechatSendKey: '',
+  autoSend: false,
+  autoSendTime: '04:00'
 };
 
 export function getNotifySettings(): NotifySettings {
@@ -66,6 +82,117 @@ export function buildConciseText(
     `事件总数：${lines.length} 条`
   ].join('\n');
   return header + '\n' + (lines.join('\n') || '（无事件）');
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * 生成「完整版」事件报告（HTML 文件）：含每条事件的标题、日期、时间、备注与图片，
+ * 用于作为邮件附件发送，便于在邮箱中直接查看排版与图片。
+ */
+export function buildFullHtml(
+  events: CalendarEvent[],
+  opts: { rangeStart: string; rangeEnd: string; exportTime: string }
+): string {
+  const list = events
+    .filter((e) => !e.deleted)
+    .sort((a, b) => (a.date < b.date ? -1 : 1));
+  const items = list
+    .map((e) => {
+      const d = parseDateStr(e.date);
+      const date = d.isValid() ? `${d.year()}年${d.month() + 1}月${d.date()}日 ${weekdayCN(d)}` : e.date;
+      const time = timeRangeLabel(e);
+      const imgs = e.images && e.images.length
+        ? `<div class="imgs">${e.images
+            .map((src) => `<img src="${src}" alt="事件图片" />`)
+            .join('')}</div>`
+        : '';
+      const tags =
+        (e.important ? '<span class="tag imp">重要</span>' : '') +
+        (e.done ? '<span class="tag done">已完成</span>' : '');
+      return `<div class="ev">
+  <div class="t">${escapeHtml(e.title)}${tags}</div>
+  <div class="m">📅 ${date} ｜ 🕒 ${time}</div>
+  ${e.description ? `<div class="d"><b>备注：</b>${escapeHtml(e.description)}</div>` : ''}
+  ${imgs}
+</div>`;
+    })
+    .join('\n');
+  return `<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>智能日历事件清单（完整版）</title>
+<style>
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f3f4f8; color: #1c1c1e; padding: 18px; margin: 0; }
+  .head { background: linear-gradient(135deg,#3b7cff,#5e60ff); color:#fff; border-radius:14px; padding:14px 18px; }
+  .head h1 { margin:0 0 6px; font-size:18px; }
+  .head p { margin:2px 0; font-size:12px; opacity:.9; }
+  .ev { background:#fff; border-radius:12px; padding:12px 14px; margin:10px 0; box-shadow:0 3px 12px rgba(60,55,110,.06); }
+  .ev .t { font-size:15px; font-weight:700; }
+  .ev .m { font-size:13px; color:#6b6b80; margin-top:4px; }
+  .ev .d { font-size:13px; color:#333; margin-top:6px; line-height:1.6; white-space:pre-wrap; }
+  .ev .imgs { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .ev .imgs img { max-width:140px; max-height:140px; border-radius:8px; object-fit:cover; border:1px solid #eee; }
+  .tag { display:inline-block; font-size:11px; font-weight:600; padding:1px 7px; border-radius:6px; margin-left:6px; }
+  .tag.imp { background:#ffe9e8; color:#ff3b30; }
+  .tag.done { background:#e9f9ef; color:#34c759; }
+  .foot { text-align:center; color:#9aa0b4; font-size:12px; margin-top:14px; }
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>智能日历 · 事件清单（完整版）</h1>
+    <p>选取时间范围：${escapeHtml(opts.rangeStart)} 至 ${escapeHtml(opts.rangeEnd)}</p>
+    <p>导出时间：${escapeHtml(opts.exportTime)} ｜ 共 ${list.length} 条事件</p>
+  </div>
+  ${items || '<p class="foot">（无事件）</p>'}
+  <p class="foot">由「智能日历」自动生成</p>
+</body>
+</html>`;
+}
+
+/** 每日定时发送使用的简洁正文（不强调范围，仅说明日期） */
+export function buildDailyText(events: CalendarEvent[]): string {
+  const lines = events
+    .filter((e) => !e.deleted)
+    .sort((a, b) => (a.date < b.date ? -1 : 1))
+    .map((e) => {
+      const d = parseDateStr(e.date);
+      const date = d.isValid() ? `${d.month() + 1}月${d.date()}日` : e.date;
+      return `${date} ${timeRangeLabel(e)} ${e.title}`;
+    });
+  const today = dayjs().format('YYYY年M月D日');
+  return [
+    `【智能日历 · 每日数据】`,
+    `日期：${today}`,
+    `事件总数：${lines.length} 条`,
+    '',
+    lines.join('\n') || '（无事件）'
+  ].join('\n');
+}
+
+/** 发送每日数据到邮箱（简洁正文 + 完整版 HTML 附件） */
+export async function sendDailyDigest(events: CalendarEvent[]): Promise<{ ok: boolean; msg: string }> {
+  const today = dayjs().format('YYYY年M月D日');
+  const text = buildDailyText(events);
+  const html = buildFullHtml(events, {
+    rangeStart: today,
+    rangeEnd: today,
+    exportTime: dayjs().format('YYYY年M月D日 HH:mm')
+  });
+  return sendEmail('智能日历 每日数据', text, {
+    name: `Calendar_Daily_${dayjs().format('YYYYMMDD')}.html`,
+    data: toBase64(html),
+    mimeType: 'text/html'
+  });
 }
 
 /** 邮件附件（base64，不含 data: 前缀） */
