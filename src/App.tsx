@@ -20,24 +20,9 @@ import CalendarPage from './mobile/CalendarPage';
 import TodoPage from './mobile/TodoPage';
 import MoreSheet from './mobile/MoreSheet';
 import SyncPanel from './mobile/SyncPanel';
-import { dayjs, parseDateStr, weekdayCN } from './utils/date';
-
-/** 宽屏（≥1024px）判定，用于桌面双栏布局 */
-function useIsDesktop(): boolean {
-  const [matched, setMatched] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches
-  );
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 1024px)');
-    const handler = (e: MediaQueryListEvent) => setMatched(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-  return matched;
-}
+import { dayjs, lunarDateLabel, weekdayCN } from './utils/date';
 
 function Shell() {
-  const isDesktop = useIsDesktop();
   const navigate = useNavigate();
   const location = useLocation();
   const { search, setSearch, activeTags, clearTags, events } = useCalendar();
@@ -45,6 +30,9 @@ function Shell() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [syncOpen, setSyncOpen] = useState(false);
+
+  const today = dayjs();
+  const lunar = useMemo(() => lunarDateLabel(today), [today]);
 
   /** 顶部同步状态图标 */
   const syncIcon =
@@ -59,28 +47,29 @@ function Shell() {
     );
 
   const tab = location.pathname.startsWith('/todos') ? 'todos' : 'calendar';
-  const today = dayjs();
 
-  /** 待办角标：今天及以前未完成的事项数量 */
+  /** 待办角标：未完成且今天及以前的事项数量 */
   const pending = useMemo(
     () =>
       events.filter((e) => {
         if (e.done) return false;
-        const d = parseDateStr(e.date);
+        const d = dayjs(e.date);
         return d.isValid() && !d.isAfter(today, 'day');
       }).length,
     [events, today]
   );
 
   return (
-    <div className={`app-shell${isDesktop ? ' desktop' : ''}`}>
+    <div className="app-shell">
       <header className="topbar">
         <div className="topbar-row">
           <div className="topbar-title">
-            智能日历
-            <small>
-              {today.month() + 1}月{today.date()}日 {weekdayCN(today)}
-            </small>
+            <div className="topbar-date">
+              {today.year()}年{today.month() + 1}月{today.date()}日
+            </div>
+            <div className="topbar-sub">
+              {weekdayCN(today)} · 农历{lunar}
+            </div>
           </div>
           <button
             className="topbar-btn"
@@ -139,46 +128,33 @@ function Shell() {
       </header>
 
       <div className="app-content">
-        {isDesktop ? (
-          <>
-            <div className="desk-col">
-              <p className="desk-col-title">日历</p>
-              <CalendarPage />
-            </div>
-            <div className="desk-col">
-              <p className="desk-col-title">办事清单</p>
-              <TodoPage />
-            </div>
-          </>
-        ) : (
+        <div className="app-content-inner">
           <Routes>
             <Route path="/" element={<Navigate to="/calendar" replace />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/todos" element={<TodoPage />} />
             <Route path="*" element={<Navigate to="/calendar" replace />} />
           </Routes>
-        )}
+        </div>
       </div>
 
-      {!isDesktop && (
-        <nav className="tabbar">
-          <button
-            className={`tabbar-item${tab === 'calendar' ? ' active' : ''}`}
-            onClick={() => navigate('/calendar')}
-          >
-            <CalendarOutlined className="tab-ico" />
-            日历
-          </button>
-          <button
-            className={`tabbar-item${tab === 'todos' ? ' active' : ''}`}
-            onClick={() => navigate('/todos')}
-          >
-            <UnorderedListOutlined className="tab-ico" />
-            办事清单
-            {pending > 0 && <span className="tab-badge">{pending > 99 ? '99+' : pending}</span>}
-          </button>
-        </nav>
-      )}
+      <nav className="tabbar">
+        <button
+          className={`tabbar-item${tab === 'calendar' ? ' active' : ''}`}
+          onClick={() => navigate('/calendar')}
+        >
+          <CalendarOutlined className="tab-ico" />
+          日历
+        </button>
+        <button
+          className={`tabbar-item${tab === 'todos' ? ' active' : ''}`}
+          onClick={() => navigate('/todos')}
+        >
+          <UnorderedListOutlined className="tab-ico" />
+          办事清单
+          {pending > 0 && <span className="tab-badge">{pending > 99 ? '99+' : pending}</span>}
+        </button>
+      </nav>
 
       <EventModal />
       <MoreSheet
