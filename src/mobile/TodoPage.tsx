@@ -7,7 +7,6 @@ import {
   parseDateStr,
   timeRangeLabel,
   timeToMinutes,
-  toDateStr,
   weekdayCN,
   type Dayjs
 } from '../utils/date';
@@ -18,7 +17,6 @@ interface Group {
   key: string;
   label: string;
   items: CalendarEvent[];
-  overdue?: boolean;
 }
 
 /** 按日期与时间排序 */
@@ -37,27 +35,45 @@ function dateLabel(d: Dayjs, today: Dayjs): string {
   return d.format('YYYY年M月D日');
 }
 
+/** 右侧状态提示 */
+function statusHint(d: Dayjs, e: CalendarEvent, today: Dayjs): string {
+  if (e.done) return '已完成';
+  if (d.isBefore(today, 'day')) return '已过期';
+  if (d.isSame(today, 'day')) {
+    if (!e.allDay && e.startTime) {
+      const now = dayjs();
+      const [h, m] = e.startTime.split(':').map(Number);
+      const start = dayjs().hour(h).minute(m);
+      if (start.isAfter(now)) {
+        const hours = Math.max(1, Math.ceil(start.diff(now, 'hour', true)));
+        return `剩${hours}小时`;
+      }
+    }
+    return '今天';
+  }
+  const days = d.diff(today, 'day');
+  return `剩${days}天`;
+}
+
 /**
- * 移动端办事清单页：按 已过期 / 今天 / 本周 / 本月 / 以后 分组，
- * 支持勾选完成、已完成折叠、快速添加。
+ * 办事清单页：按 本周 / 下周 / 其它时间 / 已完成 分组。
  */
 export default function TodoPage() {
-  const { filteredEvents, addEvent, toggleDone } = useCalendar();
+  const { filteredEvents, toggleDone } = useCalendar();
   const { openEdit } = useUI();
-  const [draft, setDraft] = useState('');
   const [doneOpen, setDoneOpen] = useState(false);
 
   const today = useMemo(() => dayjs().startOf('day'), []);
 
   const { groups, doneItems } = useMemo(() => {
+    const weekStart = today.weekday(0);
     const weekEnd = today.weekday(6);
-    const monthEnd = today.endOf('month');
+    const nextWeekStart = weekStart.add(7, 'day');
+    const nextWeekEnd = weekEnd.add(7, 'day');
 
-    const overdue: CalendarEvent[] = [];
-    const todayList: CalendarEvent[] = [];
     const week: CalendarEvent[] = [];
-    const month: CalendarEvent[] = [];
-    const later: CalendarEvent[] = [];
+    const nextWeek: CalendarEvent[] = [];
+    const other: CalendarEvent[] = [];
     const done: CalendarEvent[] = [];
 
     for (const e of filteredEvents) {
@@ -67,53 +83,32 @@ export default function TodoPage() {
       }
       const d = parseDateStr(e.date);
       if (!d.isValid()) {
-        later.push(e);
-      } else if (d.isBefore(today, 'day')) {
-        overdue.push(e);
-      } else if (d.isSame(today, 'day')) {
-        todayList.push(e);
-      } else if (!d.isAfter(weekEnd, 'day')) {
+        other.push(e);
+      } else if (!d.isBefore(weekStart, 'day') && !d.isAfter(weekEnd, 'day')) {
         week.push(e);
-      } else if (!d.isAfter(monthEnd, 'day')) {
-        month.push(e);
+      } else if (!d.isBefore(nextWeekStart, 'day') && !d.isAfter(nextWeekEnd, 'day')) {
+        nextWeek.push(e);
       } else {
-        later.push(e);
+        other.push(e);
       }
     }
 
-    [overdue, todayList, week, month, later].forEach((a) => a.sort(sortEvents));
+    [week, nextWeek, other].forEach((a) => a.sort(sortEvents));
     done.sort((a, b) => sortEvents(b, a));
 
     const gs: Group[] = [
-      { key: 'overdue', label: '已过期', items: overdue, overdue: true },
-      { key: 'today', label: '今天', items: todayList },
       { key: 'week', label: '本周', items: week },
-      { key: 'month', label: '本月', items: month },
-      { key: 'later', label: '以后', items: later }
+      { key: 'nextWeek', label: '下周', items: nextWeek },
+      { key: 'other', label: '其它时间', items: other }
     ].filter((g) => g.items.length > 0);
 
     return { groups: gs, doneItems: done };
   }, [filteredEvents, today]);
 
-  const handleAdd = () => {
-    const title = draft.trim();
-    if (!title) return;
-    addEvent({
-      title,
-      date: toDateStr(dayjs()),
-      startTime: '',
-      endTime: '',
-      allDay: true,
-      description: '',
-      tag: 'purple',
-      done: false
-    });
-    setDraft('');
-  };
-
   const renderItem = (e: CalendarEvent) => {
     const d = parseDateStr(e.date);
-    const isOverdue = !e.done && d.isValid() && d.isBefore(today, 'day');
+    const hint = d.isValid() ? statusHint(d, e, today) : '未设置日期';
+    const expired = !e.done && d.isValid() && d.isBefore(today, 'day');
     return (
       <div className="todo-item" key={e.id}>
         <button
@@ -130,13 +125,13 @@ export default function TodoPage() {
               className="todo-dot"
               style={{ background: TAG_COLORS[e.tag].color }}
             />
-            <span className={isOverdue ? 'overdue-txt' : ''}>
+            <span className={expired ? 'overdue-txt' : ''}>
               {d.isValid() ? dateLabel(d, today) : '未设置日期'}
             </span>
             {!e.allDay && e.startTime ? <span>{timeRangeLabel(e)}</span> : null}
-            <span>{TAG_COLORS[e.tag].label}</span>
           </div>
         </div>
+        <div className={`todo-hint${expired ? ' expired' : e.done ? ' done' : ''}`}>{hint}</div>
       </div>
     );
   };
@@ -145,33 +140,18 @@ export default function TodoPage() {
 
   return (
     <div className="page">
-      <div className="quick-add">
-        <input
-          value={draft}
-          onChange={(ev) => setDraft(ev.target.value)}
-          onKeyDown={(ev) => {
-            if (ev.key === 'Enter') handleAdd();
-          }}
-          placeholder="添加待办事项，回车即可…"
-          maxLength={50}
-        />
-        <button onClick={handleAdd} disabled={!draft.trim()}>
-          添加
-        </button>
-      </div>
-
       {total === 0 && doneItems.length === 0 ? (
         <div className="empty-todo">
           <span className="big">✅</span>
           还没有待办事项
           <br />
-          在上方输入框添加第一条吧
+          点击右下角 + 添加一条吧
         </div>
       ) : null}
 
       {groups.map((g) => (
         <section className="todo-group" key={g.key}>
-          <div className={`group-head${g.overdue ? ' overdue' : ''}`}>
+          <div className="group-head">
             <h4>{g.label}</h4>
             <span className="count">{g.items.length}</span>
           </div>
@@ -185,7 +165,7 @@ export default function TodoPage() {
             className="group-head clickable"
             onClick={() => setDoneOpen((v) => !v)}
           >
-            <h4>已完成</h4>
+            <h4>已完成事项</h4>
             <span className="count">{doneItems.length}</span>
             <DownOutlined className={`chev${doneOpen ? ' open' : ''}`} />
           </div>
