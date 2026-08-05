@@ -214,7 +214,8 @@ export default function EventModal() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="例如：团队周会"
-              maxLength={50}
+              maxLength={20}
+              showCount
             />
           </div>
 
