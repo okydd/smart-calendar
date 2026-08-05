@@ -438,8 +438,9 @@ body {
 
 .remind-range {
   font-size: 12px;
-  color: var(--c-text-gray);
+  color: var(--c-primary);
   margin-left: 4px;
+  font-weight: 600;
 }
 
 .remind-count {
@@ -515,6 +516,7 @@ body {
   align-items: stretch;
   gap: 10px;
   background: #fafbfc;
+  border: 1px solid #cfe0ff;
   border-radius: 12px;
   padding: 12px 12px 12px 0;
   cursor: pointer;
@@ -767,6 +769,38 @@ body {
   color: var(--c-success);
 }
 
+/* 今天无事件：占位方块 */
+.todo-empty {
+  background: var(--c-card);
+  border: 1px dashed #d3d6e2;
+  border-radius: 14px;
+  padding: 22px 12px;
+  margin-bottom: 8px;
+  text-align: center;
+  color: var(--c-text-gray);
+  font-size: 14px;
+  box-shadow: 0 3px 12px rgba(60, 55, 110, 0.05);
+}
+
+/* 清单时间行右侧的「剩X天」：加大字号 */
+.todo-days {
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-primary);
+  white-space: nowrap;
+}
+
+.todo-days.expired {
+  color: var(--c-text-gray);
+  font-weight: 600;
+}
+
+.todo-days.done {
+  color: var(--c-success);
+  font-weight: 600;
+}
+
 .done-section {
   margin-top: 6px;
   border-top: 1px dashed #e2e3ee;
@@ -878,6 +912,20 @@ body {
   width: 100%;
   display: flex;
   gap: 10px;
+}
+
+.export-range-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.export-range-col > label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--c-text-gray);
 }
 
 .export-range-pickers .ant-picker {
@@ -1402,6 +1450,60 @@ body {
   font-weight: 600;
 }
 
+/* 月提醒：年月切换并入标题行（不换行） */
+.month-nav-inline {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.month-nav-inline-label {
+  margin-left: 0;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 搜索结果返回条 */
+.search-banner {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 12px 12px 0;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #e6e8f2;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(60, 55, 110, 0.06);
+}
+
+.search-banner-text {
+  font-size: 13px;
+  color: var(--c-text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-banner-back {
+  flex-shrink: 0;
+  border: none;
+  background: var(--c-gradient);
+  color: #fff;
+  border-radius: 10px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 /* ===================== 事件弹窗（自定义，无 antd Modal 闪动） ===================== */
 .ev-overlay {
   position: fixed;
@@ -1506,6 +1608,55 @@ body {
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 6px 18px rgba(59, 124, 255, 0.28);
+}
+
+/* 事件详情底部：两行按钮（新建/编辑 各半，删除/取消 灰底各半） */
+.ev-foot-stack {
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ev-foot-row {
+  display: flex;
+  gap: 10px;
+}
+
+.ev-foot-row > button {
+  flex: 1;
+  min-width: 0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.ev-btn-new {
+  background: var(--c-gradient);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(59, 124, 255, 0.28);
+}
+
+.ev-btn-edit {
+  background: linear-gradient(135deg, #00b8a3, #1ec8a0);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(0, 184, 163, 0.26);
+}
+
+.ev-btn-gray {
+  background: #f2f3f8;
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
+}
+
+.ev-btn-new:active,
+.ev-btn-edit:active {
+  opacity: 0.9;
+}
+
+.ev-btn-gray:active {
+  background: #e7e8f0;
 }
 
 /* 事件级别（普通 / 重要） */
@@ -1784,6 +1935,44 @@ body {
   background: #f6f7fb;
   border-radius: 8px;
   padding: 8px 10px;
+}
+
+/* 每日定时发送：行布局 + 时间输入框 */
+.auto-send-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.auto-send-label {
+  font-size: 13.5px;
+  color: var(--c-text);
+  font-weight: 500;
+}
+
+.auto-send-time-label {
+  font-size: 13px;
+  color: var(--c-text-gray);
+  margin-left: auto;
+}
+
+.auto-send-time {
+  border: 1.5px solid #e6e8f2;
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-size: 14px;
+  color: var(--c-text);
+  background: #fafbff;
+  outline: none;
+  font-family: inherit;
+}
+
+.auto-send-time:focus {
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 3px rgba(59, 124, 255, 0.12);
+  background: #fff;
 }
 
 .notify-save {
