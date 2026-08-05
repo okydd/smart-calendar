@@ -13,6 +13,9 @@ export interface RemoteRow {
   tag: string;
   done: boolean;
   deleted: boolean;
+  important: boolean;
+  /** 关联图片（dataURL 数组），存为 jsonb */
+  images: string[];
   updated_at: string;
 }
 
@@ -31,6 +34,8 @@ export function rowToEvent(r: RemoteRow): CalendarEvent {
     tag: (TAGS.includes(r.tag) ? r.tag : 'purple') as CalendarEvent['tag'],
     done: Boolean(r.done),
     deleted: Boolean(r.deleted),
+    important: Boolean(r.important),
+    images: Array.isArray(r.images) ? (r.images as string[]) : [],
     updatedAt: r.updated_at
   };
 }
@@ -49,6 +54,8 @@ export function eventToRow(e: CalendarEvent, userId: string): RemoteRow {
     tag: TAGS.includes(e.tag) ? e.tag : 'purple',
     done: Boolean(e.done),
     deleted: Boolean(e.deleted),
+    important: Boolean(e.important),
+    images: Array.isArray(e.images) ? e.images : [],
     updated_at: e.updatedAt || new Date(0).toISOString()
   };
 }
