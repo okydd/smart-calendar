@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CheckOutlined, DownOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { CheckOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
 import { useUI } from '../context/UIContext';
 import { IMPORTANT_COLOR } from '../constants';
@@ -60,7 +60,6 @@ function statusHint(d: Dayjs, e: CalendarEvent, today: Dayjs): string {
 export default function TodoPage() {
   const { filteredEvents, toggleDone } = useCalendar();
   const { openView } = useUI();
-  const [doneOpen, setDoneOpen] = useState(true);
   const [doneMonth, setDoneMonth] = useState(() => dayjs().startOf('month'));
   const [doneShowAll, setDoneShowAll] = useState(false);
 
@@ -180,15 +179,11 @@ export default function TodoPage() {
 
       {doneItems.length > 0 && (
         <section className="todo-group done-section">
-          <div
-            className="group-head clickable"
-            onClick={() => setDoneOpen((v) => !v)}
-          >
+          <div className="group-head">
             <h4>已完成事项</h4>
             <span className="count">{doneItems.length}</span>
-            <DownOutlined className={`chev${doneOpen ? ' open' : ''}`} />
           </div>
-          {doneOpen && (
+          {(
             <>
               <div className="done-filter">
                 <button
