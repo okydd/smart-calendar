@@ -1325,15 +1325,16 @@ body {
   opacity: 0.92;
 }
 
-/* ===================== 有事件的日期：与今天色块同尺寸的淡色圆框 ===================== */
+/* ===================== 有事件的日期：极细淡色边框，无背景色 ===================== */
 .mcell.has-event {
   border: none;
 }
 
 .mcell.has-event .dnum {
-  border: 1.5px solid #c2c6e0;
-  background: #f3f4fb;
-  font-weight: 600;
+  border: 1px solid #e3e6f2;
+  background: transparent;
+  font-weight: 500;
+  color: var(--c-text);
 }
 
 /* 今天 / 选中日期已有底色时，不再叠加额外方框 */
@@ -1676,26 +1677,63 @@ body {
 .notify-form {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.notify-panel {
+  background: #fff;
+  border: 1px solid #eceefb;
+  border-radius: 16px;
+  padding: 14px 14px 16px;
+  box-shadow: 0 4px 16px rgba(60, 55, 110, 0.05);
+  animation: fadeUp 0.2s ease;
+}
+
+.notify-panel-head {
+  display: flex;
+  align-items: center;
   gap: 8px;
-  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-text);
+  margin-bottom: 12px;
 }
 
-.notify-form label {
+.notify-panel-head .anticon {
+  color: var(--c-primary);
+  font-size: 16px;
+}
+
+.notify-panel label {
+  display: block;
   font-size: 12.5px;
+  font-weight: 600;
   color: var(--c-text-gray);
+  margin: 10px 0 6px;
 }
 
-.notify-form input {
-  border: 1px solid var(--c-border);
-  border-radius: 10px;
-  padding: 10px 12px;
+.notify-panel input,
+.notify-panel textarea {
+  width: 100%;
+  border: 1.5px solid #e6e8f2;
+  border-radius: 12px;
+  padding: 11px 12px;
   font-size: 14px;
   color: var(--c-text);
+  background: #fafbff;
   outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
 }
 
-.notify-form input:focus {
+.notify-panel input:focus,
+.notify-panel textarea:focus {
   border-color: var(--c-primary);
+  box-shadow: 0 0 0 3px rgba(59, 124, 255, 0.12);
+  background: #fff;
 }
 
 .notify-tip {
@@ -1758,6 +1796,19 @@ body {
 .ev-all-day-tip {
   font-size: 12px;
   color: var(--c-text-gray);
+}
+
+/* 日期与时间共占一行（并排） */
+.ev-datetime-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.ev-datetime-row .ev-field {
+  min-width: 0;
+  margin-bottom: 14px;
 }
 
 .wheel-picker {
@@ -1877,9 +1928,22 @@ body {
   font-size: 13px;
 }
 
-/* --- 事件查看页 --- */
+/* --- 事件查看页（卡片化重做） --- */
 .ev-view .ev-foot {
   gap: 8px;
+}
+
+.evv-card {
+  background: #f7f8fc;
+  border: 1px solid #eef0f6;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.evv-main {
+  background: linear-gradient(135deg, #f7f8ff, #f1f3ff);
+  border-color: #e7e9fb;
 }
 
 .evv-title-row {
@@ -1887,11 +1951,10 @@ body {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
 }
 
 .evv-title {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 700;
   color: var(--c-text);
   word-break: break-word;
@@ -1911,45 +1974,35 @@ body {
   padding: 1px 7px;
 }
 
-.evv-meta {
-  background: #f7f8fc;
-  border-radius: 12px;
-  padding: 10px 12px;
+.evv-meta2 {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 12px;
   font-size: 13.5px;
   color: var(--c-text);
 }
 
-.evv-label {
-  display: inline-block;
-  min-width: 42px;
-  color: var(--c-text-gray);
+.evv-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.evv-ico {
+  font-size: 13px;
+  opacity: 0.65;
+}
+
+.evv-card-label {
   font-size: 12px;
-  margin-right: 8px;
-}
-
-.evv-flags {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.evv-flag {
-  background: #f2f3f8;
-  border-radius: 8px;
-  padding: 3px 9px;
-  font-size: 12px;
+  font-weight: 600;
   color: var(--c-text-gray);
-}
-
-.evv-block {
-  margin-top: 14px;
+  margin-bottom: 8px;
 }
 
 .evv-desc {
-  margin-top: 4px;
+  margin-top: 0;
   font-size: 13.5px;
   line-height: 1.7;
   color: var(--c-text);
@@ -1961,7 +2014,6 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 6px;
 }
 
 .evv-img {
@@ -1972,30 +2024,80 @@ body {
   border: 1px solid var(--c-border);
 }
 
-.evv-done-btn {
-  margin-top: 16px;
-  width: 100%;
-  border: 1px solid var(--c-success);
-  background: #fff;
-  color: var(--c-success);
-  border-radius: 12px;
-  padding: 10px;
-  font-size: 14px;
-  font-weight: 600;
+/* 完成状态：未完成 / 已完成 小切换 */
+.evv-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 2px 2px 0;
+}
+
+.evv-status-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text-gray);
+}
+
+.evv-toggle {
+  display: inline-flex;
+  background: #ebedf4;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.evv-toggle .opt {
+  border: none;
+  background: transparent;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text-gray);
   cursor: pointer;
+  transition: all 0.18s;
+}
+
+.evv-toggle .opt.active {
+  background: #fff;
+  color: var(--c-primary);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(20, 22, 40, 0.1);
+}
+
+.evv-toggle .opt.done.active {
+  color: var(--c-success);
+}
+
+/* --- 备注 / 图片色块标注（注 / 图）--- */
+.ev-flags-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.ev-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  flex-shrink: 0;
 }
 
-/* --- 备注 / 图片小图标 --- */
-.ev-flags-mini {
-  display: inline-flex;
-  gap: 3px;
-  font-size: 12px;
-  flex-shrink: 0;
-  opacity: 0.75;
+.ev-chip-note {
+  background: #3b7cff;
+}
+
+.ev-chip-img {
+  background: #8b5cf6;
 }
 
 /* --- 办事清单：左侧彩色边框（与日历一致） --- */
@@ -2017,12 +2119,35 @@ body {
   align-self: center;
 }
 
-/* --- 已完成事项：年月筛选 --- */
-.done-filter {
+/* --- 已完成事项：标题行右侧月份筛选 --- */
+.done-head {
+  align-items: center;
+}
+
+.done-filter-inline {
+  margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0 2px 10px;
+  gap: 6px;
+}
+
+.done-filter-inline .nav-btn {
+  width: 26px;
+  height: 26px;
+  background: #f2f3f8;
+}
+
+.done-filter-inline .done-month-label {
+  min-width: 84px;
+  text-align: center;
+}
+
+/* 分组副标题（如「今天」为空时的提示） */
+.group-sub {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--c-text-gray);
 }
 
 .done-month-label {
@@ -2090,21 +2215,28 @@ body {
 .tri-btn {
   flex: 1 1 0;
   min-width: 0;
-  border: 1px solid var(--c-border);
+  border: 1.5px solid #e6e8f2;
   background: #fff;
   border-radius: 14px;
-  padding: 12px 6px;
+  padding: 13px 6px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
   transition: all 0.18s;
+  box-shadow: 0 2px 8px rgba(60, 55, 110, 0.04);
+}
+
+.tri-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 4px rgba(60, 55, 110, 0.08);
 }
 
 .tri-btn .ico {
   font-size: 19px;
   color: var(--c-primary);
+  transition: color 0.18s;
 }
 
 .tri-btn .t {
@@ -2125,7 +2257,13 @@ body {
 
 .tri-btn.active {
   border-color: var(--c-primary);
-  background: #eef3ff;
+  background: rgba(59, 124, 255, 0.07);
+  box-shadow: 0 4px 14px rgba(59, 124, 255, 0.14);
+}
+
+.tri-btn.on {
+  border-color: #34c759;
+  background: rgba(52, 199, 89, 0.07);
 }
 
 .tri-btn.on .ico {
@@ -2151,18 +2289,7 @@ body {
   color: var(--c-primary);
 }
 
-/* --- 通知设置：多邮箱输入 --- */
+/* --- 通知设置：多邮箱输入（沿用 .notify-panel textarea 高级样式） --- */
 .notify-form textarea {
-  border: 1px solid var(--c-border);
-  border-radius: 10px;
-  padding: 9px 11px;
-  font-size: 13.5px;
-  outline: none;
-  resize: vertical;
-  font-family: inherit;
-  color: var(--c-text);
-}
-
-.notify-form textarea:focus {
-  border-color: var(--c-primary);
+  min-height: 56px;
 }
