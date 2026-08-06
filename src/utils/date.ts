@@ -49,6 +49,10 @@ export const weekDays = (d: Dayjs): Dayjs[] => {
 /** 星期 X（中文，如「星期三」） */
 export const weekdayCN = (d: Dayjs): string => `星期${WEEK_CN[d.day()]}`;
 
+/** 月日 + 星期，如「8月5日 星期三」 */
+export const dateWeekLabel = (d: Dayjs): string =>
+  `${d.month() + 1}月${d.date()}日 ${weekdayCN(d)}`;
+
 /** 导出图片用的日期列文案：MM月DD日（精简，避免与时间列重叠） */
 export const exportDateLabel = (d: Dayjs): string => `${d.format('MM')}月${d.format('DD')}日`;
 
