@@ -195,7 +195,7 @@ export default function TodoPage() {
         <section className="remind-card done-section">
           <div className="remind-header done">
             <CheckCircleOutlined className="remind-ico" />
-            <span className="remind-label">已完成事项</span>
+            <span className="remind-label">已完成</span>
             <span className="remind-count">{doneItems.length}</span>
             <div className="done-filter-inline">
               <button
