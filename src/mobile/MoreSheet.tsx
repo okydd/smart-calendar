@@ -29,6 +29,7 @@ import {
   buildConciseText,
   type NotifySettings
 } from '../utils/notify';
+import { InstallGuide } from '../utils/install';
 import ExportModal from '../components/ExportModal';
 
 export default function MoreSheet({
@@ -181,17 +182,7 @@ export default function MoreSheet({
     }
     Modal.info({
       title: '安装到桌面',
-      content: (
-        <div style={{ fontSize: 13, lineHeight: 1.9 }}>
-          <b>安卓 / 鸿蒙：</b>用浏览器打开本网址，点右上角菜单 →「添加到主屏幕 / 安装应用」。
-          <br />
-          <b>iPhone：</b>用 Safari 打开本网址，点底部分享按钮 →「添加到主屏幕」。
-          <br />
-          <b>电脑：</b>Chrome / Edge 地址栏右侧的「安装」图标。
-          <br />
-          安装后会生成独立图标，全屏运行，断网也能使用。
-        </div>
-      ),
+      content: <InstallGuide />,
       okText: '知道了'
     });
   };
