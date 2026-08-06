@@ -25,7 +25,10 @@ import {
   getNotifySettings,
   saveNotifySettings,
   dingtalkConfigured,
+  wechatConfigured,
   sendEmail,
+  sendWechat,
+  sendDingtalk,
   buildConciseText,
   type NotifySettings
 } from '../utils/notify';
@@ -173,6 +176,33 @@ export default function MoreSheet({
       message.success('通知设置已保存到本机');
     }
     setNotifyOpen(false);
+  };
+
+  /** 发送一条测试消息，验证微信/钉钉通道是否配置正确（也用于确认「提前通知」会发到该渠道） */
+  const testWechat = async () => {
+    if (!wechatConfigured()) {
+      message.warning('请先填写 ServerChan SendKey');
+      return;
+    }
+    const r = await sendWechat(
+      '智能日历 · 通道测试',
+      '这是一条测试消息，说明「事件提前通知」已可推送到微信。'
+    );
+    if (r.ok) message.success(r.msg);
+    else message.error(r.msg);
+  };
+
+  const testDingtalk = async () => {
+    if (!dingtalkConfigured()) {
+      message.warning('请先填写钉钉机器人 Webhook');
+      return;
+    }
+    const r = await sendDingtalk(
+      '智能日历 · 通道测试',
+      '这是一条测试消息，说明「事件提前通知」已可推送到钉钉。'
+    );
+    if (r.ok) message.success(r.msg);
+    else message.error(r.msg);
   };
 
   const showInstallGuide = () => {
@@ -371,6 +401,9 @@ export default function MoreSheet({
                   placeholder="SCTxxxxx"
                   onChange={(e) => setNs({ ...ns, wechatSendKey: e.target.value })}
                 />
+                <button className="notify-test" onClick={testWechat}>
+                  发送测试消息
+                </button>
               </div>
 
               <div className="notify-panel">
@@ -390,6 +423,9 @@ export default function MoreSheet({
                   placeholder="SECxxxxxxxx"
                   onChange={(e) => setNs({ ...ns, dingtalkSecret: e.target.value })}
                 />
+                <button className="notify-test" onClick={testDingtalk}>
+                  发送测试消息
+                </button>
               </div>
 
               <div className="notify-tip">
