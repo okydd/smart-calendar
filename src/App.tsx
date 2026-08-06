@@ -101,6 +101,21 @@ function Shell() {
     [events, today]
   );
 
+  /**
+   * 系统级 App 图标角标（PWA Badging API）：已安装到桌面的 PWA 会在启动器图标上显示未读数，
+   * 类似 QQ 消息红点。不支持的环境（iOS Safari、未安装、非安全上下文）静默忽略。
+   */
+  useEffect(() => {
+    const nav = navigator as any;
+    if (typeof nav.setAppBadge !== 'function') return;
+    try {
+      if (pending > 0) nav.setAppBadge(pending).catch(() => {});
+      else nav.clearAppBadge().catch(() => {});
+    } catch {
+      /* 忽略不支持的环境 */
+    }
+  }, [pending]);
+
   /** 每日定时发送：在设定时间自动把数据发到邮箱（应用打开期间触发，最佳努力） */
   useEffect(() => {
     let timer: number | undefined;
