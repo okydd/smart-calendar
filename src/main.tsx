@@ -38,6 +38,9 @@ if (boot) {
   const hide = () => {
     if (removed) return;
     removed = true;
+    if ((window as any).__bootHealTimer) {
+      clearTimeout((window as any).__bootHealTimer);
+    }
     boot.style.opacity = '0';
     window.setTimeout(() => boot.remove(), 140);
   };
