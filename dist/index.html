@@ -19,68 +19,10 @@
     <meta name="apple-mobile-web-app-title" content="智能日历" />
 
     <title>智能日历</title>
-    <link rel="stylesheet" href="./boot.css" />
-    <script type="module" crossorigin src="./assets/index-BTVpQK75.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-Ba_fTWwv.css">
+    <script type="module" crossorigin src="./assets/index-DmGVFa0j.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-oXH1-dr8.css">
   </head>
   <body>
     <div id="root"></div>
-    <div id="boot">
-      <div class="boot-inner">
-        <div class="boot-title">智能日历</div>
-        <div class="boot-bar"><div class="boot-progress" id="boot-progress"></div></div>
-        <div class="boot-hint" id="boot-hint">正在加载…</div>
-      </div>
-    </div>
-    <script>
-      (function () {
-        var bar = document.getElementById('boot-progress');
-        var hint = document.getElementById('boot-hint');
-        if (!bar) return;
-        var start = performance.now();
-        var width = 0;
-        function easeOutApproach(elapsed) {
-          // 目标上限 90%，前半段快、后半段慢，给用户"正在努力加载"的感觉
-          return 90 * (1 - Math.exp(-elapsed / 1600));
-        }
-        function tick() {
-          var target = easeOutApproach(performance.now() - start);
-          if (target > width) {
-            width = target;
-            bar.style.width = width + '%';
-          }
-          if (width < 90) requestAnimationFrame(tick);
-        }
-        requestAnimationFrame(tick);
-        window.addEventListener('load', function () {
-          bar.style.width = '100%';
-          if (hint) hint.textContent = '即将进入…';
-        });
-      })();
-
-      // 自愈：若启动页超过 14 秒仍未移除（可能因旧 SW / 损坏缓存卡死），
-      // 清除所有 Service Worker 注册并强制刷新，恢复可访问性
-      window.__bootHealTimer = setTimeout(function () {
-        if (!document.getElementById('boot')) return;
-        var reload = function () {
-          location.reload(true);
-        };
-        if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
-          navigator.serviceWorker
-            .getRegistrations()
-            .then(function (regs) {
-              return Promise.all(
-                regs.map(function (r) {
-                  return r.unregister().catch(function () {});
-                })
-              );
-            })
-            .then(reload)
-            .catch(reload);
-        } else {
-          reload();
-        }
-      }, 14000);
-    </script>
   </body>
 </html>
