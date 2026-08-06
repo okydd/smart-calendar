@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#3b7cff" />
+    <meta name="description" content="智能日历 - 日程与办事清单，支持导出精美长图" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="./icons/icon-180.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="智能日历" />
+
+    <title>智能日历</title>
+    <link rel="stylesheet" href="./boot.css" />
+    <script type="module" crossorigin src="./assets/index-D_F7r2jj.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-9GnKSyJs.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="boot">
+      <div class="boot-inner">
+        <div class="boot-title">智能日历</div>
+        <div class="boot-bar"><div class="boot-progress" id="boot-progress"></div></div>
+        <div class="boot-hint" id="boot-hint">正在加载…</div>
+      </div>
+    </div>
+    <script>
+      (function () {
+        var bar = document.getElementById('boot-progress');
+        var hint = document.getElementById('boot-hint');
+        if (!bar) return;
+        var start = performance.now();
+        var width = 0;
+        function easeOutApproach(elapsed) {
+          // 目标上限 90%，前半段快、后半段慢，给用户"正在努力加载"的感觉
+          return 90 * (1 - Math.exp(-elapsed / 1600));
+        }
+        function tick() {
+          var target = easeOutApproach(performance.now() - start);
+          if (target > width) {
+            width = target;
+            bar.style.width = width + '%';
+          }
+          if (width < 90) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+        window.addEventListener('load', function () {
+          bar.style.width = '100%';
+          if (hint) hint.textContent = '即将进入…';
+        });
+      })();
+
+      // 自愈：若启动页超过 14 秒仍未移除（可能因旧 SW / 损坏缓存卡死），
+      // 清除所有 Service Worker 注册并强制刷新，恢复可访问性
+      window.__bootHealTimer = setTimeout(function () {
+        if (!document.getElementById('boot')) return;
+        var reload = function () {
+          location.reload(true);
+        };
+        if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+          navigator.serviceWorker
+            .getRegistrations()
+            .then(function (regs) {
+              return Promise.all(
+                regs.map(function (r) {
+                  return r.unregister().catch(function () {});
+                })
+              );
+            })
+            .then(reload)
+            .catch(reload);
+        } else {
+          reload();
+        }
+      }, 14000);
+    </script>
+  </body>
+</html>
