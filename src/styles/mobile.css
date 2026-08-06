@@ -2095,6 +2095,25 @@ body {
   gap: 6px;
 }
 
+.notify-test {
+  align-self: flex-start;
+  margin-top: 4px;
+  border: 1px solid var(--c-border);
+  background: #fff;
+  color: var(--c-primary);
+  border-radius: 10px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.notify-test:active {
+  background: #f0f3ff;
+  transform: scale(0.97);
+}
+
 /* 加大「剩X天」提示字号 */
 .remind-hint {
   font-size: 13.5px;
