@@ -17,6 +17,7 @@ import MoreSheet from './mobile/MoreSheet';
 import SyncPanel from './mobile/SyncPanel';
 import { dayjs, lunarDateLabel, weekdayCN } from './utils/date';
 import { checkDueReminders, getNotifySettings, emailConfigured, sendDailyDigest } from './utils/notify';
+import { InstallGuide } from './utils/install';
 
 function Shell() {
   const navigate = useNavigate();
@@ -72,16 +73,8 @@ function Shell() {
   const handleInstall = async () => {
     if (!deferredPrompt) {
       Modal.info({
-        title: '安装到手机桌面',
-        content: (
-          <div style={{ fontSize: 13, lineHeight: 1.9 }}>
-            <b>安卓 / 鸿蒙：</b>用浏览器打开本网址，点右上角菜单 →「添加到主屏幕 / 安装应用」。
-            <br />
-            <b>iPhone：</b>用 Safari 打开本网址，点底部分享按钮 →「添加到主屏幕」。
-            <br />
-            安装后会生成独立图标，全屏运行，断网也能使用。
-          </div>
-        ),
+        title: '安装到桌面',
+        content: <InstallGuide />,
         okText: '知道了'
       });
       return;
