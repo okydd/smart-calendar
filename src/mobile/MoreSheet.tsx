@@ -423,6 +423,17 @@ export default function MoreSheet({
                   placeholder="SECxxxxxxxx"
                   onChange={(e) => setNs({ ...ns, dingtalkSecret: e.target.value })}
                 />
+                <div className="notify-help">
+                  <div className="notify-help-title">如何获取上面两个值？</div>
+                  <ol>
+                    <li>在<span className="hl">钉钉</span>中打开要接收提醒的「群聊」，右上角「···」→ 群设置</li>
+                    <li>进入「智能群助手 / 机器人」→「添加机器人」→ 选「自定义」机器人</li>
+                    <li>输入名字（如「日历提醒」），<span className="hl">安全设置务必选「加签」</span></li>
+                    <li>复制「签名密钥」<span className="hl">(SEC...)</span> 填到上面的「加签密钥」</li>
+                    <li>点击「完成」，复制「Webhook 地址」<span className="hl">(含 access_token=...)</span> 填到上面的第一行</li>
+                    <li>点「保存通知设置」，再用「发送测试消息」验证是否收到</li>
+                  </ol>
+                </div>
                 <button className="notify-test" onClick={testDingtalk}>
                   发送测试消息
                 </button>
