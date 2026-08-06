@@ -594,11 +594,10 @@ body {
   transform: scale(0.992);
 }
 
-/* 日提醒事件：左侧蓝色强调条 + 浅蓝背景 */
+/* 日提醒事件：四边标准蓝色边框 + 浅蓝背景（不再用左侧加粗强调条） */
 .event-pill-day {
-  border-color: #d6e4ff;
+  border: 1.5px solid #3b7cff;
   background: #f7faff;
-  box-shadow: inset 3px 0 0 #4c6ef5;
 }
 
 /* 重要事件：四边统一红色边框（不淡化、不偏重左边），浅红背景 */
@@ -650,6 +649,7 @@ body {
   margin-left: auto;
   color: #8a8f9e;
   font-size: 12px;
+  font-weight: normal;
   white-space: nowrap;
 }
 
@@ -669,6 +669,7 @@ body {
 .remind-title.done {
   color: #b0b4c3;
   text-decoration: line-through;
+  font-weight: normal;
 }
 
 .remind-tags {
@@ -870,23 +871,23 @@ body {
   font-size: 13px;
 }
 
-/* 清单时间行右侧的「剩X天」：加大字号 */
+/* 清单时间行右侧的「剩X天」/「已完成」：常规字号、不加粗 */
 .todo-days {
   margin-left: auto;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: normal;
   color: var(--c-primary);
   white-space: nowrap;
 }
 
 .todo-days.expired {
   color: var(--c-text-gray);
-  font-weight: 600;
+  font-weight: normal;
 }
 
 .todo-days.done {
   color: var(--c-success);
-  font-weight: 600;
+  font-weight: normal;
 }
 
 .done-section {
@@ -1286,6 +1287,7 @@ body {
 .remind-title.done {
   color: #b0b4c3;
   text-decoration: line-through;
+  font-weight: normal;
 }
 
 .remind-time-line {
@@ -1752,7 +1754,7 @@ body {
 .ev-btn-gray {
   background: #ffffff;
   color: #1c1c1e;
-  border: 1.5px solid #1c1c1e;
+  border: 1px solid #999 !important;
 }
 
 .ev-btn-new:active,
@@ -2080,6 +2082,34 @@ body {
   background: #fff;
 }
 
+/* 钉钉/微信「如何获取」指引卡 */
+.notify-help {
+  background: #eef4ff;
+  border: 1px solid #d8e6ff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 2px;
+}
+.notify-help-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #2b5fd0;
+  margin-bottom: 4px;
+}
+.notify-help ol {
+  margin: 2px 0 0;
+  padding-left: 18px;
+}
+.notify-help li {
+  font-size: 11.5px;
+  color: #3a4a66;
+  line-height: 1.65;
+}
+.notify-help .hl {
+  color: #1c1c1e;
+  font-weight: 600;
+}
+
 .notify-save {
   border: none;
   background: var(--c-gradient);
@@ -2114,11 +2144,6 @@ body {
   transform: scale(0.97);
 }
 
-/* 加大「剩X天」提示字号 */
-.remind-hint {
-  font-size: 13.5px;
-  font-weight: 600;
-}
 
 /* ===================== 第四轮改版新增样式 ===================== */
 
