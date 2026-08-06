@@ -23,7 +23,39 @@
   </head>
   <body>
     <div id="root"></div>
-    <div id="boot">智能日历</div>
+    <div id="boot">
+      <div class="boot-inner">
+        <div class="boot-title">智能日历</div>
+        <div class="boot-bar"><div class="boot-progress" id="boot-progress"></div></div>
+        <div class="boot-hint" id="boot-hint">正在加载…</div>
+      </div>
+    </div>
+    <script>
+      (function () {
+        var bar = document.getElementById('boot-progress');
+        var hint = document.getElementById('boot-hint');
+        if (!bar) return;
+        var start = performance.now();
+        var width = 0;
+        function easeOutApproach(elapsed) {
+          // 目标上限 90%，前半段快、后半段慢，给用户"正在努力加载"的感觉
+          return 90 * (1 - Math.exp(-elapsed / 1600));
+        }
+        function tick() {
+          var target = easeOutApproach(performance.now() - start);
+          if (target > width) {
+            width = target;
+            bar.style.width = width + '%';
+          }
+          if (width < 90) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+        window.addEventListener('load', function () {
+          bar.style.width = '100%';
+          if (hint) hint.textContent = '即将进入…';
+        });
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
