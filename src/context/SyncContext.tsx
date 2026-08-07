@@ -69,6 +69,8 @@ function humanizeError(msg: string): string {
   if (m.includes('unable to validate email') || m.includes('invalid email'))
     return '邮箱格式不正确';
   if (m.includes('email not confirmed')) return '邮箱尚未验证，请先到邮箱点击验证链接';
+  if (m.includes('signups not allowed') || m.includes('signup is disabled') || m.includes('not allowed to sign up'))
+    return '当前已关闭开放注册，如需账号请联系管理员开通';
   if (m.includes('does not exist') && m.includes('relation'))
     return '云端数据表未创建，请先在 Supabase 执行建表 SQL（见 SETUP.md）';
   if (m.includes('failed to fetch') || m.includes('networkerror'))
