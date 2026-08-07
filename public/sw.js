@@ -1,5 +1,5 @@
-/* 智能日历 Service Worker：离线可用（健壮版） */
-const CACHE = 'smart-calendar-v3';
+/* 智能日历 Service Worker：离线可用（激进更新版） */
+const CACHE = 'smart-calendar-v3-__BUILD_TIME__';
 const CORE = ['./', './index.html', './manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {
@@ -16,6 +16,7 @@ self.addEventListener('activate', (event) => {
     caches
       .keys()
       .then((keys) =>
+        // 清理所有非当前版本的缓存（包括同系列旧版本）
         Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
       )
       .then(() => self.clients.claim())
@@ -48,10 +49,10 @@ self.addEventListener('fetch', (event) => {
   const path = url.pathname;
   if (path.endsWith('/version.json') || path.endsWith('/sw.js')) return;
 
-  // 页面导航：网络优先，失败回退缓存入口页；成功则刷新缓存
+  // 页面导航：始终网络优先；成功则刷新缓存，失败才回退旧缓存
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-store' })
         .then((res) => {
           safePut('./index.html', res);
           return res;
@@ -66,9 +67,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 静态资源：网络优先（避免缓存到已失效的旧 hash 文件），离线时回退缓存
+  // 静态资源（JS/CSS/图片等）：网络优先，成功则刷新缓存，离线回退缓存
   event.respondWith(
-    fetch(req)
+    fetch(req, { cache: 'no-store' })
       .then((res) => {
         safePut(req, res);
         return res;
