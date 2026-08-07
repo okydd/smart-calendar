@@ -30,6 +30,7 @@ import {
   sendWechat,
   sendDingtalk,
   buildConciseText,
+  buildFullEmailHtml,
   type NotifySettings
 } from '../utils/notify';
 import { InstallGuide } from '../utils/install';
@@ -109,29 +110,17 @@ export default function MoreSheet({
 
     // 自动发送到邮箱：EmailJS 免费计划不支持附件，因此把 JSON 内容直接嵌入正文。
     // 为避开 50KB 变量限制，正文里的 JSON 最多放约 38KB；超过时截断并提示用户下载完整文件。
-    const jsonBytes = new TextEncoder().encode(json).length;
-    const maxJsonChars = 38000;
-    const truncated = json.length > maxJsonChars;
-    const jsonBody = truncated
-      ? json.slice(0, maxJsonChars) +
-        `\n...（内容过长，后续已截断；完整文件请使用上方浏览器下载的 ${fileName}）`
-      : json;
-
     const body = [
       '【智能日历 · 数据备份】',
       `选取时间范围：${rangeStart} 至 ${rangeEnd}`,
       `导出数据时间：${exportTime}`,
       `事件总数：${events.length} 条`,
-      `JSON 大小：约 ${(jsonBytes / 1024).toFixed(1)} KB`,
       '',
-      '由于 EmailJS 免费计划不支持附件，JSON 内容已直接附在下方。',
-      `请复制下方全部内容，保存为「${fileName}」，再在「更多功能 → 导入JSON」中恢复：`,
-      '',
-      '```json',
-      jsonBody,
-      '```'
+      '完整版（含图片，图片以网址内联、体积极小）已作为 HTML 正文发送，可直接在邮箱查看；',
+      `原始 JSON 文件已通过浏览器下载（${fileName}），可用于「导入JSON」恢复。`
     ].join('\n');
-    const r = await sendEmail('智能日历 数据备份', body);
+    const html = buildFullEmailHtml(events, { rangeStart, rangeEnd, exportTime });
+    const r = await sendEmail('智能日历 数据备份', body, { html });
     if (r.ok) message.success('备份内容已发送到邮箱');
     else if (r.msg !== '未配置邮箱，仅本地操作') message.info(r.msg);
   };
@@ -145,9 +134,10 @@ export default function MoreSheet({
     } catch {
       message.warning('复制失败');
     }
-    // 邮件仅发送简洁清单正文；完整版 HTML / 附件含图片 base64，极易超过 EmailJS 50KB 变量限制，导致 413/50KB 报错。
-    const r = await sendEmail('智能日历 事件清单', text);
-    if (r.ok) message.success('清单已发送到邮箱');
+    // 邮件发送完整版 HTML（图片以 URL 内联，体积极小，可容纳所有事件的完整信息，避开 50KB 限制）
+    const html = buildFullEmailHtml(list, { rangeStart, rangeEnd, exportTime });
+    const r = await sendEmail('智能日历 事件清单', text, { html });
+    if (r.ok) message.success('完整清单（含图片）已发送到邮箱');
     else if (r.msg !== '未配置邮箱，仅本地操作') message.info(r.msg);
   };
 
