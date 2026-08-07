@@ -30,11 +30,29 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>
 );
 
-// 注册 Service Worker，实现离线可用
+// 注册 Service Worker，实现离线可用；加时间戳防止浏览器/中间缓存旧 sw.js
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
+    const swUrl = `${import.meta.env.BASE_URL}sw.js?__v=${Date.now()}`;
     navigator.serviceWorker
-      .register(`${import.meta.env.BASE_URL}sw.js`)
+      .register(swUrl, { updateViaCache: 'none' })
+      .then((reg) => {
+        // 立即检查更新；若发现新 SW 则等待其激活后刷新
+        reg.update().catch(() => {});
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          if (!newWorker) return;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+              // 已有旧 SW 控制页面，提示用户刷新以使用新版本
+              if (!sessionStorage.getItem('appReloading')) {
+                sessionStorage.setItem('appReloading', '1');
+                location.reload();
+              }
+            }
+          });
+        });
+      })
       .catch(() => {
         /* 忽略注册失败（例如非 HTTPS 环境） */
       });
@@ -46,6 +64,19 @@ if ('serviceWorker' in navigator) {
   const VERSION_URL = `${import.meta.env.BASE_URL}version.json`;
   const STORE_KEY = 'appVersion';
   const RELOAD_FLAG = 'appReloading';
+  const BYPASS_FLAG = 'appBypassCache';
+
+  function reload(bypassCache: boolean) {
+    if (bypassCache) {
+      sessionStorage.setItem(BYPASS_FLAG, '1');
+      const sep = location.href.includes('?') ? '&' : '?';
+      location.href = location.href.split('#')[0] + sep + '_nocache=' + Date.now() + location.hash;
+    } else {
+      sessionStorage.setItem(RELOAD_FLAG, '1');
+      location.reload();
+    }
+  }
+
   fetch(VERSION_URL + '?_=' + Date.now(), { cache: 'no-store' })
     .then((r) => (r.ok ? r.json() : null))
     .then((j) => {
@@ -55,10 +86,26 @@ if ('serviceWorker' in navigator) {
         localStorage.setItem(STORE_KEY, j.version);
         return;
       }
-      if (cur !== j.version && !sessionStorage.getItem(RELOAD_FLAG)) {
-        localStorage.setItem(STORE_KEY, j.version);
-        sessionStorage.setItem(RELOAD_FLAG, '1');
-        location.reload(true);
+      if (cur === j.version) {
+        // 版本一致：如果此前已经强制绕过缓存，清理标记
+        sessionStorage.removeItem(BYPASS_FLAG);
+        return;
+      }
+      // 版本不一致：先记录目标版本
+      localStorage.setItem(STORE_KEY, j.version);
+      if (sessionStorage.getItem(BYPASS_FLAG)) {
+        // 已经绕过缓存刷新过一次，仍不一致，说明 URL 参数被保留或 SW 仍缓存；强制清理 SW 并硬刷新
+        sessionStorage.removeItem(BYPASS_FLAG);
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.ready.then((reg) => reg.unregister()).catch(() => {});
+        }
+        setTimeout(() => location.reload(), 300);
+        return;
+      }
+      if (!sessionStorage.getItem(RELOAD_FLAG)) {
+        reload(false);
+      } else {
+        reload(true);
       }
     })
     .catch(() => {
