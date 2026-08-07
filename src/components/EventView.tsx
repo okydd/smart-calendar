@@ -1,5 +1,6 @@
-import { Modal, Image } from 'antd';
+import { Modal } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
+import ImageViewer from './ImageViewer';
 import { useUI } from '../context/UIContext';
 import { useCalendar } from '../context/CalendarContext';
 import { parseDateStr, weekdayCN, timeRangeLabel } from '../utils/date';
@@ -92,11 +93,7 @@ export default function EventView() {
           {hasImg && (
             <div className="evv-card">
               <div className="evv-card-label">图片（{e.images!.length}）</div>
-              <div className="evv-imgs">
-                {e.images!.map((src, i) => (
-                  <Image key={i} src={src} className="evv-img" />
-                ))}
-              </div>
+              <ImageViewer images={e.images!} />
             </div>
           )}
 
