@@ -149,7 +149,7 @@ export default function MonthView() {
         ctx.arc(x + 12, ly + 7, 3, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = isSel ? THEME.todayBorder : '#555';
-        ctx.font = isSel ? `bold 12px ${FONT}` : `12px ${FONT}`;
+        ctx.font = `14px ${FONT}`;
         const title = ev.title.length > 7 ? `${ev.title.slice(0, 7)}…` : ev.title;
         ctx.fillText(title, x + 22, ly + 7);
         ctx.globalAlpha = 1;
@@ -182,7 +182,7 @@ export default function MonthView() {
       ctx.arc(px, py, 3, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = '#333';
-      ctx.font = `12px ${FONT}`;
+      ctx.font = `14px ${FONT}`;
       ctx.textAlign = 'left';
       const t = ev.title.length > 9 ? `${ev.title.slice(0, 9)}…` : ev.title;
       ctx.fillText(t, px + 10, py);
