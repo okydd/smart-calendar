@@ -146,9 +146,8 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
-function buildItemsHtml(
-  events: CalendarEvent[]
-): string {
+/** 邮件正文 HTML 中只展示 http(s) 图片；base64 本地图用占位说明，避免撑爆 50KB 变量 */
+function buildItemsHtml(events: CalendarEvent[]): string {
   const list = events
     .filter((e) => !e.deleted)
     .sort((a, b) => (a.date < b.date ? -1 : 1));
@@ -157,19 +156,29 @@ function buildItemsHtml(
       const d = parseDateStr(e.date);
       const date = d.isValid() ? `${d.year()}年${d.month() + 1}月${d.date()}日 ${weekdayCN(d)}` : e.date;
       const time = timeRangeLabel(e);
-      const imgs = e.images && e.images.length
-        ? `<div class="imgs">${e.images
+      const urlImages = (e.images || []).filter((src) => /^https?:\/\//i.test(src));
+      const hasLocalImage = (e.images || []).length > urlImages.length;
+      const imgs = urlImages.length
+        ? `<div class="imgs">${urlImages
             .map((src) => `<img src="${escapeHtml(src)}" alt="事件图片" />`)
             .join('')}</div>`
+        : '';
+      const localImgHint = hasLocalImage
+        ? `<div class="d" style="color:#999;">（含本地图片，未上传前不显示在邮件中）</div>`
         : '';
       const tags =
         (e.important ? '<span class="tag imp">重要</span>' : '') +
         (e.done ? '<span class="tag done">已完成</span>' : '');
+      // 描述过长会显著增加 HTML 体积，单条描述最多保留 500 字符
+      const desc = e.description
+        ? escapeHtml(e.description).slice(0, 500) + (e.description.length > 500 ? '…' : '')
+        : '';
       return `<div class="ev">
   <div class="t">${escapeHtml(e.title)}${tags}</div>
   <div class="m">📅 ${date} ｜ 🕒 ${time}</div>
-  ${e.description ? `<div class="d"><b>备注：</b>${escapeHtml(e.description)}</div>` : ''}
+  ${desc ? `<div class="d"><b>备注：</b>${desc}</div>` : ''}
   ${imgs}
+  ${localImgHint}
 </div>`;
     })
     .join('\n');
@@ -285,17 +294,44 @@ export interface EmailAttachment {
   mimeType: string;
 }
 
+/** EmailJS 免费计划模板变量上限 50KB；留 5KB 余量给模板固定字段与转义膨胀 */
+const MAX_EMAIL_VARS_SIZE = 45 * 1024;
+
+function byteLength(str: string): number {
+  // 用 Blob 准确计算 UTF-8 字节数（EmailJS 服务端按 UTF-8 计）
+  try {
+    return new Blob([str]).size;
+  } catch {
+    return str.length;
+  }
+}
+
+function buildPayload(params: Record<string, any>, settings: NotifySettings, att?: EmailAttachment): string {
+  return JSON.stringify({
+    service_id: settings.emailjsServiceId,
+    template_id: settings.emailjsTemplateId,
+    user_id: settings.emailjsPublicKey,
+    template_params: {
+      ...params,
+      ...(att
+        ? { attachments: [{ name: att.name, data: att.data, mimeType: att.mimeType }] }
+        : {})
+    }
+  });
+}
+
 /**
  * 通过 EmailJS 发送邮件（无需后端，浏览器直发）。
  * - 支持多个收件邮箱（逗号 / 换行分隔）；
  * - 可选 html 正文（完整版，含排版与内联图片，需模板用 {{{html}}} 渲染）；
- * - 可选附件（如 .json 备份）：付费计划生效；免费计划自动降级为仅正文发送。
+ * - 可选附件（如 .json 备份）：付费计划生效；免费计划自动降级为仅正文发送；
+ * - **自动体积降级**：当 template variables 接近 50KB 上限时，先移除 html 排版，再超长则截断正文，避免直接报错。
  */
 export async function sendEmail(
   subject: string,
   body: string,
   opts?: { attachment?: EmailAttachment; html?: string }
-): Promise<{ ok: boolean; msg: string }> {
+): Promise<{ ok: boolean; msg: string; downgraded?: boolean }> {
   const s = getNotifySettings();
   if (!emailConfigured(s)) return { ok: false, msg: '未配置邮箱，仅本地操作' };
   const targets = s.emailTarget
@@ -304,22 +340,50 @@ export async function sendEmail(
     .filter(Boolean);
   if (targets.length === 0) return { ok: false, msg: '未配置接收邮箱' };
 
+  const baseParams = {
+    to_email: targets.join(','),
+    subject,
+    title: subject,
+    message: body
+  };
+
+  // 组装最终请求体，必要时自动降级以避开 50KB 限制
+  let finalBody = body;
+  let finalHtml = opts?.html;
+  let downgraded = false;
+
+  const tryCompact = () => {
+    if (finalHtml) {
+      const full = buildPayload({ ...baseParams, message: finalBody, html: finalHtml }, s);
+      if (byteLength(full) <= MAX_EMAIL_VARS_SIZE) return;
+      // 降级 1：去掉 HTML 排版，只发纯文本
+      finalHtml = undefined;
+      downgraded = true;
+    }
+    const textOnly = buildPayload({ ...baseParams, message: finalBody }, s);
+    if (byteLength(textOnly) <= MAX_EMAIL_VARS_SIZE) return;
+    // 降级 2：截断正文，保留头部说明
+    const hint = '\n\n[内容过长，已自动截断。完整数据请使用「导出JSON」备份。]';
+    const maxLen = MAX_EMAIL_VARS_SIZE - byteLength(buildPayload({ ...baseParams, message: '' }, s)) - byteLength(hint) - 200;
+    if (maxLen > 0) {
+      finalBody = finalBody.slice(0, Math.floor(maxLen / 3)) + hint; // UTF-8 下每字符最多 3 字节，保守截断
+    } else {
+      finalBody = `【智能日历】事件过多，无法通过邮件发送。请使用「导出JSON」功能备份。`;
+    }
+    downgraded = true;
+  };
+  tryCompact();
+
   const payload = (att?: EmailAttachment) =>
-    JSON.stringify({
-      service_id: s.emailjsServiceId,
-      template_id: s.emailjsTemplateId,
-      user_id: s.emailjsPublicKey,
-      template_params: {
-        to_email: targets.join(','),
-        subject,
-        title: subject,
-        message: body,
-        ...(opts?.html ? { html: opts.html } : {}),
-        ...(att
-          ? { attachments: [{ name: att.name, data: att.data, mimeType: att.mimeType }] }
-          : {})
-      }
-    });
+    buildPayload(
+      {
+        ...baseParams,
+        message: finalBody,
+        ...(finalHtml ? { html: finalHtml } : {})
+      },
+      s,
+      att
+    );
 
   try {
     if (opts?.attachment) {
@@ -328,7 +392,7 @@ export async function sendEmail(
         headers: { 'Content-Type': 'application/json' },
         body: payload(opts.attachment)
       });
-      if (res.ok) return { ok: true, msg: '已发送到邮箱（含附件）' };
+      if (res.ok) return { ok: true, msg: '已发送到邮箱（含附件）', downgraded };
       // 免费计划不支持附件，降级重试（仅正文 / html）
     }
     const res2 = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
@@ -336,7 +400,13 @@ export async function sendEmail(
       headers: { 'Content-Type': 'application/json' },
       body: payload()
     });
-    if (res2.ok) return { ok: true, msg: '已发送到邮箱' };
+    if (res2.ok) {
+      return {
+        ok: true,
+        msg: downgraded ? '已发送到邮箱（内容较长，已自动精简排版）' : '已发送到邮箱',
+        downgraded
+      };
+    }
     const t = await res2.text();
     return { ok: false, msg: '邮件发送失败：' + t.slice(0, 80) };
   } catch (e) {
