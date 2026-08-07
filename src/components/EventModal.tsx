@@ -4,6 +4,7 @@ import { DeleteOutlined, PlusOutlined, CloseOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useCalendar } from '../context/CalendarContext';
 import { useUI } from '../context/UIContext';
+import { hostImages } from '../utils/imageHost';
 import { IMPORTANT_COLOR, PRESET_REMINDERS } from '../constants';
 import type { CalendarEvent, ReminderOffset } from '../types';
 import WheelPicker, { WheelColumn } from './WheelPicker';
@@ -178,13 +179,20 @@ export default function EventModal() {
   const removeOffset = (o: ReminderOffset) =>
     setRemindOffsets(remindOffsets.filter((x) => !(x.unit === o.unit && x.value === o.value)));
 
-  const handleOk = () => {
+  const handleOk = async () => {
     if (!title.trim()) {
       message.warning('请输入事件标题');
       return;
     }
     const [y, m, day] = dateValues;
     const date = dayjs(`${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
+    // 保存前把本地 base64 图片托管到云端拿到 URL（未登录则保留本地 dataURL）
+    let savedImages = images;
+    try {
+      savedImages = await hostImages(images);
+    } catch {
+      /* 托管失败不影响保存，保留本地图片 */
+    }
     const payload: Omit<CalendarEvent, 'id'> = {
       title: title.trim(),
       date: date.format('YYYY-MM-DD'),
@@ -196,7 +204,7 @@ export default function EventModal() {
       description: description.trim(),
       tag: 'purple',
       important: importance === 'important',
-      images,
+      images: savedImages,
       reminder: remindOffsets
     };
     if (mode === 'edit' && base.id) updateEvent(base.id, payload);
