@@ -30,6 +30,7 @@ import {
   sendWechat,
   sendDingtalk,
   buildConciseText,
+  buildFullText,
   buildFullEmailHtml,
   type NotifySettings
 } from '../utils/notify';
@@ -97,7 +98,9 @@ export default function MoreSheet({
     });
 
   const handleExportJSON = async () => {
-    const json = JSON.stringify(events, null, 2);
+    // 导出范围与选择器一致：用户通过日期选择器指定范围，导出的 JSON 只含该范围事件
+    const list = rangedEvents();
+    const json = JSON.stringify(list, null, 2);
     const fileName = `Calendar_Backup_${dayjs().format('YYYYMMDD_HHmmss')}.json`;
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -106,26 +109,29 @@ export default function MoreSheet({
     a.download = fileName;
     a.click();
     URL.revokeObjectURL(url);
-    message.success(`已导出 ${events.length} 条事件`);
+    message.success(`已导出 ${list.length} 条事件`);
 
-    // 自动发送到邮箱：EmailJS 免费计划不支持附件，因此把 JSON 内容直接嵌入正文。
-    // 为避开 50KB 变量限制，正文里的 JSON 最多放约 38KB；超过时截断并提示用户下载完整文件。
+    // 自动发送到邮箱：EmailJS 免费计划不支持附件，因此把事件完整文字版作为正文。
+    // 若文字版仍超过 50KB，sendEmail 会自动降级截断；完整 JSON 文件已通过浏览器下载。
     const body = [
       '【智能日历 · 数据备份】',
       `选取时间范围：${rangeStart} 至 ${rangeEnd}`,
       `导出数据时间：${exportTime}`,
-      `事件总数：${events.length} 条`,
+      `事件总数：${list.length} 条`,
       '',
-      '完整版（含图片，图片以网址内联、体积极小）已作为 HTML 正文发送，可直接在邮箱查看；',
-      `原始 JSON 文件已通过浏览器下载（${fileName}），可用于「导入JSON」恢复。`
+      buildFullText(list, { rangeStart, rangeEnd, exportTime }),
+      '',
+      '---',
+      `原始 JSON 文件已通过浏览器下载（${fileName}），可用于「导入JSON」恢复。`,
+      '若邮件正文被自动截断，请以浏览器下载的 JSON 文件为准。'
     ].join('\n');
-    const html = buildFullEmailHtml(events, { rangeStart, rangeEnd, exportTime });
+    const html = buildFullEmailHtml(list, { rangeStart, rangeEnd, exportTime });
     const r = await sendEmail('智能日历 数据备份', body, { html });
     if (r.ok) {
       message.success(
         r.downgraded
           ? '备份邮件已发送（事件较多，正文已自动精简；完整数据请用「导出JSON」）'
-          : '备份内容已发送到邮箱'
+          : '备份内容（含完整文字）已发送到邮箱'
       );
     } else if (r.msg !== '未配置邮箱，仅本地操作') message.info(r.msg);
   };
@@ -139,14 +145,15 @@ export default function MoreSheet({
     } catch {
       message.warning('复制失败');
     }
-    // 邮件发送完整版 HTML（图片以 URL 内联，体积极小，可容纳所有事件的完整信息，避开 50KB 限制）
+    // 邮件发送完整文字版 + HTML 版：即使邮箱没渲染 HTML，message 正文也含备注、图片 URL 等完整信息
+    const fullText = buildFullText(list, { rangeStart, rangeEnd, exportTime });
     const html = buildFullEmailHtml(list, { rangeStart, rangeEnd, exportTime });
-    const r = await sendEmail('智能日历 事件清单', text, { html });
+    const r = await sendEmail('智能日历 事件清单', fullText, { html });
     if (r.ok) {
       message.success(
         r.downgraded
           ? '清单已发送到邮箱（内容较长，已自动精简排版）'
-          : '完整清单（含图片）已发送到邮箱'
+          : '完整清单（含备注、图片网址）已发送到邮箱'
       );
     } else if (r.msg !== '未配置邮箱，仅本地操作') message.info(r.msg);
   };
