@@ -150,7 +150,7 @@ export default function TodoPage() {
         <div className="todo-body" onClick={() => openView(e)}>
           <div className="remind-title-line">
             <span className={`remind-title${e.done ? ' done' : ''}`}>{e.title}</span>
-            {e.important && <span className="imp-flag">重要</span>}
+            {e.important && <span className="imp-flag">重</span>}
             <EventFlags e={e} />
           </div>
           <div className="remind-time-line">
@@ -206,32 +206,30 @@ export default function TodoPage() {
           <div className="remind-header done">
             <CheckCircleOutlined className="remind-ico" />
             <span className="remind-label">已完成</span>
-            <span className="remind-count">{doneItems.length}</span>
+            <span className="remind-range">{doneMonth.year()}年{doneMonth.month() + 1}月</span>
             <div className="done-filter-inline">
               <button
-                className="nav-btn"
+                className="nav-btn month-nav-inline"
                 onClick={() => setDoneMonth(doneMonth.subtract(1, 'month'))}
                 aria-label="上月"
               >
                 <LeftOutlined />
               </button>
-              <span className="done-month-label">
-                {doneMonth.year()}年{doneMonth.month() + 1}月
-              </span>
               <button
-                className="nav-btn"
+                className="nav-btn month-nav-inline"
                 onClick={() => setDoneMonth(doneMonth.add(1, 'month'))}
                 aria-label="下月"
               >
                 <RightOutlined />
               </button>
               <button
-                className={`done-all-btn${doneShowAll ? ' active' : ''}`}
+                className="remind-back"
                 onClick={() => setDoneShowAll((v) => !v)}
               >
                 {doneShowAll ? '按月份' : '全部'}
               </button>
             </div>
+            <span className="remind-count">{doneItems.length}</span>
           </div>
           {doneFiltered.length === 0 ? (
             <div className="empty-remind">本月暂无已完成事项</div>
