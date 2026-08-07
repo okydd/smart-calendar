@@ -552,6 +552,27 @@ body {
   background: #fafbfc;
 }
 
+/* 空态-同步中：蓝色文字、不可点击（避免误触发新建） */
+.empty-remind.syncing {
+  color: var(--c-primary);
+  cursor: default;
+  background: #f5f8ff;
+  border-color: #d6e2ff;
+}
+
+/* 日提醒同步中小提示（已有部分事件时显示在列表顶部） */
+.remind-syncing-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--c-primary);
+  background: #eef4ff;
+  border-radius: 10px;
+}
+
 .empty-remind .empty-check {
   color: #d3d6e2;
   font-size: 14px;
@@ -598,6 +619,7 @@ body {
 .event-pill-day {
   border: 1.5px solid #3b7cff;
   background: #f7faff;
+  padding: 12px 14px;
 }
 
 /* 日提醒：单行布局（时间 → 标题 → 标签），时间单独底色药丸 */
