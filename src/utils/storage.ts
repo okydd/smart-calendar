@@ -34,11 +34,22 @@ export function loadEvents(): CalendarEvent[] | null {
 }
 
 /** 将事件数组写入 localStorage */
-export function saveEvents(events: CalendarEvent[]): void {
+export function saveEvents(events: CalendarEvent[]): { ok: boolean; error?: string } {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+    return { ok: true };
   } catch (err) {
+    const msg = String((err as Error)?.message ?? '');
+    const isQuota =
+      msg.includes('Quota') ||
+      msg.includes('quota') ||
+      msg.includes('exceeded') ||
+      msg.includes('Exceeded');
+    const error = isQuota
+      ? '本机存储空间已满：事件中的图片过多，请导出 JSON 备份后删除部分旧事件，或开启云同步把图片上传到云端。'
+      : '保存日历事件失败：' + msg;
     console.error('保存日历事件失败', err);
+    return { ok: false, error };
   }
 }
 
