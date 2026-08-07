@@ -1,13 +1,6 @@
 import type { CalendarEvent } from '../types';
-import { TAG_COLORS, THEME } from '../constants';
-import {
-  dayjs,
-  exportDateLabel,
-  nowStamp,
-  parseDateStr,
-  timeRangeLabel,
-  weekdayCN
-} from './date';
+import { THEME } from '../constants';
+import { dayjs, exportDateLabel, nowStamp, parseDateStr } from './date';
 import { roundRect } from './canvas';
 
 const FONT =
@@ -75,9 +68,9 @@ function buildCanvas(events: CalendarEvent[], opts: ExportImageOptions) {
   ctx.fillStyle = headerGrad;
   ctx.fillRect(PAD_X, CARD_TOP, cardW, HEADER_H);
 
-  const colDateX = PAD_X + 28;
-  const colTimeX = PAD_X + 188;
-  const colEventX = PAD_X + 372;
+  const colDateX = PAD_X + 24;
+  const colTimeX = PAD_X + 168;
+  const colEventX = PAD_X + 300;
 
   ctx.fillStyle = '#ffffff';
   ctx.font = `bold 26px ${FONT}`;
@@ -93,9 +86,6 @@ function buildCanvas(events: CalendarEvent[], opts: ExportImageOptions) {
       ctx.fillStyle = '#f8f9ff';
       ctx.fillRect(PAD_X, rowY, cardW, ROW_H);
     }
-    // 左侧色条
-    ctx.fillStyle = TAG_COLORS[e.tag]?.color ?? THEME.todayBorder;
-    ctx.fillRect(PAD_X + 8, rowY + ROW_H / 2 - 16, 5, 32);
 
     const cy = rowY + ROW_H / 2;
     const d = parseDateStr(e.date);
@@ -103,10 +93,12 @@ function buildCanvas(events: CalendarEvent[], opts: ExportImageOptions) {
     ctx.fillStyle = THEME.textDark;
     ctx.font = `24px ${FONT}`;
     ctx.textAlign = 'left';
-    ctx.fillText(exportDateLabel(d), colDateX + 16, cy);
+    ctx.fillText(exportDateLabel(d), colDateX, cy);
 
+    // 时间只显示单点（不再「几点到几点」）
+    const timeText = !e.allDay && e.startTime ? e.startTime : '全天';
     ctx.fillStyle = '#3b7cff';
-    ctx.fillText(timeRangeLabel(e), colTimeX, cy);
+    ctx.fillText(timeText, colTimeX, cy);
 
     ctx.fillStyle = THEME.textDark;
     const title = truncate(ctx, e.title, colEventX, PAD_X + cardW - 24);
@@ -124,44 +116,38 @@ function buildCanvas(events: CalendarEvent[], opts: ExportImageOptions) {
   return { canvas, H };
 }
 
-/** 绘制标题区：日历图标 + 主标题 + 副标题 + 事件数 */
+/** 绘制标题区：日历图标 + 主标题 + 副标题 + 事件数（第三行） */
 function drawTitleArea(
   ctx: CanvasRenderingContext2D,
   opts: ExportImageOptions,
   count: number
 ): void {
-  const cx = W / 2;
   const today = dayjs();
 
   // 左侧日历图标
-  drawCalendarIcon(ctx, PAD_X + 80, 90, 80, '#ffffff');
+  drawCalendarIcon(ctx, PAD_X + 66, 105, 92, '#ffffff');
 
+  const textX = PAD_X + 140;
   ctx.textAlign = 'left';
+
+  // 第一行：主标题
   ctx.fillStyle = '#ffffff';
   ctx.font = `bold 38px ${FONT}`;
-  ctx.fillText(opts.title || '日历事件提醒', PAD_X + 150, 82);
+  ctx.fillText(opts.title || '日历事件提醒', textX, 70);
 
+  // 第二行：副标题（日期范围）
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
   ctx.font = `24px ${FONT}`;
   ctx.fillText(
     opts.subtitle || `${today.format('YYYY-MM-DD')} 至 ${today.add(1, 'month').format('YYYY-MM-DD')}`,
-    PAD_X + 150,
-    122
+    textX,
+    114
   );
 
-  // 右侧事件数胶囊
-  const pillText = `共 ${opts.total ?? count} 个事件`;
-  ctx.font = `22px ${FONT}`;
-  const pillW = ctx.measureText(pillText).width + 32;
-  const pillX = W - PAD_X - pillW;
-  const pillY = 70;
-  const pillH = 42;
-  ctx.fillStyle = 'rgba(255,255,255,0.25)';
-  roundRect(ctx, pillX, pillY, pillW, pillH, 21);
-  ctx.fill();
-  ctx.fillStyle = '#ffffff';
-  ctx.textAlign = 'center';
-  ctx.fillText(pillText, pillX + pillW / 2, pillY + pillH / 2 + 1);
+  // 第三行：事件总数（左对齐，避免与标题/副标题重叠）
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.font = `24px ${FONT}`;
+  ctx.fillText(`共 ${opts.total ?? count} 个事件`, textX, 156);
 }
 
 /** 日历图标 */
