@@ -5,10 +5,12 @@ import {
   RightOutlined,
   CalendarOutlined,
   ClockCircleOutlined,
-  CheckCircleOutlined
+  CheckCircleOutlined,
+  SyncOutlined
 } from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
 import { useUI } from '../context/UIContext';
+import { useSync } from '../context/SyncContext';
 import {
   dayjs,
   parseDateStr,
@@ -74,6 +76,8 @@ export default function TodoPage() {
 
   const today = useMemo(() => dayjs().startOf('day'), []);
   const todayStr = today.format('YYYY-MM-DD');
+
+  const { status } = useSync();
 
   const { groups, doneItems } = useMemo(() => {
     const weekStart = today.isoWeekday(1);
@@ -184,7 +188,13 @@ export default function TodoPage() {
             <span className="remind-count">{g.items.length}</span>
           </div>
           {g.items.length === 0 ? (
-            <div className="todo-empty">无事件，或事件已全部完成</div>
+            g.key === 'today' && status === 'syncing' ? (
+              <div className="todo-empty syncing">
+                <SyncOutlined spin /> 同步中…
+              </div>
+            ) : (
+              <div className="todo-empty">无事件，或事件已全部完成</div>
+            )
           ) : (
             <div className="remind-list">{g.items.map(renderItem)}</div>
           )}
