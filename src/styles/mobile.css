@@ -674,6 +674,13 @@ body {
   color: #8a8f9e;
 }
 
+/* 已过期 / 已完成：时间药丸改灰、不加粗 */
+.day-time.struck {
+  background: #eef0f6;
+  color: #8a8f9e;
+  font-weight: normal;
+}
+
 /* 重要事件：四边统一红色边框（不淡化、不偏重左边），浅红背景 */
 .event-pill.important {
   border: 1.5px solid #fa5252;
@@ -717,6 +724,12 @@ body {
 
 .remind-time.all-day {
   color: #8a8f9e;
+}
+
+/* 已过期 / 已完成：时间与日期同灰、不加粗（周提醒、月提醒、办事清单通用） */
+.remind-time.struck {
+  color: #8a8f9e;
+  font-weight: normal;
 }
 
 .remind-hint {
@@ -977,7 +990,7 @@ body {
 }
 
 .todo-days.done {
-  color: var(--c-success);
+  color: var(--c-text-gray);
   font-weight: normal;
 }
 
@@ -2370,7 +2383,7 @@ body {
 }
 
 .wheel-item {
-  scroll-snap-align: start;
+  scroll-snap-align: center;
   text-align: center;
   font-size: 14px;
   color: #9aa0b4;
