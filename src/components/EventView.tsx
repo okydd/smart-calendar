@@ -65,7 +65,7 @@ export default function EventView() {
               <span className={`evv-title${done ? ' done' : ''}`}>{e.title}</span>
               {e.important && (
                 <span className="imp-flag" style={{ background: '#ffe9e8', color: IMPORTANT_COLOR }}>
-                  重要
+                  重
                 </span>
               )}
               {done && <span className="evv-done-tag">已完成</span>}
