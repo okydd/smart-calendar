@@ -150,7 +150,7 @@ export default function TimeGridView() {
         ctx.fillStyle = color;
         ctx.fill();
         ctx.fillStyle = '#fff';
-        ctx.font = `11px ${FONT}`;
+        ctx.font = `14px ${FONT}`;
         ctx.textAlign = 'left';
         const t = ev.title.length > 10 ? `${ev.title.slice(0, 10)}…` : ev.title;
         ctx.fillText(t, bx + 8, adY + bh / 2);
@@ -191,7 +191,7 @@ export default function TimeGridView() {
           ctx.stroke();
         }
         ctx.fillStyle = '#333';
-        ctx.font = `12px ${FONT}`;
+        ctx.font = `14px ${FONT}`;
         ctx.textAlign = 'left';
         const t = ev.title.length > 12 ? `${ev.title.slice(0, 12)}…` : ev.title;
         ctx.fillText(t, bx + 10, top + 13);
@@ -251,7 +251,7 @@ export default function TimeGridView() {
         ctx.fillStyle = color;
         ctx.fillRect(bx, top, 4, hit.h);
         ctx.fillStyle = '#fff';
-        ctx.font = `12px ${FONT}`;
+        ctx.font = `14px ${FONT}`;
         ctx.textAlign = 'left';
         ctx.fillText(hit.ev.title, bx + 10, top + 13);
         ctx.globalAlpha = 1;
