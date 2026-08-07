@@ -44,7 +44,7 @@ export default function EventDetailPanel() {
       <div className="detail-body">
         <div className="detail-row">
           <div className="detail-label">标题</div>
-          <div className="detail-value" style={{ fontSize: 18, fontWeight: 600 }}>
+          <div className="detail-value" style={{ fontSize: 14, fontWeight: 400 }}>
             {e.title}
           </div>
         </div>
