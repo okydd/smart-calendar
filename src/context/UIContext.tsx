@@ -4,7 +4,9 @@ import React, {
   useContext,
   useState
 } from 'react';
+import { message } from 'antd';
 import type { CalendarEvent } from '../types';
+import { useSync } from './SyncContext';
 
 export interface EventModalState {
   open: boolean;
@@ -47,13 +49,30 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
 
-  const openCreate = useCallback((initial?: Partial<CalendarEvent>) => {
-    setEventModal({ open: true, mode: 'create', initial: initial ?? null });
-  }, []);
+  // 仅已登录（已获授权）账号可新建/编辑；未登录的访客只能查看，不能改动数据
+  const { userId } = useSync();
 
-  const openEdit = useCallback((event: CalendarEvent) => {
-    setEventModal({ open: true, mode: 'edit', initial: event });
-  }, []);
+  const openCreate = useCallback(
+    (initial?: Partial<CalendarEvent>) => {
+      if (!userId) {
+        message.warning('请先在「更多 → 云同步」登录后再新建事件');
+        return;
+      }
+      setEventModal({ open: true, mode: 'create', initial: initial ?? null });
+    },
+    [userId]
+  );
+
+  const openEdit = useCallback(
+    (event: CalendarEvent) => {
+      if (!userId) {
+        message.warning('请先在「更多 → 云同步」登录后再编辑事件');
+        return;
+      }
+      setEventModal({ open: true, mode: 'edit', initial: event });
+    },
+    [userId]
+  );
 
   const closeEventModal = useCallback(() => {
     setEventModal((m) => ({ ...m, open: false }));
