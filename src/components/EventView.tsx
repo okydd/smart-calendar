@@ -40,6 +40,7 @@ export default function EventView() {
       okText: '删除',
       okButtonProps: { danger: true },
       cancelText: '取消',
+      centered: true,
       onOk: () => {
         deleteEvent(e.id);
         closeEventView();
