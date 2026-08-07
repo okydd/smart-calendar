@@ -7,7 +7,7 @@ import {
   UnorderedListOutlined
 } from '@ant-design/icons';
 import { CalendarProvider, useCalendar } from './context/CalendarContext';
-import { SyncProvider } from './context/SyncContext';
+import { SyncProvider, useSync } from './context/SyncContext';
 import { UIProvider, useUI } from './context/UIContext';
 import EventModal from './components/EventModal';
 import EventView from './components/EventView';
@@ -18,12 +18,14 @@ import SyncPanel from './mobile/SyncPanel';
 import { dayjs, lunarDateLabel, weekdayCN } from './utils/date';
 import { checkDueReminders, getNotifySettings, emailConfigured, sendDailyDigest } from './utils/notify';
 import { InstallGuide } from './utils/install';
+import { hostImages } from './utils/imageHost';
 
 function Shell() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { activeTags, clearTags, events, search, setSearch, filteredEvents } = useCalendar();
+  const { activeTags, clearTags, events, search, setSearch, filteredEvents, updateEvent } = useCalendar();
   const { openView } = useUI();
+  const { userId } = useSync();
   const [moreOpen, setMoreOpen] = useState(false);
   const [syncOpen, setSyncOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -44,6 +46,44 @@ function Shell() {
   useEffect(() => {
     eventsRef.current = events;
   }, [events]);
+
+  /**
+   * 一次性把本地 base64 图片托管为云端 URL（受 localStorage 标记保护，仅登录后执行），
+   * 使所有历史事件的图片都能以网址形式出现在邮件中，从而把所有事件完整信息塞进一封邮件。
+   */
+  useEffect(() => {
+    const FLAG = 'calendarImgMigrated';
+    if (!userId) return; // 仅登录后
+    if (localStorage.getItem(FLAG)) return;
+    let cancelled = false;
+    (async () => {
+      const list = eventsRef.current.filter((e) =>
+        (e.images || []).some((u) => typeof u === 'string' && u.startsWith('data:'))
+      );
+      if (!list.length) {
+        localStorage.setItem(FLAG, '1');
+        return;
+      }
+      let allOk = true;
+      for (const e of list) {
+        if (cancelled) break;
+        try {
+          const orig = e.images || [];
+          const hosted = await hostImages(orig);
+          if (hosted.some((u, i) => u !== orig[i])) {
+            updateEvent(e.id, { images: hosted });
+          }
+        } catch {
+          allOk = false;
+        }
+      }
+      if (allOk) localStorage.setItem(FLAG, '1');
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, updateEvent]);
+
   useEffect(() => {
     let alive = true;
     const tick = async () => {
