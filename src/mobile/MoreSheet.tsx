@@ -34,6 +34,7 @@ import {
   buildFullEmailHtml,
   type NotifySettings
 } from '../utils/notify';
+import { createShare } from '../utils/share';
 import { InstallGuide } from '../utils/install';
 import ExportModal from '../components/ExportModal';
 
@@ -97,6 +98,49 @@ export default function MoreSheet({
       );
     });
 
+  /**
+   * 发送「事件数据」邮件：优先把完整数据（含图片）打包上传到日历云端，邮件里只放在线查看 / 下载链接，
+   * 体积极小，彻底绕开 EmailJS 50KB 限制与 HTML 渲染问题。未登录或上传失败则回退为邮件内文完整版。
+   */
+  const sendWithShare = async (
+    subject: string,
+    list: ReturnType<typeof rangedEvents>,
+    note?: string
+  ): Promise<{ ok: boolean; shared: boolean; msg: string }> => {
+    const concise = buildConciseText(list, { rangeStart, rangeEnd, exportTime });
+    if (userId) {
+      const share = await createShare(list, { rangeStart, rangeEnd, exportTime });
+      if (share) {
+        const body = [
+          concise,
+          '',
+          '────────────',
+          '📎 完整数据（含图片）在线查看：',
+          share.viewerUrl,
+          '',
+          '⬇️ 下载完整 JSON：',
+          share.url,
+          note ? '\n' + note : ''
+        ]
+          .filter(Boolean)
+          .join('\n');
+        const r = await sendEmail(subject, body);
+        // 顺手把在线查看链接复制到剪贴板，方便随时粘贴
+        try {
+          await navigator.clipboard.writeText(share.viewerUrl);
+        } catch {
+          /* 忽略剪贴板失败 */
+        }
+        return { ok: r.ok, shared: true, msg: r.msg };
+      }
+    }
+    // 回退：把完整文字版直接放进邮件（仍受 50KB 限制，sendEmail 会自动降级）
+    const full = buildFullText(list, { rangeStart, rangeEnd, exportTime });
+    const html = buildFullEmailHtml(list, { rangeStart, rangeEnd, exportTime });
+    const r = await sendEmail(subject, full, { html });
+    return { ok: r.ok, shared: false, msg: r.msg };
+  };
+
   const handleExportJSON = async () => {
     // 导出范围与选择器一致：用户通过日期选择器指定范围，导出的 JSON 只含该范围事件
     const list = rangedEvents();
@@ -111,29 +155,16 @@ export default function MoreSheet({
     URL.revokeObjectURL(url);
     message.success(`已导出 ${list.length} 条事件`);
 
-    // 自动发送到邮箱：EmailJS 免费计划不支持附件，因此把事件完整文字版作为正文。
-    // 若文字版仍超过 50KB，sendEmail 会自动降级截断；完整 JSON 文件已通过浏览器下载。
-    const body = [
-      '【智能日历 · 数据备份】',
-      `选取时间范围：${rangeStart} 至 ${rangeEnd}`,
-      `导出数据时间：${exportTime}`,
-      `事件总数：${list.length} 条`,
-      '',
-      buildFullText(list, { rangeStart, rangeEnd, exportTime }),
-      '',
-      '---',
-      `原始 JSON 文件已通过浏览器下载（${fileName}），可用于「导入JSON」恢复。`,
-      '若邮件正文被自动截断，请以浏览器下载的 JSON 文件为准。'
-    ].join('\n');
-    const html = buildFullEmailHtml(list, { rangeStart, rangeEnd, exportTime });
-    const r = await sendEmail('智能日历 数据备份', body, { html });
-    if (r.ok) {
+    // 优先发「云端分享链接」；未登录或失败则回退内文完整版。完整 JSON 文件也已下载到本机。
+    const note = `完整 JSON 文件也已通过浏览器下载（${fileName}），可用于「导入JSON」恢复。`;
+    const { ok, shared, msg } = await sendWithShare('智能日历 数据备份', list, note);
+    if (ok) {
       message.success(
-        r.downgraded
-          ? '备份邮件已发送（事件较多，正文已自动精简；完整数据请用「导出JSON」）'
+        shared
+          ? '备份链接已发到邮箱，在线查看地址也已复制到剪贴板'
           : '备份内容（含完整文字）已发送到邮箱'
       );
-    } else if (r.msg !== '未配置邮箱，仅本地操作') message.info(r.msg);
+    } else if (msg !== '未配置邮箱，仅本地操作') message.info(msg);
   };
 
   const handleCopyEvents = async () => {
@@ -145,17 +176,15 @@ export default function MoreSheet({
     } catch {
       message.warning('复制失败');
     }
-    // 邮件发送完整文字版 + HTML 版：即使邮箱没渲染 HTML，message 正文也含备注、图片 URL 等完整信息
-    const fullText = buildFullText(list, { rangeStart, rangeEnd, exportTime });
-    const html = buildFullEmailHtml(list, { rangeStart, rangeEnd, exportTime });
-    const r = await sendEmail('智能日历 事件清单', fullText, { html });
-    if (r.ok) {
+    // 优先发「云端分享链接」；未登录或失败则回退内文完整版（含备注、图片网址）
+    const { ok, shared, msg } = await sendWithShare('智能日历 事件清单', list);
+    if (ok) {
       message.success(
-        r.downgraded
-          ? '清单已发送到邮箱（内容较长，已自动精简排版）'
+        shared
+          ? '完整数据链接已发到邮箱，在线查看地址也已复制到剪贴板'
           : '完整清单（含备注、图片网址）已发送到邮箱'
       );
-    } else if (r.msg !== '未配置邮箱，仅本地操作') message.info(r.msg);
+    } else if (msg !== '未配置邮箱，仅本地操作') message.info(msg);
   };
 
   const handleImportFile = (file: File) => {
