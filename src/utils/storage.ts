@@ -33,8 +33,19 @@ export function loadEvents(): CalendarEvent[] | null {
   }
 }
 
+export type QuotaRescuer = (events: CalendarEvent[]) => Promise<CalendarEvent[]>;
+
+let quotaRescuer: QuotaRescuer | null = null;
+
+/** 注册 localStorage 配额满时的自动救援函数（通常由 Shell 注入，用于把 base64 图片上传到云端） */
+export function registerQuotaRescuer(rescuer: QuotaRescuer | null) {
+  quotaRescuer = rescuer;
+}
+
 /** 将事件数组写入 localStorage */
-export function saveEvents(events: CalendarEvent[]): { ok: boolean; error?: string } {
+export async function saveEvents(
+  events: CalendarEvent[]
+): Promise<{ ok: boolean; error?: string; rescued?: boolean }> {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
     return { ok: true };
@@ -45,6 +56,26 @@ export function saveEvents(events: CalendarEvent[]): { ok: boolean; error?: stri
       msg.includes('quota') ||
       msg.includes('exceeded') ||
       msg.includes('Exceeded');
+
+    // 配额满且注册了救援函数：尝试把 base64 图片托管为 URL 后再保存
+    if (isQuota && quotaRescuer) {
+      try {
+        const rescued = await quotaRescuer(events);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(rescued));
+        return { ok: true, rescued: true };
+      } catch (rescueErr) {
+        const rescueMsg = String((rescueErr as Error)?.message ?? '');
+        console.error('配额救援失败', rescueErr);
+        return {
+          ok: false,
+          error:
+            '本机存储空间已满，自动把图片上传到云端失败：' +
+            rescueMsg +
+            '。请手动导出 JSON 备份后删除部分旧事件，或登录云同步后重试。'
+        };
+      }
+    }
+
     const error = isQuota
       ? '本机存储空间已满：事件中的图片过多，请导出 JSON 备份后删除部分旧事件，或开启云同步把图片上传到云端。'
       : '保存日历事件失败：' + msg;
