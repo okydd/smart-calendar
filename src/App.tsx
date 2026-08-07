@@ -15,6 +15,7 @@ import CalendarPage from './mobile/CalendarPage';
 import TodoPage from './mobile/TodoPage';
 import MoreSheet from './mobile/MoreSheet';
 import SyncPanel from './mobile/SyncPanel';
+import ShareView from './mobile/ShareView';
 import { dayjs, lunarDateLabel, weekdayCN } from './utils/date';
 import { checkDueReminders, getNotifySettings, emailConfigured, sendDailyDigest } from './utils/notify';
 import { InstallGuide } from './utils/install';
@@ -232,6 +233,7 @@ function Shell() {
             <Route path="/" element={<Navigate to="/calendar" replace />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/todos" element={<TodoPage />} />
+            <Route path="/share/:id" element={<ShareView />} />
             <Route path="*" element={<Navigate to="/calendar" replace />} />
           </Routes>
         </div>
