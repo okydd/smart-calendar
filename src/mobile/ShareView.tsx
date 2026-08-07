@@ -123,7 +123,7 @@ export default function ShareView() {
             <div className="share-card" key={e.id}>
               <div className="share-card-title">
                 {e.title}
-                {e.important && <span className="share-tag imp">重要</span>}
+                {e.important && <span className="share-tag imp">重</span>}
                 {e.done && <span className="share-tag done">已完成</span>}
               </div>
               <div className="share-card-meta">📅 {dateLabel} ｜ 🕒 {timeRangeLabel(e)}</div>
