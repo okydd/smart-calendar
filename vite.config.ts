@@ -16,6 +16,23 @@ export default defineConfig({
     outDir: 'dist',
     // 本机沙箱环境下删除中文路径目录会失败，交由 CI / 手动清理
     emptyOutDir: false,
-    chunkSizeWarningLimit: 1500
+    chunkSizeWarningLimit: 700,
+    rollupOptions: {
+      output: {
+        /**
+         * 拆分第三方依赖为多个中等体积的 chunk：
+         * 1) 首屏与后续更新只需下载变化的部分，缓存命中率更高；
+         * 2) 发布通道（GitHub API / 受限网络）对单个 >1MB 文件上传会失败，
+         *    拆包后每个文件都在安全区间内。
+         */
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          // 只切成两块：antd UI 层 与 其余依赖，块数越少越不容易出现循环引用
+          if (id.includes('/antd/') || id.includes('/rc-') || id.includes('@ant-design'))
+            return 'vendor-antd';
+          return 'vendor';
+        }
+      }
+    }
   }
 })
