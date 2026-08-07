@@ -13,6 +13,9 @@ import {
 import { useSync } from '../context/SyncContext';
 import { dayjs } from '../utils/date';
 
+/** 记住上次登录的邮箱，仅存本机，用于回显到用户名输入框，避免遗忘 */
+const LAST_MAIL_KEY = 'calendarLastMail';
+
 const SQL_SNIPPET = `-- 在 Supabase → SQL Editor 中粘贴执行（一次即可）
 create table if not exists public.calendar_events (
   id          text        not null,
@@ -69,7 +72,13 @@ export default function SyncPanel({
 
   const [url, setUrl] = useState(configUrl);
   const [anonKey, setAnonKey] = useState('');
-  const [mail, setMail] = useState('');
+  const [mail, setMail] = useState(() => {
+    try {
+      return localStorage.getItem(LAST_MAIL_KEY) || '';
+    } catch {
+      return '';
+    }
+  });
   const [pwd, setPwd] = useState('');
   const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
   const [busy, setBusy] = useState(false);
@@ -108,6 +117,11 @@ export default function SyncPanel({
       return;
     }
     message.success(mode === 'signIn' ? '登录成功，正在同步…' : '注册成功，正在同步…');
+    try {
+      localStorage.setItem(LAST_MAIL_KEY, mail.trim());
+    } catch {
+      /* 忽略存储失败 */
+    }
     setPwd('');
   };
 
@@ -282,7 +296,7 @@ export default function SyncPanel({
             <Input
               value={mail}
               onChange={(e) => setMail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder="邮箱（已为你记住上次账号）"
               autoComplete="username"
             />
           </div>
