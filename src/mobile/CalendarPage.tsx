@@ -219,7 +219,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
       return (
         <div key={e.id} className={cls} onClick={() => openView(e)}>
           <div className="remind-oneline">
-            <span className={`day-time${e.allDay || !e.startTime ? ' all-day' : ''}`}>
+            <span className={`day-time${e.allDay || !e.startTime ? ' all-day' : ''}${struck ? ' struck' : ''}`}>
               {timeText}
             </span>
             <span className={titleCls}>{e.title}</span>
@@ -240,7 +240,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
           </div>
           <div className="remind-time-line">
             {showDate && dateText ? <span className="remind-date">{dateText}</span> : null}
-            <span className={`remind-time${e.allDay || !e.startTime ? ' all-day' : ''}`}>
+            <span className={`remind-time${e.allDay || !e.startTime ? ' all-day' : ''}${struck ? ' struck' : ''}`}>
               {timeText}
             </span>
             <span className={`remind-hint${expired ? ' expired' : ''}`}>{timeHint(d, e)}</span>
