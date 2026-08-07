@@ -99,18 +99,22 @@ export default function MoreSheet({
     });
 
   /**
-   * 发送「事件数据」邮件：优先把完整数据（含图片）打包上传到日历云端，邮件里只放在线查看 / 下载链接，
-   * 体积极小，彻底绕开 EmailJS 50KB 限制与 HTML 渲染问题。未登录或上传失败则回退为邮件内文完整版。
+   * 发送「事件数据」邮件：
+   * - 已登录时，优先把完整数据（含图片）打包上传到日历云端，邮件里只放在线查看 / 下载链接，
+   *   体积极小，彻底绕开 EmailJS 50KB 限制与 HTML 渲染问题。
+   * - 未登录时，回退为邮件内文完整版（base64 图片会被过滤，避免超过 50KB）。
+   * - 云端上传失败时返回明确错误原因，不再静默失败。
    */
   const sendWithShare = async (
     subject: string,
     list: ReturnType<typeof rangedEvents>,
     note?: string
-  ): Promise<{ ok: boolean; shared: boolean; msg: string }> => {
+  ): Promise<{ ok: boolean; shared: boolean; msg: string; error?: string }> => {
     const concise = buildConciseText(list, { rangeStart, rangeEnd, exportTime });
     if (userId) {
-      const share = await createShare(list, { rangeStart, rangeEnd, exportTime });
-      if (share) {
+      const outcome = await createShare(list, { rangeStart, rangeEnd, exportTime });
+      if (outcome.ok && outcome.result) {
+        const share = outcome.result;
         const body = [
           concise,
           '',
@@ -133,6 +137,13 @@ export default function MoreSheet({
         }
         return { ok: r.ok, shared: true, msg: r.msg };
       }
+      // 云端上传失败：直接返回错误，避免把巨大内文塞进邮件再触发 50KB 限制
+      return {
+        ok: false,
+        shared: false,
+        msg: outcome.error || '分享失败',
+        error: outcome.error
+      };
     }
     // 回退：把完整文字版直接放进邮件（仍受 50KB 限制，sendEmail 会自动降级）
     const full = buildFullText(list, { rangeStart, rangeEnd, exportTime });
@@ -157,14 +168,16 @@ export default function MoreSheet({
 
     // 优先发「云端分享链接」；未登录或失败则回退内文完整版。完整 JSON 文件也已下载到本机。
     const note = `完整 JSON 文件也已通过浏览器下载（${fileName}），可用于「导入JSON」恢复。`;
-    const { ok, shared, msg } = await sendWithShare('智能日历 数据备份', list, note);
+    const { ok, shared, msg, error } = await sendWithShare('智能日历 数据备份', list, note);
     if (ok) {
       message.success(
         shared
           ? '备份链接已发到邮箱，在线查看地址也已复制到剪贴板'
           : '备份内容（含完整文字）已发送到邮箱'
       );
-    } else if (msg !== '未配置邮箱，仅本地操作') message.info(msg);
+    } else if (msg !== '未配置邮箱，仅本地操作') {
+      message.error(error || msg || '发送失败');
+    }
   };
 
   const handleCopyEvents = async () => {
@@ -177,14 +190,16 @@ export default function MoreSheet({
       message.warning('复制失败');
     }
     // 优先发「云端分享链接」；未登录或失败则回退内文完整版（含备注、图片网址）
-    const { ok, shared, msg } = await sendWithShare('智能日历 事件清单', list);
+    const { ok, shared, msg, error } = await sendWithShare('智能日历 事件清单', list);
     if (ok) {
       message.success(
         shared
           ? '完整数据链接已发到邮箱，在线查看地址也已复制到剪贴板'
           : '完整清单（含备注、图片网址）已发送到邮箱'
       );
-    } else if (msg !== '未配置邮箱，仅本地操作') message.info(msg);
+    } else if (msg !== '未配置邮箱，仅本地操作') {
+      message.error(error || msg || '发送失败');
+    }
   };
 
   const handleImportFile = (file: File) => {
