@@ -1,9 +1,10 @@
 import { Button, Popconfirm } from 'antd';
-import { EditOutlined, DeleteOutlined, CalendarOutlined, ClockCircleOutlined, FileTextOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, CalendarOutlined, ClockCircleOutlined, FileTextOutlined, FileImageOutlined } from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
 import { useUI } from '../context/UIContext';
 import { TAG_COLORS } from '../constants';
 import { parseDateStr, weekdayCN, timeRangeLabel } from '../utils/date';
+import ImageViewer from './ImageViewer';
 
 export default function EventDetailPanel() {
   const { selectedEvent, deleteEvent } = useCalendar();
@@ -75,6 +76,15 @@ export default function EventDetailPanel() {
             {e.description ? e.description : <span style={{ color: '#bbb' }}>无</span>}
           </div>
         </div>
+
+        {e.images && e.images.length > 0 && (
+          <div className="detail-row detail-row-imgs">
+            <div className="detail-label">
+              <FileImageOutlined /> 图片（{e.images.length}）
+            </div>
+            <ImageViewer images={e.images} gridClassName="detail-imgs" thumbClassName="detail-img" />
+          </div>
+        )}
 
         <div className="detail-actions">
           <Button
