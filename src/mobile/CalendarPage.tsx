@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   LeftOutlined,
   RightOutlined,
@@ -65,11 +65,17 @@ function timeHint(d: Dayjs, e: CalendarEvent): string {
 export default function CalendarPage({ showFab = true }: { showFab?: boolean }) {
   const { filteredEvents, currentDate, setCurrentDate } = useCalendar();
   const { openCreate, openView } = useUI();
-  const { status } = useSync();
-  const syncing = !!userId && status === 'syncing';
+  const { status, userId, syncNow } = useSync();
+  const syncing = status === 'syncing';
   const [slide, setSlide] = useState<'' | 'slide-left' | 'slide-right'>('');
   const [monthView, setMonthView] = useState<Dayjs | null>(null);
   const touchRef = useRef<{ x: number; y: number } | null>(null);
+
+  /** 进入日历页时立即同步一次：确保日/周/月提醒打开即显示完整数据，
+   *  不依赖手动刷新或等待定时轮询（解决「日提醒数量不能及时同步」）。 */
+  useEffect(() => {
+    if (userId) void syncNow();
+  }, [userId, syncNow]);
 
   const today = dayjs();
   const days = useMemo(() => {
@@ -314,7 +320,14 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
             </div>
           )
         ) : (
-          <div className="remind-list">{dayEvents.map((e) => renderEventRow(e, false, true))}</div>
+          <>
+            {syncing && (
+              <div className="remind-syncing-tip">
+                <SyncOutlined spin /> 同步中…
+              </div>
+            )}
+            <div className="remind-list">{dayEvents.map((e) => renderEventRow(e, false, true))}</div>
+          </>
         )}
       </section>
 
