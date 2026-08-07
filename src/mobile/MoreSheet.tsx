@@ -121,8 +121,13 @@ export default function MoreSheet({
     ].join('\n');
     const html = buildFullEmailHtml(events, { rangeStart, rangeEnd, exportTime });
     const r = await sendEmail('智能日历 数据备份', body, { html });
-    if (r.ok) message.success('备份内容已发送到邮箱');
-    else if (r.msg !== '未配置邮箱，仅本地操作') message.info(r.msg);
+    if (r.ok) {
+      message.success(
+        r.downgraded
+          ? '备份邮件已发送（事件较多，正文已自动精简；完整数据请用「导出JSON」）'
+          : '备份内容已发送到邮箱'
+      );
+    } else if (r.msg !== '未配置邮箱，仅本地操作') message.info(r.msg);
   };
 
   const handleCopyEvents = async () => {
@@ -137,8 +142,13 @@ export default function MoreSheet({
     // 邮件发送完整版 HTML（图片以 URL 内联，体积极小，可容纳所有事件的完整信息，避开 50KB 限制）
     const html = buildFullEmailHtml(list, { rangeStart, rangeEnd, exportTime });
     const r = await sendEmail('智能日历 事件清单', text, { html });
-    if (r.ok) message.success('完整清单（含图片）已发送到邮箱');
-    else if (r.msg !== '未配置邮箱，仅本地操作') message.info(r.msg);
+    if (r.ok) {
+      message.success(
+        r.downgraded
+          ? '清单已发送到邮箱（内容较长，已自动精简排版）'
+          : '完整清单（含图片）已发送到邮箱'
+      );
+    } else if (r.msg !== '未配置邮箱，仅本地操作') message.info(r.msg);
   };
 
   const handleImportFile = (file: File) => {
@@ -431,7 +441,7 @@ export default function MoreSheet({
 
               <div className="notify-tip">
                 事件提前提醒同时推送到微信与钉钉（已配置才发送）；导出/复制数据通过邮件发送。
-                由于 EmailJS 免费计划单封请求变量上限 50KB，复制/导出邮件仅发送简洁正文，不再附带含图片 base64 的 HTML 附件。
+                邮件中的图片以云端网址内联，体积很小；若事件过多/描述过长导致接近 EmailJS 免费版 50KB 上限，会自动降级为精简正文发送。
               </div>
               <button className="notify-save" onClick={saveNotify}>
                 <SaveOutlined /> 保存通知设置
