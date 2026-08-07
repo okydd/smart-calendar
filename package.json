@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
-    "build": "vite build",
+    "build": "vite build && node -e \"const fs=require('fs'); const p='dist/sw.js'; let s=fs.readFileSync(p,'utf8'); const t=new Date().toISOString().replace(/[:.]/g,'-'); s=s.replace(/__BUILD_TIME__/g,t); fs.writeFileSync(p,s); console.log('SW build time:', t);\"",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview --host"
   },
