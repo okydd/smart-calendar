@@ -84,15 +84,25 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
   // 任意变更后持久化；若因 localStorage 配额不足失败，提示用户导出/清理
   const saveWarnedRef = useRef(false);
   useEffect(() => {
-    const res = saveEvents(allEvents);
-    if (!res.ok) {
-      if (!saveWarnedRef.current) {
-        saveWarnedRef.current = true;
-        message.error(res.error, 6);
+    let cancelled = false;
+    (async () => {
+      const res = await saveEvents(allEvents);
+      if (cancelled) return;
+      if (!res.ok) {
+        if (!saveWarnedRef.current) {
+          saveWarnedRef.current = true;
+          message.error(res.error, 6);
+        }
+      } else {
+        if (res.rescued) {
+          message.success('本机存储已满，已自动把图片上传到云端并释放空间', 4);
+        }
+        saveWarnedRef.current = false;
       }
-    } else {
-      saveWarnedRef.current = false;
-    }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [allEvents]);
 
   /** 本地变更：写入并触发同步 */
