@@ -114,9 +114,17 @@ export function buildFullText(
       const lines = [
         `${i + 1}. ${e.title}${e.important ? '【重要】' : ''}${e.done ? '【已完成】' : ''}`,
         `   时间：${date} ｜ ${timeRangeLabel(e)}`,
-        e.description ? `   备注：${e.description}` : '',
-        e.images && e.images.length ? `   图片：${e.images.length} 张` : ''
+        e.description ? `   备注：${e.description}` : ''
       ];
+      // 纯文本兜底：仅当图片是 http(s) 网址时才附上（base64 太长省略）
+      if (e.images && e.images.length) {
+        const urls = e.images.filter((u) => /^https?:\/\//i.test(u));
+        lines.push(
+          urls.length
+            ? `   图片(${e.images.length} 张)：${urls.join('  ')}`
+            : `   图片：${e.images.length} 张（本地存储，详见网页端）`
+        );
+      }
       return lines.filter(Boolean).join('\n');
     })
     .join('\n');
@@ -138,25 +146,20 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
-/**
- * 生成「完整版」事件报告（HTML 文件）：含每条事件的标题、日期、时间、备注与图片，
- * 用于作为邮件附件发送，便于在邮箱中直接查看排版与图片。
- */
-export function buildFullHtml(
-  events: CalendarEvent[],
-  opts: { rangeStart: string; rangeEnd: string; exportTime: string }
+function buildItemsHtml(
+  events: CalendarEvent[]
 ): string {
   const list = events
     .filter((e) => !e.deleted)
     .sort((a, b) => (a.date < b.date ? -1 : 1));
-  const items = list
+  return list
     .map((e) => {
       const d = parseDateStr(e.date);
       const date = d.isValid() ? `${d.year()}年${d.month() + 1}月${d.date()}日 ${weekdayCN(d)}` : e.date;
       const time = timeRangeLabel(e);
       const imgs = e.images && e.images.length
         ? `<div class="imgs">${e.images
-            .map((src) => `<img src="${src}" alt="事件图片" />`)
+            .map((src) => `<img src="${escapeHtml(src)}" alt="事件图片" />`)
             .join('')}</div>`
         : '';
       const tags =
@@ -170,6 +173,21 @@ export function buildFullHtml(
 </div>`;
     })
     .join('\n');
+}
+
+/**
+ * 生成「完整版」事件报告（HTML 文件）：含每条事件的标题、日期、时间、备注与图片，
+ * 用于作为邮件附件 / 文件下载，便于在邮箱中直接查看排版与图片。
+ * 图片以 URL（已托管到云端）或本地 base64 形式内联，URL 形式体积极小。
+ */
+export function buildFullHtml(
+  events: CalendarEvent[],
+  opts: { rangeStart: string; rangeEnd: string; exportTime: string }
+): string {
+  const list = events
+    .filter((e) => !e.deleted)
+    .sort((a, b) => (a.date < b.date ? -1 : 1));
+  const items = buildItemsHtml(events);
   return `<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -205,6 +223,29 @@ export function buildFullHtml(
 </html>`;
 }
 
+/**
+ * 邮件正文用的 HTML 片段（不含 doctype/document 外壳），直接作为 EmailJS 的 html 变量渲染。
+ * 图片以 URL 形式内联，整体体积极小，可把所有事件的完整信息塞进一封邮件（避开 50KB 限制）。
+ */
+export function buildFullEmailHtml(
+  events: CalendarEvent[],
+  opts: { rangeStart: string; rangeEnd: string; exportTime: string }
+): string {
+  const list = events
+    .filter((e) => !e.deleted)
+    .sort((a, b) => (a.date < b.date ? -1 : 1));
+  const items = buildItemsHtml(events);
+  return `<div style="font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;background:#f3f4f8;color:#1c1c1e;padding:18px;margin:0;">
+  <div style="background:linear-gradient(135deg,#3b7cff,#5e60ff);color:#fff;border-radius:14px;padding:14px 18px;">
+    <h1 style="margin:0 0 6px;font-size:18px;">智能日历 · 事件清单（完整版）</h1>
+    <p style="margin:2px 0;font-size:12px;opacity:.9;">选取时间范围：${escapeHtml(opts.rangeStart)} 至 ${escapeHtml(opts.rangeEnd)}</p>
+    <p style="margin:2px 0;font-size:12px;opacity:.9;">导出时间：${escapeHtml(opts.exportTime)} ｜ 共 ${list.length} 条事件</p>
+  </div>
+  ${items || '<p style="text-align:center;color:#9aa0b4;font-size:12px;margin-top:14px;">（无事件）</p>'}
+  <p style="text-align:center;color:#9aa0b4;font-size:12px;margin-top:14px;">由「智能日历」自动生成</p>
+</div>`;
+}
+
 /** 每日定时发送使用的简洁正文（不强调范围，仅说明日期） */
 export function buildDailyText(events: CalendarEvent[]): string {
   const lines = events
@@ -225,20 +266,16 @@ export function buildDailyText(events: CalendarEvent[]): string {
   ].join('\n');
 }
 
-/** 发送每日数据到邮箱（简洁正文 + 完整版 HTML 附件） */
+/** 发送每日数据到邮箱（简洁正文 + 完整版 HTML 正文，图片以 URL 内联，体积极小） */
 export async function sendDailyDigest(events: CalendarEvent[]): Promise<{ ok: boolean; msg: string }> {
   const today = dayjs().format('YYYY年M月D日');
   const text = buildDailyText(events);
-  const html = buildFullHtml(events, {
+  const html = buildFullEmailHtml(events, {
     rangeStart: today,
     rangeEnd: today,
     exportTime: dayjs().format('YYYY年M月D日 HH:mm')
   });
-  return sendEmail('智能日历 每日数据', text, {
-    name: `Calendar_Daily_${dayjs().format('YYYYMMDD')}.html`,
-    data: toBase64(html),
-    mimeType: 'text/html'
-  });
+  return sendEmail('智能日历 每日数据', text, { html });
 }
 
 /** 邮件附件（base64，不含 data: 前缀） */
