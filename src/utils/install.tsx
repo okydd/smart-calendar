@@ -1,16 +1,28 @@
 import type { ReactNode } from 'react';
 
 /** 判断当前运行环境，用于给出针对性的「安装到桌面」指引 */
-export function detectPlatform(): 'ios' | 'android' | 'wechat' | 'desktop' | 'other' {
+export function detectPlatform():
+  | 'ios'
+  | 'android'
+  | 'wechat'
+  | 'quark'
+  | 'desktop'
+  | 'other' {
   if (typeof navigator === 'undefined') return 'other';
   const ua = navigator.userAgent;
   const isWechat = /MicroMessenger/i.test(ua);
   const isIOS =
     /iPhone|iPad|iPod/i.test(ua) ||
     (navigator.platform === 'MacIntel' && (navigator as any).maxTouchPoints > 1);
+  // 国产浏览器（夸克/UC/华为/小米/OPPO/vivo 等）常不实现标准 PWA 安装对话框，需手动添加
+  const isQuark =
+    /Quark|UCBrowser|HuaweiBrowser|MiuiBrowser|VivoBrowser|OppoBrowser|HeyTapBrowser|QHBrowser|QBWebView/i.test(
+      ua
+    );
   const isAndroid = /Android/i.test(ua);
   if (isWechat) return 'wechat';
   if (isIOS) return 'ios';
+  if (isQuark) return 'quark';
   if (isAndroid) return 'android';
   if (/Windows|Macintosh|Linux x86/i.test(ua)) return 'desktop';
   return 'other';
@@ -109,6 +121,29 @@ export function InstallGuide(): ReactNode {
           </li>
           <li>若页面已弹出「安装到桌面」按钮，直接点它即可。</li>
         </ol>
+      </div>
+    );
+  }
+  if (p === 'quark') {
+    return (
+      <div style={{ fontSize: 13, lineHeight: 1.9 }}>
+        <p style={{ margin: '0 0 8px' }}>
+          夸克等国产浏览器不会弹出系统安装框，请手动「添加到桌面」：
+        </p>
+        <ol style={{ margin: 0, paddingLeft: 18 }}>
+          <li>
+            点浏览器底部「<b>≡</b>」菜单或右上角「<b>···</b>」，找到「<b>添加到桌面</b> / 生成桌面快捷方式」。
+          </li>
+          <li>
+            或在页面里<b>长按空白处</b>，选择「<b>添加到主屏幕</b>」。
+          </li>
+          <li>
+            若地址栏右侧有「<b>下载</b>」图标，点开也可能有「添加到桌面」入口。
+          </li>
+        </ol>
+        <p style={{ margin: '8px 0 0', color: '#8e8e93' }}>
+          添加后桌面上会出现独立图标，点开即全屏运行。
+        </p>
       </div>
     );
   }
