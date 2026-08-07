@@ -294,8 +294,9 @@ export interface EmailAttachment {
   mimeType: string;
 }
 
-/** EmailJS 免费计划模板变量上限 50KB；留 5KB 余量给模板固定字段与转义膨胀 */
-const MAX_EMAIL_VARS_SIZE = 45 * 1024;
+/** EmailJS 免费计划模板变量上限 50KB；阈值设 35KB，给服务固定字段、URL 编码、网络层冗余留足余量 */
+const MAX_EMAIL_VARS_SIZE = 35 * 1024;
+const EMAIL_RETRIES = 3;
 
 function byteLength(str: string): number {
   // 用 Blob 准确计算 UTF-8 字节数（EmailJS 服务端按 UTF-8 计）
@@ -320,12 +321,66 @@ function buildPayload(params: Record<string, any>, settings: NotifySettings, att
   });
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * 判断是否为可重试的网络错误（连接被关闭、超时、临时 DNS 失败等）。
+ * fetch 抛出的 TypeError / ERR_CONNECTION_CLOSED 等通常属于此类。
+ */
+function isRetryableError(e: unknown): boolean {
+  if (!e) return false;
+  const msg = String((e as Error).message ?? '');
+  return (
+    msg.includes('CONNECTION_CLOSED') ||
+    msg.includes('CONNECTION_REFUSED') ||
+    msg.includes('CONNECTION_RESET') ||
+    msg.includes('ETIMEDOUT') ||
+    msg.includes('ECONNRESET') ||
+    msg.includes('ECONNREFUSED') ||
+    msg.includes('ETIMEDOUT') ||
+    msg.includes('NetworkError') ||
+    msg.includes('network') ||
+    msg.includes('abort') ||
+    msg.includes('timeout') ||
+    (e as Error).name === 'TypeError' ||
+    (e as Error).name === 'AbortError'
+  );
+}
+
+async function fetchEmailSend(body: string, retries = EMAIL_RETRIES): Promise<Response> {
+  let lastErr: unknown = null;
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body
+      });
+      if (res.ok) return res;
+      // HTTP 4xx/5xx：如果是 50KB 限制等明确错误，不再重试
+      const text = await res.text().catch(() => '');
+      if (text.toLowerCase().includes('size limit') || res.status === 413) {
+        throw new Error('EmailJS size limit: ' + text.slice(0, 80));
+      }
+      lastErr = new Error(`HTTP ${res.status}: ${text.slice(0, 80)}`);
+    } catch (e) {
+      lastErr = e;
+      if (!isRetryableError(e)) break; // 非网络错误不重试
+    }
+    if (i < retries - 1) await sleep(800 * (i + 1)); // 指数退避 800ms / 1600ms
+  }
+  throw lastErr ?? new Error('邮件发送失败：网络异常，请检查网络后重试');
+}
+
 /**
  * 通过 EmailJS 发送邮件（无需后端，浏览器直发）。
  * - 支持多个收件邮箱（逗号 / 换行分隔）；
  * - 可选 html 正文（完整版，含排版与内联图片，需模板用 {{{html}}} 渲染）；
  * - 可选附件（如 .json 备份）：付费计划生效；免费计划自动降级为仅正文发送；
- * - **自动体积降级**：当 template variables 接近 50KB 上限时，先移除 html 排版，再超长则截断正文，避免直接报错。
+ * - **自动体积降级**：当 template variables 接近 50KB 上限时，先移除 html 排版，再超长则截断正文，避免直接报错；
+ * - **失败重试**：对连接关闭、超时等网络错误自动重试 3 次。
  */
 export async function sendEmail(
   subject: string,
@@ -387,19 +442,11 @@ export async function sendEmail(
 
   try {
     if (opts?.attachment) {
-      const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: payload(opts.attachment)
-      });
+      const res = await fetchEmailSend(payload(opts.attachment));
       if (res.ok) return { ok: true, msg: '已发送到邮箱（含附件）', downgraded };
       // 免费计划不支持附件，降级重试（仅正文 / html）
     }
-    const res2 = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: payload()
-    });
+    const res2 = await fetchEmailSend(payload());
     if (res2.ok) {
       return {
         ok: true,
@@ -410,7 +457,11 @@ export async function sendEmail(
     const t = await res2.text();
     return { ok: false, msg: '邮件发送失败：' + t.slice(0, 80) };
   } catch (e) {
-    return { ok: false, msg: '邮件发送失败：' + ((e as Error)?.message ?? '') };
+    const errMsg = ((e as Error)?.message ?? '').slice(0, 120);
+    if (errMsg.toLowerCase().includes('size limit')) {
+      return { ok: false, msg: '邮件发送失败：内容超过 EmailJS 限制，请减少事件数量或用「导出JSON」备份' };
+    }
+    return { ok: false, msg: '邮件发送失败：网络异常，请检查网络后重试（' + errMsg + '）' };
   }
 }
 
