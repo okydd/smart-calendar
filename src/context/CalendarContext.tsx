@@ -7,6 +7,7 @@ import React, {
   useRef,
   useState
 } from 'react';
+import { message } from 'antd';
 import { dayjs, type Dayjs } from '../utils/date';
 import type { CalendarEvent, TagColor, ViewMode } from '../types';
 import { loadEvents, saveEvents } from '../utils/storage';
@@ -80,9 +81,18 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
   const latestRef = useRef(allEvents);
   latestRef.current = allEvents;
 
-  // 任意变更后持久化
+  // 任意变更后持久化；若因 localStorage 配额不足失败，提示用户导出/清理
+  const saveWarnedRef = useRef(false);
   useEffect(() => {
-    saveEvents(allEvents);
+    const res = saveEvents(allEvents);
+    if (!res.ok) {
+      if (!saveWarnedRef.current) {
+        saveWarnedRef.current = true;
+        message.error(res.error, 6);
+      }
+    } else {
+      saveWarnedRef.current = false;
+    }
   }, [allEvents]);
 
   /** 本地变更：写入并触发同步 */
