@@ -349,15 +349,50 @@ function isRetryableError(e: unknown): boolean {
   );
 }
 
+const EMAIL_TIMEOUT = 15000; // 单次请求 15 秒超时
+
+/** 使用 XMLHttpRequest 发送，作为 fetch 在大陆不稳定链路下的 fallback */
+function xhrEmailSend(body: string): Promise<Response> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://api.emailjs.com/api/v1.0/email/send', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.timeout = EMAIL_TIMEOUT;
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(new Response(xhr.responseText, { status: xhr.status }));
+      } else {
+        resolve(new Response(xhr.responseText, { status: xhr.status, statusText: xhr.statusText }));
+      }
+    };
+    xhr.onerror = () => reject(new Error('XHR network error'));
+    xhr.ontimeout = () => reject(new Error('XHR timeout'));
+    xhr.onabort = () => reject(new Error('XHR abort'));
+    xhr.send(body);
+  });
+}
+
 async function fetchEmailSend(body: string, retries = EMAIL_RETRIES): Promise<Response> {
   let lastErr: unknown = null;
   for (let i = 0; i < retries; i++) {
     try {
-      const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body
-      });
+      // 先用 fetch + AbortController 超时；失败时回退 XHR
+      let res: Response;
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), EMAIL_TIMEOUT);
+        res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+          signal: ctrl.signal,
+          keepalive: true
+        });
+        clearTimeout(timer);
+      } catch (fetchErr) {
+        // fetch 失败（连接被关闭/超时等）尝试 XHR 兜底
+        res = await xhrEmailSend(body);
+      }
       if (res.ok) return res;
       // HTTP 4xx/5xx：如果是 50KB 限制等明确错误，不再重试
       const text = await res.text().catch(() => '');
@@ -365,6 +400,8 @@ async function fetchEmailSend(body: string, retries = EMAIL_RETRIES): Promise<Re
         throw new Error('EmailJS size limit: ' + text.slice(0, 80));
       }
       lastErr = new Error(`HTTP ${res.status}: ${text.slice(0, 80)}`);
+      // HTTP 错误通常不是网络抖动，不再重试
+      break;
     } catch (e) {
       lastErr = e;
       if (!isRetryableError(e)) break; // 非网络错误不重试
@@ -461,7 +498,13 @@ export async function sendEmail(
     if (errMsg.toLowerCase().includes('size limit')) {
       return { ok: false, msg: '邮件发送失败：内容超过 EmailJS 限制，请减少事件数量或用「导出JSON」备份' };
     }
-    return { ok: false, msg: '邮件发送失败：网络异常，请检查网络后重试（' + errMsg + '）' };
+    return {
+      ok: false,
+      msg:
+        '邮件发送失败：网络异常，请检查网络后重试。若多次失败，可改用「复制事件」生成云端链接，或先「导出JSON」备份。(' +
+        errMsg +
+        ')'
+    };
   }
 }
 
