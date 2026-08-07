@@ -113,7 +113,16 @@ export default function TodoPage() {
       }
     }
 
-    [todayItems, week, nextWeek, other].forEach((a) => a.sort(sortEvents));
+    const isStruck = (e: CalendarEvent) =>
+      !!e.done || (() => { const d = parseDateStr(e.date); return d.isValid() && d.isBefore(today, 'day'); })();
+    const sorterStruck = (a: CalendarEvent, b: CalendarEvent) => {
+      const sa = isStruck(a) ? 1 : 0;
+      const sb = isStruck(b) ? 1 : 0;
+      if (sa !== sb) return sa - sb;
+      return sortEvents(a, b);
+    };
+
+    [todayItems, week, nextWeek, other].forEach((a) => a.sort(sorterStruck));
     done.sort((a, b) => sortEvents(b, a));
 
     const gs: Group[] = [
@@ -136,6 +145,7 @@ export default function TodoPage() {
     const d = parseDateStr(e.date);
     const hint = d.isValid() ? statusHint(d, e, today) : '未设置日期';
     const expired = !e.done && d.isValid() && d.isBefore(today, 'day');
+    const struck = e.done || expired;
     const timeText = e.allDay || !e.startTime ? '全天' : e.startTime;
     const dateText = d.isValid() ? dateLabel(d, today) : '未设置日期';
     return (
@@ -149,13 +159,13 @@ export default function TodoPage() {
         </button>
         <div className="todo-body" onClick={() => openView(e)}>
           <div className="remind-title-line">
-            <span className={`remind-title${e.done ? ' done' : ''}`}>{e.title}</span>
+            <span className={`remind-title${struck ? ' struck' : ''}`}>{e.title}</span>
             {e.important && <span className="imp-flag">重</span>}
             <EventFlags e={e} />
           </div>
           <div className="remind-time-line">
             <span className="remind-date">{dateText}</span>
-            <span className={`remind-time${e.allDay || !e.startTime ? ' all-day' : ''}`}>
+            <span className={`remind-time${e.allDay || !e.startTime ? ' all-day' : ''}${struck ? ' struck' : ''}`}>
               {timeText}
             </span>
             <span className={`todo-days${expired ? ' expired' : e.done ? ' done' : ''}`}>{hint}</span>
