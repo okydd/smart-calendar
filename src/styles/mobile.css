@@ -2540,7 +2540,7 @@ body {
 
 .evv-title {
   font-size: 14px;
-  font-weight: normal;
+  font-weight: 700;
   color: var(--c-text);
   word-break: break-word;
 }
