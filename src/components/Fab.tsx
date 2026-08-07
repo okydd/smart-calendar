@@ -2,7 +2,20 @@ import { useEffect, useRef, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 
 const POS_KEY = 'calendarFabPos';
+const POS_VER_KEY = 'calendarFabPosVer';
+/** 版本号变化时清空已保存的拖拽位置，让 + 号按钮回到默认右下角 */
+const POS_VER = 3;
 const SIZE = 56;
+
+// 部署后重置一次拖拽位置（默认右下角）；保留拖动能力，仅清理旧的持久化坐标
+try {
+  if (localStorage.getItem(POS_VER_KEY) !== String(POS_VER)) {
+    localStorage.removeItem(POS_KEY);
+    localStorage.setItem(POS_VER_KEY, String(POS_VER));
+  }
+} catch {
+  /* ignore */
+}
 
 interface Pos {
   x: number;
