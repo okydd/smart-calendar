@@ -18,8 +18,10 @@ import SyncPanel from './mobile/SyncPanel';
 import ShareView from './mobile/ShareView';
 import { dayjs, lunarDateLabel, weekdayCN } from './utils/date';
 import { checkDueReminders, getNotifySettings, emailConfigured, sendDailyDigest } from './utils/notify';
-import { InstallGuide } from './utils/install';
+import { InstallGuide, detectPlatform } from './utils/install';
 import { hostImages } from './utils/imageHost';
+import { registerQuotaRescuer } from './utils/storage';
+import type { CalendarEvent } from './types';
 
 function Shell() {
   const navigate = useNavigate();
@@ -49,22 +51,45 @@ function Shell() {
   }, [events]);
 
   /**
-   * 一次性把本地 base64 图片托管为云端 URL（受 localStorage 标记保护，仅登录后执行），
-   * 使所有历史事件的图片都能以网址形式出现在邮件中，从而把所有事件完整信息塞进一封邮件。
+   * 注册 localStorage 配额满时的自动救援：把 base64 图片上传到 Supabase Storage 并替换为 URL，
+   * 从而释放 localStorage 空间。未登录时无法上传，直接让保存失败并提示用户登录。
    */
   useEffect(() => {
-    const FLAG = 'calendarImgMigrated';
+    registerQuotaRescuer(async (events: CalendarEvent[]) => {
+      if (!userId) throw new Error('未登录云同步账号，无法上传图片释放空间');
+      const out: CalendarEvent[] = [];
+      for (const e of events) {
+        const orig = e.images || [];
+        const hasDataUrl = orig.some((u) => typeof u === 'string' && u.startsWith('data:'));
+        if (!hasDataUrl) {
+          out.push(e);
+          continue;
+        }
+        const hosted = await hostImages(orig);
+        out.push({ ...e, images: hosted });
+      }
+      return out;
+    });
+    return () => {
+      registerQuotaRescuer(null);
+    };
+  }, [userId]);
+
+  /**
+   * 登录后自动把本地 base64 图片托管为云端 URL（启动即执行，不限一次），
+   * 从而释放 localStorage 空间、让邮件/分享能引用图片网址。
+   */
+  const migratedRef = useRef(false);
+  useEffect(() => {
     if (!userId) return; // 仅登录后
-    if (localStorage.getItem(FLAG)) return;
+    if (migratedRef.current) return;
     let cancelled = false;
     (async () => {
       const list = eventsRef.current.filter((e) =>
         (e.images || []).some((u) => typeof u === 'string' && u.startsWith('data:'))
       );
-      if (!list.length) {
-        localStorage.setItem(FLAG, '1');
-        return;
-      }
+      if (!list.length) return;
+      migratedRef.current = true;
       let allOk = true;
       for (const e of list) {
         if (cancelled) break;
@@ -78,7 +103,10 @@ function Shell() {
           allOk = false;
         }
       }
-      if (allOk) localStorage.setItem(FLAG, '1');
+      // 成功后写入标记（quota 满时可能写失败，但下次启动会重试）
+      if (allOk) {
+        try { localStorage.setItem('calendarImgMigrated', '1'); } catch { /* 忽略 */ }
+      }
     })();
     return () => {
       cancelled = true;
@@ -112,7 +140,9 @@ function Shell() {
   }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) {
+    // 夸克等国产浏览器虽会触发安装事件，但 prompt() 不弹系统安装框，
+    // 直接给出手动「添加到桌面」指引，避免点了「安装」却无反应。
+    if (!deferredPrompt || detectPlatform() === 'quark') {
       Modal.info({
         title: '安装到桌面',
         content: <InstallGuide />,
