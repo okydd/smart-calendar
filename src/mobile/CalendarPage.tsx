@@ -5,7 +5,9 @@ import {
   PlusOutlined,
   CalendarOutlined,
   EyeOutlined,
-  SyncOutlined
+  SyncOutlined,
+  DownOutlined,
+  UpOutlined
 } from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
 import { useUI } from '../context/UIContext';
@@ -69,6 +71,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
   const syncing = status === 'syncing';
   const [slide, setSlide] = useState<'' | 'slide-left' | 'slide-right'>('');
   const [monthView, setMonthView] = useState<Dayjs | null>(null);
+  const [expanded, setExpanded] = useState(false);
   const touchRef = useRef<{ x: number; y: number } | null>(null);
 
   /** 进入日历页时立即同步一次：确保日/周/月提醒打开即显示完整数据，
@@ -78,10 +81,15 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
   }, [userId, syncNow]);
 
   const today = dayjs();
-  const days = useMemo(() => {
-    const start = currentDate.startOf('month').subtract((currentDate.date(1).day() + 6) % 7, 'day');
-    return Array.from({ length: 42 }, (_, i) => start.add(i, 'day'));
-  }, [currentDate]);
+  // 日历网格：默认收起只显示「选中日所在周 + 下一周」（14 天）；展开后显示完整月份（6 周）
+  const visibleDays = useMemo(() => {
+    if (expanded) {
+      const start = currentDate.startOf('month').subtract((currentDate.date(1).day() + 6) % 7, 'day');
+      return Array.from({ length: 42 }, (_, i) => start.add(i, 'day'));
+    }
+    const wkStart = currentDate.startOf('isoWeek');
+    return Array.from({ length: 14 }, (_, i) => wkStart.add(i, 'day'));
+  }, [expanded, currentDate]);
   const byDate = useMemo(() => groupByDate(filteredEvents), [filteredEvents]);
 
   const goMonth = (delta: number) => {
@@ -151,15 +159,24 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
       }
     }
 
-    const sorter = (a: CalendarEvent, b: CalendarEvent) => {
+    const isStruck = (e: CalendarEvent) =>
+      !!e.done || (dayjs(e.date).isValid() && dayjs(e.date).isBefore(today, 'day'));
+    const baseSorter = (a: CalendarEvent, b: CalendarEvent) => {
       if (a.date !== b.date) return a.date < b.date ? -1 : 1;
       if (a.allDay !== b.allDay) return a.allDay ? -1 : 1;
       return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
     };
+    // 周/月提醒：已过期或已完成（struck）的事件排到正常事件之后
+    const sorterStruck = (a: CalendarEvent, b: CalendarEvent) => {
+      const sa = isStruck(a) ? 1 : 0;
+      const sb = isStruck(b) ? 1 : 0;
+      if (sa !== sb) return sa - sb;
+      return baseSorter(a, b);
+    };
 
-    day.sort(sorter);
-    week.sort(sorter);
-    month.sort(sorter);
+    day.sort(baseSorter);
+    week.sort(sorterStruck);
+    month.sort(sorterStruck);
 
     const monthRangeLabel = `${wk3Start.month() + 1}月${wk3Start.date()}日 - ${wk4End.month() + 1}月${wk4End.date()}日`;
     const weekRangeLabel = `${weekStart.month() + 1}月${weekStart.date()}日 - ${nextWeekEnd.month() + 1}月${nextWeekEnd.date()}日`;
@@ -188,12 +205,14 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
   const renderEventRow = (e: CalendarEvent, showDate: boolean, isDay = false) => {
     const d = dayjs(e.date);
     const expired = !e.done && d.isValid() && d.isBefore(today, 'day');
+    const struck = e.done || expired;
     const timeText = e.allDay || !e.startTime ? '全天' : e.startTime;
     const dateText =
       showDate && d.isValid()
         ? `${d.month() + 1}月${d.date()}日 ${WEEK_DAYS[(d.day() + 6) % 7]}`
         : '';
     const cls = `event-pill${isDay ? ' event-pill-day' : ''}${e.important ? ' important' : ''}`;
+    const titleCls = `remind-title${struck ? ' struck' : ''}`;
 
     // 日提醒：一行显示「时间(底色药丸) + 标题 + 重要/注/图」，不显示倒计时
     if (isDay) {
@@ -203,8 +222,8 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
             <span className={`day-time${e.allDay || !e.startTime ? ' all-day' : ''}`}>
               {timeText}
             </span>
-            <span className={`remind-title${e.done ? ' done' : ''}`}>{e.title}</span>
-            {e.important && <span className="imp-flag">重要</span>}
+            <span className={titleCls}>{e.title}</span>
+            {e.important && <span className="imp-flag">重</span>}
             <EventFlags e={e} />
           </div>
         </div>
@@ -215,8 +234,8 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
       <div key={e.id} className={cls} onClick={() => openView(e)}>
         <div className="remind-main">
           <div className="remind-title-line">
-            <span className={`remind-title${e.done ? ' done' : ''}`}>{e.title}</span>
-            {e.important && <span className="imp-flag">重要</span>}
+            <span className={titleCls}>{e.title}</span>
+            {e.important && <span className="imp-flag">重</span>}
             <EventFlags e={e} />
           </div>
           <div className="remind-time-line">
@@ -264,7 +283,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
-          {days.map((d) => {
+          {visibleDays.map((d) => {
             const key = toDateStr(d);
             const evts = byDate.get(key) ?? [];
             const isOut = d.month() !== currentDate.month();
@@ -289,6 +308,18 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
               </div>
             );
           })}
+        </div>
+
+        <div className="month-toggle">
+          {expanded ? (
+            <button className="month-toggle-btn" onClick={() => setExpanded(false)}>
+              <UpOutlined /> 收起
+            </button>
+          ) : (
+            <button className="month-toggle-btn" onClick={() => setExpanded(true)}>
+              <DownOutlined /> 展开整月
+            </button>
+          )}
         </div>
       </div>
 
