@@ -658,8 +658,8 @@ body {
 }
 
 .remind-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: normal;
   color: #1d1d1d;
   white-space: nowrap;
   overflow: hidden;
@@ -807,9 +807,9 @@ body {
 }
 
 .todo-title {
-  font-size: 15px;
+  font-size: 14px;
   color: var(--c-text);
-  font-weight: 600;
+  font-weight: normal;
   word-break: break-word;
   line-height: 1.25;
 }
@@ -1276,8 +1276,8 @@ body {
 .remind-title {
   flex: 1;
   min-width: 0;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: normal;
   color: var(--c-text);
   white-space: nowrap;
   overflow: hidden;
@@ -2539,8 +2539,8 @@ body {
 }
 
 .evv-title {
-  font-size: 19px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: normal;
   color: var(--c-text);
   word-break: break-word;
 }
