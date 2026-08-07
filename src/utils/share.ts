@@ -20,29 +20,36 @@ export interface ShareResult {
   viewerUrl: string;
 }
 
+export interface ShareOutcome {
+  ok: boolean;
+  result?: ShareResult;
+  /** 失败时的可读原因 */
+  error?: string;
+}
+
 /**
  * 把一批事件的完整数据（含图片）打包成 JSON，上传到 Supabase 公开桶，
- * 返回可公网访问的链接。需已登录；未登录 / 未配置 / 失败均返回 null（调用方回退到邮件内文）。
+ * 返回可公网访问的链接。需已登录；未登录 / 未配置 / 失败均返回 {ok:false, error:...}。
  *
  * 上传前会把事件里的 dataURL 图片托管为云端 URL，保证在线查看与邮件都能正常显示图片。
+ * 图片逐张串行上传，避免并发触发 HTTP/2 协议错误。
  */
 export async function createShare(
   events: CalendarEvent[],
   meta: ShareMeta
-): Promise<ShareResult | null> {
+): Promise<ShareOutcome> {
   const client = getClient();
-  if (!client) return null;
+  if (!client) return { ok: false, error: '未配置云同步，请先到「云同步」中设置 Supabase' };
   try {
     const { data: userData } = await client.auth.getUser();
-    if (!userData.user) return null;
+    if (!userData.user) return { ok: false, error: '请先登录云同步账号再分享数据' };
 
-    // 托管图片：把 dataURL 转成公开 URL，使分享数据里的图片可在线加载
-    const prepared: CalendarEvent[] = await Promise.all(
-      events.map(async (e) => {
-        const imgs = e.images && e.images.length ? await hostImages(e.images) : e.images;
-        return { ...e, images: imgs ?? e.images };
-      })
-    );
+    // 托管图片：串行处理每个事件的图片，避免并发 HTTP/2 连接风暴
+    const prepared: CalendarEvent[] = [];
+    for (const e of events) {
+      const imgs = e.images && e.images.length ? await hostImages(e.images) : e.images;
+      prepared.push({ ...e, images: imgs ?? e.images });
+    }
 
     const payload = {
       app: 'smart-calendar',
@@ -68,7 +75,8 @@ export async function createShare(
         upsert: true,
         cacheControl: '0'
       });
-    if (error || !data) return null;
+    if (error) return { ok: false, error: '分享数据上传失败：' + (error.message || '') };
+    if (!data) return { ok: false, error: '分享数据上传失败：服务端未返回文件信息' };
 
     const { data: urlData } = client.storage.from(SHARE_BUCKET).getPublicUrl(data.path);
     const url = urlData.publicUrl || '';
@@ -76,9 +84,9 @@ export async function createShare(
     const origin = typeof location !== 'undefined' ? location.origin : 'https://okydd.github.io';
     const base = typeof location !== 'undefined' ? location.pathname : '/smart-calendar/';
     const viewerUrl = `${origin}${base}#/share/${id}`;
-    return { id, url, viewerUrl };
-  } catch {
-    return null;
+    return { ok: true, result: { id, url, viewerUrl } };
+  } catch (e) {
+    return { ok: false, error: '分享数据上传失败：' + ((e as Error)?.message ?? '网络异常') };
   }
 }
 
