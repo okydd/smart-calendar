@@ -146,13 +146,13 @@ export default function TodoPage() {
     const struck = !!e.done;
     const timeText = e.allDay || !e.startTime ? '全天' : e.startTime;
     const dateText = d.isValid() ? dateLabel(d, today) : '未设置日期';
-    // 办事清单状态边框分级（互斥）：已完成→无边框 / 重要→红边 / 今天→实蓝 / 其它→淡蓝
-    const stateCls = e.done
-      ? ' done-pill'
-      : e.important
-        ? ' important'
-        : e.date === todayStr
-          ? ' today'
+    // 办事清单状态边框分级（互斥）：重要→红边 / 今天(含已完成)→实蓝 / 其它未完成→淡蓝 / 其它已完成→无边框
+    const stateCls = e.important
+      ? ' important'
+      : e.date === todayStr
+        ? ' today'
+        : e.done
+          ? ' done-pill'
           : ' not-done';
     return (
       <div className={`event-pill todo-item${stateCls}`} key={e.id}>

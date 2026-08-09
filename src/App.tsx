@@ -28,7 +28,8 @@ function Shell() {
   const location = useLocation();
   const { activeTags, clearTags, events, search, setSearch, filteredEvents, updateEvent } = useCalendar();
   const { openView } = useUI();
-  const { userId } = useSync();
+  const { userId, email } = useSync();
+  const isSettings = location.pathname === '/settings';
   const [syncOpen, setSyncOpen] = useState(false);
 
   /** 事件到期提醒检查：打开即查、每 60 秒、回到前台/可见时各查一次 */
@@ -168,12 +169,21 @@ function Shell() {
       <header className="topbar">
         <div className="topbar-row">
           <div className="topbar-title">
-            <div className="topbar-date">
-              {today.year()}年{today.month() + 1}月{today.date()}日
-            </div>
-            <div className="topbar-sub">
-              {weekdayCN(today)} · 农历{lunar}
-            </div>
+            {isSettings ? (
+              <>
+                <div className="topbar-date">{email || '未登录'}</div>
+                <div className="topbar-sub">当前登录账号</div>
+              </>
+            ) : (
+              <>
+                <div className="topbar-date">
+                  {today.year()}年{today.month() + 1}月{today.date()}日
+                </div>
+                <div className="topbar-sub">
+                  {weekdayCN(today)} · 农历{lunar}
+                </div>
+              </>
+            )}
           </div>
         </div>
 

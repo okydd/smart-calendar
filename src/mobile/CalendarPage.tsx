@@ -179,7 +179,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
       return baseSorter(a, b);
     };
 
-    day.sort(baseSorter);
+    day.sort(sorterStruck);
     week.sort(sorterStruck);
     month.sort(sorterStruck);
 

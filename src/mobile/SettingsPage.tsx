@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { App, Modal, DatePicker, Spin } from 'antd';
+import { App, Modal, Spin } from 'antd';
+import WheelDatePicker from '../components/WheelDatePicker';
 import {
   PictureOutlined,
   UploadOutlined,
@@ -692,6 +693,10 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
 
       {/* 底部四个按钮：导出图片 / 导出数据 ； 导入json / 返回日历 */}
       <div className="set-actions">
+        <div className="set-range">
+          <WheelDatePicker label="导出开始日期" value={startDate} onChange={setStartDate} />
+          <WheelDatePicker label="导出结束日期" value={endDate} onChange={setEndDate} />
+        </div>
         <div className="sheet-actions-row">
           <div className="btn-wrap">
             <button className="sheet-btn-v2 primary" onClick={() => setExportOpen(true)}>
@@ -718,28 +723,6 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
               <RollbackOutlined className="ico" />
               返回日历
             </button>
-          </div>
-        </div>
-        <div className="set-range">
-          <div className="set-range-col">
-            <label>导出开始日期</label>
-            <DatePicker
-              value={startDate}
-              onChange={(v) => v && setStartDate(v)}
-              format="YYYY/MM/DD"
-              suffixIcon={null}
-              allowClear={false}
-            />
-          </div>
-          <div className="set-range-col">
-            <label>导出结束日期</label>
-            <DatePicker
-              value={endDate}
-              onChange={(v) => v && setEndDate(v)}
-              format="YYYY/MM/DD"
-              suffixIcon={null}
-              allowClear={false}
-            />
           </div>
         </div>
       </div>

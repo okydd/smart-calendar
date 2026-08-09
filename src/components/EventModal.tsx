@@ -100,7 +100,7 @@ export default function EventModal() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [importance, setImportance] = useState<'normal' | 'important'>('normal');
-  const [allDay, setAllDay] = useState(true);
+  const [allDay, setAllDay] = useState(false);
   const [dateValues, setDateValues] = useState<[number, number, number]>([2026, 8, 5]);
   const [timeValues, setTimeValues] = useState<[number, number]>([9, 0]);
   const [remindOffsets, setRemindOffsets] = useState<ReminderOffset[]>([]);
@@ -120,13 +120,19 @@ export default function EventModal() {
     setImages(Array.isArray(base.images) ? base.images.slice(0, MAX_IMAGES) : []);
     const d = base.date ? dayjs(base.date, 'YYYY-MM-DD') : dayjs();
     setDateValues([d.year(), d.month() + 1, d.date()]);
-    const ad = !base.startTime;
-    setAllDay(ad);
-    if (!ad && base.startTime) {
-      const [h, m] = base.startTime.split(':').map(Number);
-      // 分钟对齐到 5 的倍数（滚轮仅支持 5 分钟间隔）
-      setTimeValues([h, Math.min(55, Math.max(0, Math.round(m / 5) * 5))]);
-    } else setTimeValues([9, 0]);
+    if (mode === 'create') {
+      // 新建事件默认选中「选择时间」（非全天）
+      setAllDay(false);
+      setTimeValues([9, 0]);
+    } else {
+      const ad = base.allDay ?? !base.startTime;
+      setAllDay(ad);
+      if (!ad && base.startTime) {
+        const [h, m] = base.startTime.split(':').map(Number);
+        // 分钟对齐到 5 的倍数（滚轮仅支持 5 分钟间隔）
+        setTimeValues([h, Math.min(55, Math.max(0, Math.round(m / 5) * 5))]);
+      } else setTimeValues([9, 0]);
+    }
     setRemindOffsets(
       base.reminder && base.reminder.length ? base.reminder.map((r) => ({ ...r })) : []
     );
