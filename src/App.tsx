@@ -28,7 +28,7 @@ function Shell() {
   const location = useLocation();
   const { activeTags, clearTags, events, search, setSearch, filteredEvents, updateEvent } = useCalendar();
   const { openView } = useUI();
-  const { userId, email } = useSync();
+  const { userId } = useSync();
   const isSettings = location.pathname === '/settings';
   const [syncOpen, setSyncOpen] = useState(false);
 
@@ -166,34 +166,29 @@ function Shell() {
 
   return (
     <div className="app-shell">
-      <header className="topbar">
-        <div className="topbar-row">
-          <div className="topbar-title">
-            {isSettings ? (
-              <>
-                <div className="topbar-date">{email || '未登录'}</div>
-                <div className="topbar-sub">当前登录账号</div>
-              </>
-            ) : (
-              <>
-                <div className="topbar-date">
-                  {today.year()}年{today.month() + 1}月{today.date()}日
-                </div>
-                <div className="topbar-sub">
-                  {weekdayCN(today)} · 农历{lunar}
-                </div>
-              </>
-            )}
+      {isSettings ? (
+        <div className="topbar-spacer" />
+      ) : (
+        <header className="topbar">
+          <div className="topbar-row">
+            <div className="topbar-title">
+              <div className="topbar-date">
+                {today.year()}年{today.month() + 1}月{today.date()}日
+              </div>
+              <div className="topbar-sub">
+                {weekdayCN(today)} · 农历{lunar}
+              </div>
+            </div>
           </div>
-        </div>
 
-        {activeTags.length > 0 && (
-          <div className="filter-hint">
-            已按 {activeTags.length} 个标签筛选
-            <button onClick={clearTags}>清除</button>
-          </div>
-        )}
-      </header>
+          {activeTags.length > 0 && (
+            <div className="filter-hint">
+              已按 {activeTags.length} 个标签筛选
+              <button onClick={clearTags}>清除</button>
+            </div>
+          )}
+        </header>
+      )}
 
       <div className="app-content">
         <div className="app-content-inner">

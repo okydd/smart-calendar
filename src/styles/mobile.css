@@ -63,6 +63,13 @@ body {
   box-shadow: 0 8px 26px rgba(76, 110, 245, 0.18);
 }
 
+/* 设置页隐藏顶部渐变栏，仅保留刘海安全区占位（账号信息在下方卡片显示） */
+.topbar-spacer {
+  flex-shrink: 0;
+  height: var(--safe-top);
+  background: transparent;
+}
+
 .topbar-row {
   display: flex;
   align-items: flex-start;
