@@ -658,9 +658,9 @@ body {
 .event-pill.todo-item.not-done {
   border-color: rgba(59, 124, 255, 0.4);
 }
-/* 今天待办：实蓝边框（1.5px，与重要事件同款仅换色） */
+/* 今天待办：淡蓝边框（与日提醒、周/月提醒普通事件一致） */
 .event-pill.todo-item.today {
-  border: 1.5px solid #3b7cff;
+  border: 1.5px solid rgba(59, 124, 255, 0.4);
 }
 /* 已完成事件：无边框 */
 .event-pill.todo-item.done-pill {
@@ -668,9 +668,9 @@ body {
 }
 /* 重要事件沿用上方 .event-pill.important 的实红边框，无需重复 */
 
-/* 日提醒事件：四边标准蓝色边框 + 浅蓝背景（不再用左侧加粗强调条，置于 .not-done 之后以保留今日强调） */
+/* 日提醒事件：四边淡蓝色边框 + 浅蓝背景 */
 .event-pill.event-pill-day {
-  border: 1.5px solid #3b7cff;
+  border: 1.5px solid rgba(59, 124, 255, 0.4);
   background: #f7faff;
   padding: 12px 14px;
 }
@@ -3588,8 +3588,13 @@ body {
 }
 
 /* 导出卡片：日期选择与下方按钮之间留出间距 */
-.set-actions .sheet-actions-row:first-child {
+.set-actions .export-main-row {
   margin-top: 16px;
+}
+
+/* 导出卡片标题与“关于”等分组标题左对齐 */
+.set-actions .set-group-title {
+  padding-left: 4px;
 }
 
 .set-range-col {

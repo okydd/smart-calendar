@@ -3,7 +3,6 @@ import { App, Modal, Spin } from 'antd';
 import WheelDatePicker from '../components/WheelDatePicker';
 import {
   PictureOutlined,
-  UploadOutlined,
   ExportOutlined,
   CloudSyncOutlined,
   CloseOutlined,
@@ -20,17 +19,14 @@ import {
   SafetyCertificateOutlined,
   InfoCircleOutlined,
   DeleteOutlined,
-  RollbackOutlined,
   AndroidOutlined,
   DesktopOutlined,
   CheckCircleFilled,
   ThunderboltOutlined,
   SoundOutlined
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
 import { useCalendar } from '../context/CalendarContext';
 import { useSync } from '../context/SyncContext';
-import { sanitizeImported } from '../utils/storage';
 import { dayjs } from '../utils/date';
 import {
   getNotifySettings,
@@ -131,8 +127,7 @@ function Switch({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
 
 export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void }) {
   const { message, modal } = App.useApp();
-  const navigate = useNavigate();
-  const { events, importEvents, search, setSearch, duplicateCount, dedupeNow } = useCalendar();
+  const { events, search, setSearch, duplicateCount, dedupeNow } = useCalendar();
   const {
     status,
     email,
@@ -150,7 +145,6 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [backupOpen, setBackupOpen] = useState(false);
   const [busy, setBusy] = useState('');
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const [ns, setNs] = useState<NotifySettings>(() => getNotifySettings());
   useEffect(() => {
@@ -358,29 +352,6 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
     message.success(`已下载 ${all.length} 条事件到本机（${fileName}）`);
   };
 
-  const handleImportFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const parsed = JSON.parse(String(reader.result));
-        const list = sanitizeImported(parsed);
-        modal.confirm({
-          title: `确认导入 ${list.length} 条事件？`,
-          content: '导入会以文件内容为准覆盖当前数据（不在文件中的事件将被删除），并同步到云端。',
-          okText: '确认导入',
-          cancelText: '取消',
-          onOk: () => {
-            importEvents(list);
-            message.success(`已导入 ${list.length} 条事件`);
-          }
-        });
-      } catch (err) {
-        message.error(`导入失败：${(err as Error).message}`);
-      }
-    };
-    reader.readAsText(file);
-  };
-
   /* ---------------- 通知渠道 ---------------- */
   const saveNotify = async () => {
     saveNotifySettings(ns);
@@ -504,7 +475,7 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
           <WheelDatePicker label="导出开始日期" value={startDate} onChange={setStartDate} />
           <WheelDatePicker label="导出结束日期" value={endDate} onChange={setEndDate} />
         </div>
-        <div className="sheet-actions-row">
+        <div className="sheet-actions-row export-main-row">
           <div className="btn-wrap">
             <button className="sheet-btn-v2 primary" onClick={() => setExportOpen(true)}>
               <PictureOutlined className="ico" />
@@ -515,20 +486,6 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
             <button className="sheet-btn-v2 success" onClick={handleExportData}>
               <ExportOutlined className="ico" />
               导出数据
-            </button>
-          </div>
-        </div>
-        <div className="sheet-actions-row">
-          <div className="btn-wrap">
-            <button className="sheet-btn-v2" onClick={() => fileRef.current?.click()}>
-              <UploadOutlined className="ico" />
-              导入json
-            </button>
-          </div>
-          <div className="btn-wrap">
-            <button className="sheet-btn-v2" onClick={() => navigate('/calendar')}>
-              <RollbackOutlined className="ico" />
-              返回日历
             </button>
           </div>
         </div>
@@ -681,18 +638,6 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
           onClick={() => setNotifyOpen(true)}
         />
       </div>
-
-      <input
-        ref={fileRef}
-        type="file"
-        accept="application/json,.json"
-        style={{ display: 'none' }}
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) handleImportFile(f);
-          e.target.value = '';
-        }}
-      />
 
       {/* 消息通知设置 */}
       <Modal
