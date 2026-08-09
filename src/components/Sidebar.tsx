@@ -5,8 +5,7 @@ import {
   SearchOutlined,
   DownloadOutlined,
   UploadOutlined,
-  PictureOutlined,
-  ReloadOutlined
+  PictureOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useCalendar } from '../context/CalendarContext';
@@ -25,8 +24,7 @@ export default function Sidebar() {
     clearTags,
     events,
     filteredEvents,
-    importEvents,
-    resetSample
+    importEvents
   } = useCalendar();
   const { openCreate } = useUI();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -171,16 +169,6 @@ export default function Sidebar() {
             onClick={() => fileRef.current?.click()}
           >
             导入 JSON
-          </Button>
-          <Button
-            icon={<ReloadOutlined />}
-            block
-            onClick={() => {
-              resetSample();
-              message.success('已恢复示例数据');
-            }}
-          >
-            恢复示例数据
           </Button>
         </div>
         <input

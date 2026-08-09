@@ -247,7 +247,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
             <EventFlags e={e} />
           </div>
           <div className="remind-time-line">
-            {showDate && dateText ? <span className="remind-date">{dateText}</span> : null}
+            {showDate && dateText && !relLabel ? <span className="remind-date">{dateText}</span> : null}
             {relLabel && <span className="remind-rel">{relLabel}</span>}
             <span className={`remind-time${e.allDay || !e.startTime ? ' all-day' : ''}${struck ? ' struck' : ''}`}>
               {timeText}

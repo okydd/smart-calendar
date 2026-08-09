@@ -18,8 +18,6 @@ interface Row {
   wechat_send_key: string;
   dingtalk_webhook: string;
   dingtalk_secret: string;
-  auto_send: boolean;
-  auto_send_time: string;
   updated_at?: string;
 }
 
@@ -32,9 +30,7 @@ export function settingsToRow(s: NotifySettings, userId: string): Row {
     emailjs_public_key: s.emailjsPublicKey ?? '',
     wechat_send_key: s.wechatSendKey ?? '',
     dingtalk_webhook: s.dingtalkWebhook ?? '',
-    dingtalk_secret: s.dingtalkSecret ?? '',
-    auto_send: !!s.autoSend,
-    auto_send_time: s.autoSendTime ?? '04:00'
+    dingtalk_secret: s.dingtalkSecret ?? ''
   };
 }
 
@@ -46,9 +42,7 @@ function rowToSettings(r: Row): NotifySettings {
     emailjsPublicKey: r.emailjs_public_key ?? '',
     wechatSendKey: r.wechat_send_key ?? '',
     dingtalkWebhook: r.dingtalk_webhook ?? '',
-    dingtalkSecret: r.dingtalk_secret ?? '',
-    autoSend: !!r.auto_send,
-    autoSendTime: r.auto_send_time ?? '04:00'
+    dingtalkSecret: r.dingtalk_secret ?? ''
   };
 }
 

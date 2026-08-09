@@ -295,8 +295,8 @@ body {
   padding: 5px 13px;
   font-size: 12px;
   font-weight: 600;
-  color: #fff;
-  background: var(--c-gradient);
+  color: #3b7cff;
+  background: rgba(59, 124, 255, 0.12);
   cursor: pointer;
 }
 
@@ -559,9 +559,9 @@ body {
 }
 
 .today-tag.active {
-  background: var(--c-primary);
-  color: #fff;
-  box-shadow: 0 0 0 3px rgba(59, 124, 255, 0.25);
+  background: rgba(59, 124, 255, 0.15);
+  color: #3b7cff;
+  box-shadow: none;
 }
 
 .empty-remind {
@@ -1413,11 +1413,18 @@ body {
   color: var(--c-text-gray);
 }
 
-/* 需求4：周提醒中，事件日期为明天/后天时，在时间前的蓝色相对标签 */
+/* 需求4：周提醒中，事件日期为明天/后天时，以蓝色标签显示在事件时间前 */
 .remind-rel {
-  color: #3b7cff;
+  display: inline-flex;
+  align-items: center;
+  background: #3b7cff;
+  color: #fff;
   font-weight: 600;
-  margin-right: 6px;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 7px;
+  border-radius: 8px;
+  margin-right: 8px;
   white-space: nowrap;
 }
 

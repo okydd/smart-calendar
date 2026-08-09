@@ -70,7 +70,7 @@ function buildCanvas(events: CalendarEvent[], opts: ExportImageOptions) {
 
   const colDateX = PAD_X + 24;
   const colTimeX = PAD_X + 168;
-  const colEventX = PAD_X + 300;
+  const colEventX = PAD_X + 250;
 
   ctx.fillStyle = '#ffffff';
   ctx.font = `bold 26px ${FONT}`;

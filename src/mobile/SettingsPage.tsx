@@ -13,7 +13,6 @@ import {
   SearchOutlined,
   BellOutlined,
   NotificationOutlined,
-  ClockCircleOutlined,
   RightOutlined,
   UserOutlined,
   SyncOutlined,
@@ -274,7 +273,7 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
 
   /**
    * 「导出数据」：把简洁版事件清单发到邮箱，邮件里同时带
-   *  ① 完整事件在线查看链接  ② 完整 JSON 下载链接。
+   *  ① 完整事件在线查看链接 ② 完整 JSON 下载链接。
    */
   const handleExportData = async () => {
     const list = rangedEvents();
@@ -500,12 +499,6 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
       <div className="set-group">
         <div className="set-group-title">账号与同步</div>
         <Row
-          icon={<CloudSyncOutlined style={{ color: '#3b7cff' }} />}
-          label="云同步"
-          value={syncLabel}
-          onClick={onOpenSync}
-        />
-        <Row
           icon={<SyncOutlined style={{ color: '#34c759' }} />}
           label="立即同步"
           desc={lastSyncAt ? `上次同步 ${dayjs(lastSyncAt).format('YYYY-MM-DD HH:mm')}` : '尚未同步'}
@@ -590,7 +583,7 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
         <Row
           icon={<NotificationOutlined style={{ color: '#3b7cff' }} />}
           label="消息通知"
-          desc="邮件 / 微信 / 钉钉，以及每日定时发送"
+          desc="邮件 / 微信 / 钉钉"
           value={
             [emailConfigured(ns) && '邮件', wechatConfigured(ns) && '微信', dingtalkConfigured(ns) && '钉钉']
               .filter(Boolean)
@@ -796,34 +789,6 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
               placeholder="public_xxx"
               onChange={(e) => setNs({ ...ns, emailjsPublicKey: e.target.value })}
             />
-          </div>
-
-          <div className="notify-panel">
-            <div className="notify-panel-head">
-              <ClockCircleOutlined />
-              <span>每日定时发送</span>
-            </div>
-            <div className="auto-send-row">
-              <span className="auto-send-label">开启每日发送</span>
-              <button
-                type="button"
-                className={`switch-mini${ns.autoSend ? ' on' : ''}`}
-                onClick={() => setNs({ ...ns, autoSend: !ns.autoSend })}
-                aria-label="开启每日发送"
-              >
-                <span className="knob" />
-              </button>
-              <span className="auto-send-time-label">发送时间</span>
-              <input
-                type="time"
-                className="auto-send-time"
-                value={ns.autoSendTime}
-                onChange={(e) => setNs({ ...ns, autoSendTime: e.target.value || '04:00' })}
-              />
-            </div>
-            <div className="notify-tip">
-              默认每天 04:00 发送。应用需处于打开状态才会触发；若打开时已过发送时间且今日未发送，会立即补发。
-            </div>
           </div>
 
           <div className="notify-panel">

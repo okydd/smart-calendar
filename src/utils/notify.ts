@@ -38,10 +38,6 @@ export interface NotifySettings {
   dingtalkWebhook: string;
   /** 钉钉机器人「加签」密钥（安全设置选了「加签」时必填） */
   dingtalkSecret: string;
-  /** 是否开启每日定时发送（到邮箱） */
-  autoSend: boolean;
-  /** 每日发送时间 HH:mm（默认 04:00） */
-  autoSendTime: string;
 }
 
 const DEFAULT: NotifySettings = {
@@ -51,9 +47,7 @@ const DEFAULT: NotifySettings = {
   emailjsPublicKey: '',
   wechatSendKey: '',
   dingtalkWebhook: '',
-  dingtalkSecret: '',
-  autoSend: false,
-  autoSendTime: '04:00'
+  dingtalkSecret: ''
 };
 
 export function getNotifySettings(): NotifySettings {
@@ -265,38 +259,6 @@ export function buildFullEmailHtml(
   <p style="text-align:center;color:#9aa0b4;font-size:12px;margin-top:14px;">由「智能日历」自动生成</p>
   ${APK_FOOTER_HTML}
 </div>`;
-}
-
-/** 每日定时发送使用的简洁正文（不强调范围，仅说明日期） */
-export function buildDailyText(events: CalendarEvent[]): string {
-  const lines = events
-    .filter((e) => !e.deleted)
-    .sort((a, b) => (a.date < b.date ? -1 : 1))
-    .map((e) => {
-      const d = parseDateStr(e.date);
-      const date = d.isValid() ? `${d.month() + 1}月${d.date()}日` : e.date;
-      return `${date} ${timeRangeLabel(e)} ${e.title}`;
-    });
-  const today = dayjs().format('YYYY年M月D日');
-  return [
-    `【智能日历 · 每日数据】`,
-    `日期：${today}`,
-    `事件总数：${lines.length} 条`,
-    '',
-    lines.join('\n') || '（无事件）'
-  ].join('\n') + APK_FOOTER_TEXT;
-}
-
-/** 发送每日数据到邮箱（简洁正文 + 完整版 HTML 正文，图片以 URL 内联，体积极小） */
-export async function sendDailyDigest(events: CalendarEvent[]): Promise<{ ok: boolean; msg: string }> {
-  const today = dayjs().format('YYYY年M月D日');
-  const text = buildDailyText(events);
-  const html = buildFullEmailHtml(events, {
-    rangeStart: today,
-    rangeEnd: today,
-    exportTime: dayjs().format('YYYY年M月D日 HH:mm')
-  });
-  return sendEmail('智能日历 每日数据', text, { html });
 }
 
 /** 邮件附件（base64，不含 data: 前缀） */

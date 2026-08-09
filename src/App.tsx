@@ -17,7 +17,7 @@ import SettingsPage from './mobile/SettingsPage';
 import SyncPanel from './mobile/SyncPanel';
 import ShareView from './mobile/ShareView';
 import { dayjs, lunarDateLabel, weekdayCN } from './utils/date';
-import { checkDueReminders, getNotifySettings, emailConfigured, sendDailyDigest } from './utils/notify';
+import { checkDueReminders } from './utils/notify';
 import { setNativeBadge } from './utils/badge';
 import { hostImages } from './utils/imageHost';
 import { registerQuotaRescuer } from './utils/storage';
@@ -163,47 +163,6 @@ function Shell() {
     setNativeBadge(pending);
   }, [pending]);
 
-  /** 每日定时发送：在设定时间自动把数据发到邮箱（应用打开期间触发，最佳努力） */
-  useEffect(() => {
-    let timer: number | undefined;
-    let cancelled = false;
-    const LAST_KEY = 'calendarLastAutoSend';
-    const trySend = async () => {
-      if (cancelled) return;
-      const s = getNotifySettings();
-      if (!s.autoSend) return;
-      if (!emailConfigured(s)) return;
-      const todayStr = dayjs().format('YYYY-MM-DD');
-      const last = localStorage.getItem(LAST_KEY);
-      if (last === todayStr) return; // 今天已发送
-      const [h, m] = (s.autoSendTime || '04:00').split(':').map(Number);
-      const now = dayjs();
-      const target = now
-        .startOf('day')
-        .hour(h)
-        .minute(m)
-        .second(0);
-      if (now.isBefore(target)) {
-        // 还没到发送时间，等到达时再发
-        const ms = target.diff(now);
-        timer = window.setTimeout(trySend, Math.min(ms, 24 * 3600 * 1000));
-        return;
-      }
-      localStorage.setItem(LAST_KEY, todayStr);
-      const r = await sendDailyDigest(eventsRef.current);
-      if (!r.ok && r.msg !== '未配置邮箱，仅本地操作') {
-        // 发送失败：允许今天稍后重试
-        localStorage.removeItem(LAST_KEY);
-        console.warn('[auto-send] 每日发送失败:', r.msg);
-      }
-    };
-    trySend();
-    return () => {
-      cancelled = true;
-      if (timer) window.clearTimeout(timer);
-    };
-  }, []);
-
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -249,6 +208,7 @@ function Shell() {
         >
           <CalendarOutlined className="tab-ico" />
           日历
+          {pending > 0 && <span className="tab-badge">{pending > 99 ? '99+' : pending}</span>}
         </button>
         <button
           className={`tabbar-item${tab === 'todos' ? ' active' : ''}`}
@@ -256,7 +216,6 @@ function Shell() {
         >
           <UnorderedListOutlined className="tab-ico" />
           办事清单
-          {pending > 0 && <span className="tab-badge">{pending > 99 ? '99+' : pending}</span>}
         </button>
         <button
           className={`tabbar-item${tab === 'settings' ? ' active' : ''}`}
