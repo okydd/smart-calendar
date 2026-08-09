@@ -1,5 +1,31 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import fs from 'node:fs'
+import path from 'node:path'
+
+/**
+ * 构建版本号（北京时间）。
+ * 同一个值会被：
+ *  1) define 注入到前端代码里（__APP_VERSION__ = 当前运行的版本）；
+ *  2) 写入根目录 .build-version，供 scripts/stamp-build.mjs 生成 dist/version.json
+ *     （线上最新版本）。两边一致，前端才能正确判断「是否已是最新版」。
+ */
+function buildVersion(): string {
+  const now = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const bj = new Date(now.getTime() + (8 * 60 + now.getTimezoneOffset()) * 60000)
+  return (
+    `${bj.getFullYear()}-${pad(bj.getMonth() + 1)}-${pad(bj.getDate())}` +
+    `T${pad(bj.getHours())}:${pad(bj.getMinutes())}:${pad(bj.getSeconds())}+08:00`
+  )
+}
+
+const APP_VERSION = buildVersion()
+try {
+  fs.writeFileSync(path.resolve(import.meta.dirname, '.build-version'), APP_VERSION)
+} catch {
+  /* 开发模式下写不了也不影响 */
+}
 
 // https://vitejs.dev/config/
 // base 使用相对路径 './'，这样无论部署在域名根目录还是
@@ -7,6 +33,9 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   base: './',
   plugins: [react()],
+  define: {
+    __APP_VERSION__: JSON.stringify(APP_VERSION)
+  },
   server: {
     host: true,
     port: 5173,

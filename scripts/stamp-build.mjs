@@ -17,9 +17,20 @@ const now = new Date();
 const pad = (n) => String(n).padStart(2, '0');
 // 统一按北京时间（UTC+8）输出，便于人工核对
 const bj = new Date(now.getTime() + (8 * 60 + now.getTimezoneOffset()) * 60000);
-const version =
+const fallback =
   `${bj.getFullYear()}-${pad(bj.getMonth() + 1)}-${pad(bj.getDate())}` +
   `T${pad(bj.getHours())}:${pad(bj.getMinutes())}:${pad(bj.getSeconds())}+08:00`;
+
+// 优先复用 vite.config.ts 在构建开始时写入的版本号，
+// 保证「打进代码里的版本」和「version.json 里的版本」完全一致。
+let version = fallback;
+try {
+  const stampFile = path.join(ROOT, '.build-version');
+  const v = fs.readFileSync(stampFile, 'utf8').trim();
+  if (v) version = v;
+} catch {
+  /* 没有就用当前时间 */
+}
 
 // 1) Service Worker 缓存名
 const swPath = path.join(DIST, 'sw.js');

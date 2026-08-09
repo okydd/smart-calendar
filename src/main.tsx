@@ -30,6 +30,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>
 );
 
+// 注册 Service Worker / 自动更新。
+// 网页、PWA、以及「在线壳模式」的原生 APK 都需要：
+// APK 通过 https 加载线上页面，SW 既提供离线缓存，也让版本更新自动生效。
 // 注册 Service Worker，实现离线可用；加时间戳防止浏览器/中间缓存旧 sw.js
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

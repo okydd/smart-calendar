@@ -6,3 +6,6 @@ github-upload
 .DS_Store
 .workbuddy
 .secrets.json
+
+# 安卓构建产物（已托管在 GitHub Releases）
+*.apk

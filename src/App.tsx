@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Modal } from 'antd';
 import {
-  MoreOutlined,
   CalendarOutlined,
-  UnorderedListOutlined
+  UnorderedListOutlined,
+  SettingOutlined
 } from '@ant-design/icons';
 import { CalendarProvider, useCalendar } from './context/CalendarContext';
 import { SyncProvider, useSync } from './context/SyncContext';
@@ -13,12 +13,12 @@ import EventModal from './components/EventModal';
 import EventView from './components/EventView';
 import CalendarPage from './mobile/CalendarPage';
 import TodoPage from './mobile/TodoPage';
-import MoreSheet from './mobile/MoreSheet';
+import SettingsPage from './mobile/SettingsPage';
 import SyncPanel from './mobile/SyncPanel';
 import ShareView from './mobile/ShareView';
 import { dayjs, lunarDateLabel, weekdayCN } from './utils/date';
 import { checkDueReminders, getNotifySettings, emailConfigured, sendDailyDigest } from './utils/notify';
-import { InstallGuide, detectPlatform } from './utils/install';
+import { setNativeBadge } from './utils/badge';
 import { hostImages } from './utils/imageHost';
 import { registerQuotaRescuer } from './utils/storage';
 import type { CalendarEvent } from './types';
@@ -29,22 +29,9 @@ function Shell() {
   const { activeTags, clearTags, events, search, setSearch, filteredEvents, updateEvent } = useCalendar();
   const { openView } = useUI();
   const { userId } = useSync();
-  const [moreOpen, setMoreOpen] = useState(false);
   const [syncOpen, setSyncOpen] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const installable = !!deferredPrompt;
 
-  useEffect(() => {
-    const handler = (e: any) => {
-      // 阻止浏览器默认的安装提示，保留下来由按钮触发
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
-
-  /** 微信到期提醒检查：打开即查、每 60 秒、回到前台/可见时各查一次 */
+  /** 事件到期提醒检查：打开即查、每 60 秒、回到前台/可见时各查一次 */
   const eventsRef = useRef(events);
   useEffect(() => {
     eventsRef.current = events;
@@ -139,28 +126,14 @@ function Shell() {
     };
   }, []);
 
-  const handleInstall = async () => {
-    // 夸克等国产浏览器虽会触发安装事件，但 prompt() 不弹系统安装框，
-    // 直接给出手动「添加到桌面」指引，避免点了「安装」却无反应。
-    if (!deferredPrompt || detectPlatform() === 'quark') {
-      Modal.info({
-        title: '安装到桌面',
-        content: <InstallGuide />,
-        okText: '知道了'
-      });
-      return;
-    }
-    deferredPrompt.prompt();
-    const choice = await deferredPrompt.userChoice;
-    if (choice.outcome === 'accepted') {
-      setDeferredPrompt(null);
-    }
-  };
-
   const today = dayjs();
   const lunar = useMemo(() => lunarDateLabel(today), [today]);
 
-  const tab = location.pathname.startsWith('/todos') ? 'todos' : 'calendar';
+  const tab = location.pathname.startsWith('/todos')
+    ? 'todos'
+    : location.pathname.startsWith('/settings')
+      ? 'settings'
+      : 'calendar';
 
   /** 待办角标：今天当天、且未完成的待办数量（与清单「今天」组一致） */
   const pending = useMemo(
@@ -178,13 +151,16 @@ function Shell() {
    */
   useEffect(() => {
     const nav = navigator as any;
-    if (typeof nav.setAppBadge !== 'function') return;
-    try {
-      if (pending > 0) nav.setAppBadge(pending).catch(() => {});
-      else nav.clearAppBadge().catch(() => {});
-    } catch {
-      /* 忽略不支持的环境 */
+    if (typeof nav.setAppBadge === 'function') {
+      try {
+        if (pending > 0) nav.setAppBadge(pending).catch(() => {});
+        else nav.clearAppBadge().catch(() => {});
+      } catch {
+        /* 忽略不支持的环境 */
+      }
     }
+    // 原生安卓 APK 图标角标（今日未完成事件数）
+    setNativeBadge(pending);
   }, [pending]);
 
   /** 每日定时发送：在设定时间自动把数据发到邮箱（应用打开期间触发，最佳努力） */
@@ -240,13 +216,6 @@ function Shell() {
               {weekdayCN(today)} · 农历{lunar}
             </div>
           </div>
-          <button
-            className="topbar-btn"
-            onClick={() => setMoreOpen(true)}
-            aria-label="更多"
-          >
-            <MoreOutlined />
-          </button>
         </div>
 
         {activeTags.length > 0 && (
@@ -263,6 +232,10 @@ function Shell() {
             <Route path="/" element={<Navigate to="/calendar" replace />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/todos" element={<TodoPage />} />
+            <Route
+              path="/settings"
+              element={<SettingsPage onOpenSync={() => setSyncOpen(true)} />}
+            />
             <Route path="/share/:id" element={<ShareView />} />
             <Route path="*" element={<Navigate to="/calendar" replace />} />
           </Routes>
@@ -285,17 +258,17 @@ function Shell() {
           办事清单
           {pending > 0 && <span className="tab-badge">{pending > 99 ? '99+' : pending}</span>}
         </button>
+        <button
+          className={`tabbar-item${tab === 'settings' ? ' active' : ''}`}
+          onClick={() => navigate('/settings')}
+        >
+          <SettingOutlined className="tab-ico" />
+          设置
+        </button>
       </nav>
 
       <EventModal />
       <EventView />
-      <MoreSheet
-        open={moreOpen}
-        onClose={() => setMoreOpen(false)}
-        onOpenSync={() => setSyncOpen(true)}
-        installable={installable}
-        onInstall={handleInstall}
-      />
       <SyncPanel open={syncOpen} onClose={() => setSyncOpen(false)} />
 
       {/* 搜索结果弹窗：关掉后返回原页面 */}

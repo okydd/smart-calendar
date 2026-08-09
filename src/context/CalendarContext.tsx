@@ -12,8 +12,37 @@ import { dayjs, type Dayjs } from '../utils/date';
 import type { CalendarEvent, TagColor, ViewMode } from '../types';
 import { loadEvents, saveEvents } from '../utils/storage';
 import { generateSampleEvents } from '../data/sampleEvents';
+import { countDuplicates, dedupeEvents } from '../utils/dedupe';
 
 const nowIso = () => new Date().toISOString();
+
+/** 一次性自动去重的标记，避免每次启动都跑 */
+const DEDUPE_FLAG = 'calendarDedupeV1';
+
+/**
+ * 本机是否存在 Supabase 登录态（键形如 sb-xxxx-auth-token）。
+ * 已登录说明数据会从云端拉回来，此时不应再生成示例事件，
+ * 否则会和云端旧数据并存造成「看起来一模一样的两条」。
+ */
+function hasCloudSession(): boolean {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) return true;
+    }
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
+/** 首次启动时决定初始数据：优先本机 → 已登录云端则留空 → 否则示例数据 */
+function initialEvents(): CalendarEvent[] {
+  const stored = loadEvents();
+  if (stored) return stored;
+  if (hasCloudSession()) return [];
+  return generateSampleEvents().map((e) => stamp(e) as CalendarEvent);
+}
 
 /** 给事件补上最新修改时间戳 */
 function stamp<T extends Partial<CalendarEvent>>(e: T): T & { updatedAt: string } {
@@ -54,6 +83,10 @@ interface CalendarContextValue {
   toggleDone: (id: string) => void;
   importEvents: (e: CalendarEvent[]) => void;
   resetSample: () => void;
+  /** 当前可清理的重复事件条数 */
+  duplicateCount: number;
+  /** 立即清理重复事件，返回清理条数 */
+  dedupeNow: () => number;
   /** 同步引擎回写合并结果（不标记为本地变更） */
   applyMerged: (e: CalendarEvent[]) => void;
   /** 读取当前完整数据（含墓碑）的快照，避免闭包过期 */
@@ -63,13 +96,7 @@ interface CalendarContextValue {
 const CalendarContext = createContext<CalendarContextValue | null>(null);
 
 export function CalendarProvider({ children }: { children: React.ReactNode }) {
-  const [allEvents, setAllEvents] = useState<CalendarEvent[]>(() => {
-    const stored = loadEvents();
-    if (stored) return stored;
-    const sample = generateSampleEvents().map((e) => stamp(e) as CalendarEvent);
-    saveEvents(sample);
-    return sample;
-  });
+  const [allEvents, setAllEvents] = useState<CalendarEvent[]>(initialEvents);
   const [view, setView] = useState<ViewMode>('month');
   const [currentDate, setCurrentDate] = useState<Dayjs>(dayjs());
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -205,6 +232,41 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
     importEvents(sample);
   }, [importEvents]);
 
+  const duplicateCount = useMemo(() => countDuplicates(allEvents), [allEvents]);
+
+  /**
+   * 历史遗留重复数据的一次性自动清理。
+   * 延迟 8 秒执行，确保云端首轮同步已完成，否则刚清掉又会被云端拉回来。
+   * mutate 会自增 revision，因此墓碑会推送到云端，其它设备也一并清掉。
+   */
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(DEDUPE_FLAG)) return;
+    } catch {
+      return;
+    }
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(DEDUPE_FLAG, '1');
+      } catch {
+        /* ignore */
+      }
+      const { events: next, removed } = dedupeEvents(latestRef.current);
+      if (removed > 0) {
+        mutate(() => next);
+        message.success(`已自动清理 ${removed} 条重复事件`, 4);
+      }
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [mutate]);
+
+  /** 手动清理重复事件（重复项转墓碑，会同步到云端） */
+  const dedupeNow = useCallback(() => {
+    const { events: next, removed } = dedupeEvents(latestRef.current);
+    if (removed > 0) mutate(() => next);
+    return removed;
+  }, [mutate]);
+
   /** 同步引擎回写：不自增 revision，避免无限同步循环 */
   const applyMerged = useCallback((merged: CalendarEvent[]) => {
     setAllEvents(() => {
@@ -238,6 +300,8 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
     toggleDone,
     importEvents,
     resetSample,
+    duplicateCount,
+    dedupeNow,
     applyMerged,
     snapshot
   };

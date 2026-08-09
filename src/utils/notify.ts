@@ -1,5 +1,15 @@
 import type { CalendarEvent } from '../types';
 import { parseDateStr, timeRangeLabel, weekdayCN, dayjs } from './date';
+import { APK_DOWNLOAD_URL } from '../constants';
+import { fireReminderNow, getStrongRemindPrefs } from './localNotify';
+
+/** 邮件末尾固定页脚：当前版本 APK 下载链接（需求1：邮件最后增加 APK 下载网址） */
+export const APK_FOOTER_TEXT = APK_DOWNLOAD_URL
+  ? `\n\n────────────\n📱 智能日历安卓版（当前版本 APK）下载：\n${APK_DOWNLOAD_URL}`
+  : '';
+const APK_FOOTER_HTML = APK_DOWNLOAD_URL
+  ? `<p class="foot"><a href="${APK_DOWNLOAD_URL}" style="color:#3b7cff;text-decoration:none;">📱 下载智能日历安卓版（当前版本 APK）</a></p>`
+  : '';
 
 /** 通知相关设置（保存在本机 localStorage） */
 const KEY = 'calendarNotify';
@@ -135,7 +145,7 @@ export function buildFullText(
     `事件总数：${list.length} 条`,
     '',
     items || '（无事件）'
-  ].join('\n');
+  ].join('\n') + APK_FOOTER_TEXT;
 }
 
 function escapeHtml(s: string): string {
@@ -228,6 +238,7 @@ export function buildFullHtml(
   </div>
   ${items || '<p class="foot">（无事件）</p>'}
   <p class="foot">由「智能日历」自动生成</p>
+  ${APK_FOOTER_HTML}
 </body>
 </html>`;
 }
@@ -252,6 +263,7 @@ export function buildFullEmailHtml(
   </div>
   ${items || '<p style="text-align:center;color:#9aa0b4;font-size:12px;margin-top:14px;">（无事件）</p>'}
   <p style="text-align:center;color:#9aa0b4;font-size:12px;margin-top:14px;">由「智能日历」自动生成</p>
+  ${APK_FOOTER_HTML}
 </div>`;
 }
 
@@ -272,7 +284,7 @@ export function buildDailyText(events: CalendarEvent[]): string {
     `事件总数：${lines.length} 条`,
     '',
     lines.join('\n') || '（无事件）'
-  ].join('\n');
+  ].join('\n') + APK_FOOTER_TEXT;
 }
 
 /** 发送每日数据到邮箱（简洁正文 + 完整版 HTML 正文，图片以 URL 内联，体积极小） */
@@ -587,10 +599,15 @@ function addSent(sig: string): void {
 
 /**
  * 检查所有事件的到期提醒：遍历每个事件的多个提前提醒偏移，当「事件开始时间 - 提前量」已到达、
- * 且未超出事件后 2 小时窗口、且本次未曾推送过时，通过微信推送。需在应用打开期间运行。
+ * 且未超出事件后 2 小时窗口、且本次未曾推送过时触发提醒。
+ *
+ * 提醒渠道：
+ *  - 本机强提醒（弹窗 + 振动 + 铃声），只要开了开关就always触发；
+ *  - 微信 ServerChan / 钉钉机器人（已配置时）。
  */
 export async function checkDueReminders(events: CalendarEvent[]): Promise<void> {
-  if (!wechatConfigured() && !dingtalkConfigured()) return;
+  const strongOn = getStrongRemindPrefs().enabled;
+  if (!strongOn && !wechatConfigured() && !dingtalkConfigured()) return;
   const now = dayjs();
   const sent = getSent();
   for (const e of events) {
@@ -617,6 +634,15 @@ export async function checkDueReminders(events: CalendarEvent[]): Promise<void> 
       const desp = `时间：${d.month() + 1}月${d.date()}日 ${time}\n${
         e.description ? '备注：' + e.description : ''
       }`;
+      // 本机强提醒：弹窗 + 振动 + 铃声
+      if (strongOn) {
+        const unitCN = r.unit === 'day' ? '天' : r.unit === 'hour' ? '小时' : '分钟';
+        await fireReminderNow(
+          `⏰ ${e.title}`,
+          `${d.month() + 1}月${d.date()}日 ${time}（提前${r.value}${unitCN}提醒）` +
+            (e.description ? `\n${e.description.slice(0, 60)}` : '')
+        );
+      }
       const tasks: Promise<{ ok: boolean; msg: string }>[] = [];
       if (wechatConfigured()) tasks.push(sendWechat(`事件提醒：${e.title}`, desp));
       if (dingtalkConfigured()) tasks.push(sendDingtalk(`事件提醒：${e.title}`, desp));

@@ -21,6 +21,7 @@ export default function ImageViewer({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
+  const [drag, setDrag] = useState<number | null>(null);
   const touchX = useRef<number | null>(null);
   const touchY = useRef<number | null>(null);
 
@@ -55,20 +56,34 @@ export default function ImageViewer({
     };
   }, [open]);
 
-  // 移动端左右滑动切换
+  // 移动端左右滑动切换（微信式：跟手拖动，松手翻页或回弹）
   const onTouchStart = (e: React.TouchEvent) => {
     touchX.current = e.touches[0].clientX;
     touchY.current = e.touches[0].clientY;
+    setDrag(0);
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (touchX.current == null || touchY.current == null) return;
+    const dx = e.touches[0].clientX - touchX.current;
+    const dy = e.touches[0].clientY - touchY.current;
+    // 以横向拖动为主时才跟手位移，避免与纵向滚动冲突
+    if (Math.abs(dx) > Math.abs(dy)) {
+      setDrag(dx);
+    }
   };
   const onTouchEnd = (e: React.TouchEvent) => {
-    if (touchX.current == null || touchY.current == null) return;
-    const dx = e.changedTouches[0].clientX - touchX.current;
-    const dy = e.changedTouches[0].clientY - touchY.current;
-    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) {
-      go(dx < 0 ? 1 : -1); // 左滑→下一张，右滑→上一张
-    }
+    const sx = touchX.current;
+    const sy = touchY.current;
     touchX.current = null;
     touchY.current = null;
+    setDrag(null);
+    if (sx == null || sy == null) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = e.changedTouches[0].clientY - sy;
+    // 拖动超过阈值（约 50px）且以横向为主则翻页，否则回弹（drag 已置空，自动归位）
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      go(dx < 0 ? 1 : -1); // 左滑→下一张，右滑→上一张
+    }
   };
 
   if (count === 0) return null;
@@ -124,7 +139,13 @@ export default function ImageViewer({
             alt={`图片 ${index + 1}`}
             draggable={false}
             onClick={(e) => e.stopPropagation()}
+            style={{
+              transform: drag ? `translateX(${drag}px)` : undefined,
+              transition: drag ? 'none' : 'transform 0.25s ease',
+              touchAction: 'pan-y'
+            }}
             onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
           />
 

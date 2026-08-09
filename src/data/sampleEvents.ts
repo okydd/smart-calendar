@@ -1,4 +1,4 @@
-import { dayjs, genId, type Dayjs } from '../utils/date';
+import { dayjs, type Dayjs } from '../utils/date';
 import type { CalendarEvent } from '../types';
 
 /** 找到当月第一个指定星期几（day(): 0=周日 … 6=周六） */
@@ -10,6 +10,28 @@ function firstWeekdayInMonth(monthStart: Dayjs, target: number): Dayjs {
     guard++;
   }
   return d;
+}
+
+/**
+ * 示例事件使用「固定 ID」而不是随机 ID。
+ *
+ * 原因：若用随机 ID，一旦本机 localStorage 被清空（例如 APK 从 localhost 换成
+ * okydd.github.io 域名后 storage 隔离），会重新生成一批 ID 不同但内容完全相同的
+ * 示例事件；随后与云端合并时 mergeEvents 以 id 为主键做 LWW，无法识别它们是同一条，
+ * 于是「月提醒」里出现两条一模一样的数据。固定 ID 后无论生成多少次都会被自动去重。
+ */
+export const SAMPLE_EVENT_IDS = [
+  'sample-weekly-meeting',
+  'sample-fitness',
+  'sample-doctor',
+  'sample-review',
+  'sample-birthday',
+  'sample-reading'
+] as const;
+
+/** 判断某个 ID 是否属于内置示例事件 */
+export function isSampleEventId(id: string): boolean {
+  return (SAMPLE_EVENT_IDS as readonly string[]).includes(id);
 }
 
 /**
@@ -33,7 +55,7 @@ export function generateSampleEvents(ref: Dayjs = dayjs()): CalendarEvent[] {
 
   return [
     {
-      id: genId(),
+      id: 'sample-weekly-meeting',
       title: '团队周会',
       date: monday.format('YYYY-MM-DD'),
       startTime: '14:00',
@@ -43,7 +65,7 @@ export function generateSampleEvents(ref: Dayjs = dayjs()): CalendarEvent[] {
       tag: 'purple'
     },
     {
-      id: genId(),
+      id: 'sample-fitness',
       title: '健身训练',
       date: wednesday.format('YYYY-MM-DD'),
       startTime: '19:00',
@@ -53,7 +75,7 @@ export function generateSampleEvents(ref: Dayjs = dayjs()): CalendarEvent[] {
       tag: 'green'
     },
     {
-      id: genId(),
+      id: 'sample-doctor',
       title: '医生预约',
       date: at(12).format('YYYY-MM-DD'),
       startTime: '10:00',
@@ -63,7 +85,7 @@ export function generateSampleEvents(ref: Dayjs = dayjs()): CalendarEvent[] {
       tag: 'red'
     },
     {
-      id: genId(),
+      id: 'sample-review',
       title: '项目评审',
       date: at(18).format('YYYY-MM-DD'),
       startTime: '16:00',
@@ -73,7 +95,7 @@ export function generateSampleEvents(ref: Dayjs = dayjs()): CalendarEvent[] {
       tag: 'orange'
     },
     {
-      id: genId(),
+      id: 'sample-birthday',
       title: '生日聚会',
       date: at(8).format('YYYY-MM-DD'),
       startTime: '',
@@ -83,7 +105,7 @@ export function generateSampleEvents(ref: Dayjs = dayjs()): CalendarEvent[] {
       tag: 'pink'
     },
     {
-      id: genId(),
+      id: 'sample-reading',
       title: '读书分享会',
       date: at(22).format('YYYY-MM-DD'),
       startTime: '15:00',

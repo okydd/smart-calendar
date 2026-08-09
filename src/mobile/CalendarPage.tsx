@@ -5,7 +5,6 @@ import {
   PlusOutlined,
   CalendarOutlined,
   EyeOutlined,
-  SyncOutlined,
   DownOutlined,
   UpOutlined
 } from '@ant-design/icons';
@@ -64,11 +63,18 @@ function timeHint(d: Dayjs, e: CalendarEvent): string {
   return '';
 }
 
+/** 相对日标签：今天 / 明天 / 后天（用于周提醒在事件时间前标注，蓝色） */
+function relativeDayLabel(d: Dayjs, today: Dayjs): string {
+  if (d.isSame(today, 'day')) return '今天';
+  if (d.isSame(today.add(1, 'day'), 'day')) return '明天';
+  if (d.isSame(today.add(2, 'day'), 'day')) return '后天';
+  return '';
+}
+
 export default function CalendarPage({ showFab = true }: { showFab?: boolean }) {
   const { filteredEvents, currentDate, setCurrentDate } = useCalendar();
   const { openCreate, openView } = useUI();
-  const { status, userId, syncNow } = useSync();
-  const syncing = status === 'syncing';
+  const { userId, syncNow } = useSync();
   const [slide, setSlide] = useState<'' | 'slide-left' | 'slide-right'>('');
   const [monthView, setMonthView] = useState<Dayjs | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -213,6 +219,8 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
         : '';
     const cls = `event-pill${isDay ? ' event-pill-day' : ''}${e.important ? ' important' : ''}`;
     const titleCls = `remind-title${struck ? ' struck' : ''}`;
+    // 周/月提醒：事件日期为今天/明天/后天时，在时间前加蓝色相对标签
+    const relLabel = showDate && !isDay ? relativeDayLabel(d, today) : '';
 
     // 日提醒：一行显示「时间(底色药丸) + 标题 + 重要/注/图」，不显示倒计时
     if (isDay) {
@@ -240,6 +248,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
           </div>
           <div className="remind-time-line">
             {showDate && dateText ? <span className="remind-date">{dateText}</span> : null}
+            {relLabel && <span className="remind-rel">{relLabel}</span>}
             <span className={`remind-time${e.allDay || !e.startTime ? ' all-day' : ''}${struck ? ' struck' : ''}`}>
               {timeText}
             </span>
@@ -338,27 +347,13 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
           </span>
         </div>
         {dayEvents.length === 0 ? (
-          syncing ? (
-            <div className="empty-remind syncing">
-              <SyncOutlined spin />
-              同步中…
-            </div>
-          ) : (
-            <div className="empty-remind" onClick={() => openCreate({ date: selectedKey })}>
-              <CalendarOutlined className="empty-check" />
-              暂无安排
-              <PlusOutlined className="empty-plus" />
-            </div>
-          )
+          <div className="empty-remind" onClick={() => openCreate({ date: selectedKey })}>
+            <CalendarOutlined className="empty-check" />
+            暂无安排
+            <PlusOutlined className="empty-plus" />
+          </div>
         ) : (
-          <>
-            {syncing && (
-              <div className="remind-syncing-tip">
-                <SyncOutlined spin /> 同步中…
-              </div>
-            )}
-            <div className="remind-list">{dayEvents.map((e) => renderEventRow(e, false, true))}</div>
-          </>
+          <div className="remind-list">{dayEvents.map((e) => renderEventRow(e, false, true))}</div>
         )}
       </section>
 

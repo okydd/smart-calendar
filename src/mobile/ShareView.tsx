@@ -21,7 +21,7 @@ export default function ShareView() {
   const [data, setData] = useState<SharePayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { message: msgApi } = message;
+  const msgApi = message;
 
   useEffect(() => {
     let alive = true;

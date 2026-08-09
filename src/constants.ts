@@ -55,3 +55,17 @@ export const PRESET_REMINDERS: { label: string; unit: ReminderOffset['unit']; va
   { label: '30分钟', unit: 'minute', value: 30 },
   { label: '15分钟', unit: 'minute', value: 15 }
 ];
+
+/**
+ * 当前版本安卓 APK 的公开下载地址。
+ * 托管在 GitHub Releases（按 tag=apk 固定地址，更新 APK 时覆盖同名资源即可，
+ * URL 保持不变，邮件里始终指向「最新版本」）。
+ */
+export const APK_DOWNLOAD_URL =
+  'https://github.com/okydd/smart-calendar/releases/download/apk/smart-calendar.apk';
+
+/** 电脑 / 手机浏览器访问的网页版地址（与 APP 数据完全同步） */
+export const WEB_APP_URL = 'https://okydd.github.io/smart-calendar/';
+
+/** APK 发布页（可查看历史版本 / 手动下载） */
+export const APK_RELEASE_PAGE = 'https://github.com/okydd/smart-calendar/releases/tag/apk';

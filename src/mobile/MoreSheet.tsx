@@ -32,10 +32,12 @@ import {
   buildConciseText,
   buildFullText,
   buildFullEmailHtml,
+  APK_FOOTER_TEXT,
   type NotifySettings
 } from '../utils/notify';
 import { createShare } from '../utils/share';
 import { InstallGuide } from '../utils/install';
+import { copyText } from '../utils/clipboard';
 import ExportModal from '../components/ExportModal';
 
 export default function MoreSheet({
@@ -127,7 +129,7 @@ export default function MoreSheet({
           note ? '\n' + note : ''
         ]
           .filter(Boolean)
-          .join('\n');
+          .join('\n') + APK_FOOTER_TEXT;
         const r = await sendEmail(subject, body);
         // 顺手把在线查看链接复制到剪贴板，方便随时粘贴
         try {
@@ -183,22 +185,28 @@ export default function MoreSheet({
   const handleCopyEvents = async () => {
     const list = rangedEvents();
     const text = buildConciseText(list, { rangeStart, rangeEnd, exportTime });
-    try {
-      await navigator.clipboard.writeText(text);
-      message.success(`已复制 ${list.length} 条事件清单`);
-    } catch {
-      message.warning('复制失败');
-    }
+    // 复制：优先 clipboard，WebView 下失败则用 execCommand 兜底
+    const copied = await copyText(text);
     // 优先发「云端分享链接」；未登录或失败则回退内文完整版（含备注、图片网址）
     const { ok, shared, msg, error } = await sendWithShare('智能日历 事件清单', list);
     if (ok) {
-      message.success(
-        shared
-          ? '完整数据链接已发到邮箱，在线查看地址也已复制到剪贴板'
-          : '完整清单（含备注、图片网址）已发送到邮箱'
-      );
+      if (copied) {
+        message.success(
+          shared
+            ? `已复制 ${list.length} 条事件清单，完整数据链接已发到邮箱`
+            : `已复制 ${list.length} 条事件清单，完整清单已发到邮箱`
+        );
+      } else {
+        // 复制未成功（如剪贴板被禁用），但邮件已正常发出，不再报错误导
+        message.success(
+          shared ? '完整数据链接已发到邮箱' : '完整清单已发到邮箱'
+        );
+      }
     } else if (msg !== '未配置邮箱，仅本地操作') {
-      message.error(error || msg || '发送失败');
+      if (!copied) message.warning('复制失败，且邮件发送未成功');
+      else message.error(error || msg || '发送失败');
+    } else if (!copied) {
+      message.warning('复制失败');
     }
   };
 
