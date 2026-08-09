@@ -127,10 +127,10 @@ async function ensureChannel(): Promise<void> {
 /* 振动 + 铃声                                                          */
 /* ------------------------------------------------------------------ */
 
-/** 触发振动（Web Vibration API，安卓 WebView 支持） */
-export function vibrateNow(): void {
+/** 触发振动（Web Vibration API，安卓 WebView 支持）。可传自定义模式，默认「四段强振」。 */
+export function vibrateNow(pattern?: number[]): void {
   try {
-    navigator.vibrate?.([500, 200, 500, 200, 700]);
+    navigator.vibrate?.(pattern ?? [500, 100, 500, 100, 500, 100, 500]);
   } catch {
     /* ignore */
   }
@@ -192,8 +192,12 @@ export async function fireReminderNow(title: string, body: string): Promise<void
   const prefs = getStrongRemindPrefs();
   if (!prefs.enabled) return;
 
-  if (prefs.vibrate) vibrateNow();
-  if (prefs.sound) playRingtone();
+  if (prefs.vibrate) {
+    vibrateNow();
+    // 二次强调振动：单次可能不敏感，过约 1.4s 再补一段，强化「强提醒」触感
+    window.setTimeout(() => vibrateNow([300, 100, 300, 100, 300]), 1400);
+  }
+  if (prefs.sound) playRingtone(3);
 
   if (isNativeApp()) {
     try {
@@ -224,7 +228,7 @@ export async function fireReminderNow(title: string, body: string): Promise<void
         body,
         tag: `calendar-remind-${seq++}`,
         requireInteraction: true,
-        vibrate: [500, 200, 500],
+        vibrate: [500, 100, 500, 100, 500, 100, 500],
         renotify: true
       };
       const reg = await navigator.serviceWorker?.getRegistration?.();

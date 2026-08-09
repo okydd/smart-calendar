@@ -217,6 +217,23 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
   const [verMsg, setVerMsg] = useState('');
   const isLatest = !latest || latest === CURRENT_VERSION || CURRENT_VERSION === 'dev';
 
+  const UPGRADE_STEPS = ['正在检查本地更新…', '正在清理旧版本缓存…', '正在加载最新页面…'];
+  const sleep = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
+  const [upgrading, setUpgrading] = useState(false);
+  const [upgradeStep, setUpgradeStep] = useState(0);
+
+  /** 点击「立即升级」后分阶段展示进度，再真正执行升级（会触发页面刷新） */
+  const doUpgrade = async () => {
+    setUpgrading(true);
+    setUpgradeStep(0);
+    await sleep(450);
+    setUpgradeStep(1);
+    await sleep(450);
+    setUpgradeStep(2);
+    await sleep(400);
+    await applyLatestVersion();
+  };
+
   const doCheckVersion = async () => {
     setVerChecking(true);
     setVerMsg('');
@@ -246,7 +263,9 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
         ),
         okText: '立即升级',
         cancelText: '稍后',
-        onOk: () => applyLatestVersion()
+        onOk: () => {
+          void doUpgrade();
+        }
       });
     }
   };
@@ -924,6 +943,21 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
       {busy && (
         <div className="set-busy">
           <Spin /> <span>{busy}</span>
+        </div>
+      )}
+
+      {upgrading && (
+        <div className="upgrade-overlay">
+          <div className="upgrade-card">
+            <Spin size="large" />
+            <div className="upgrade-title">正在升级到最新版本…</div>
+            <div className="upgrade-step">{UPGRADE_STEPS[upgradeStep]}</div>
+            <div className="upgrade-dots">
+              {UPGRADE_STEPS.map((_, i) => (
+                <span key={i} className={`dot${i <= upgradeStep ? ' on' : ''}`} />
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>

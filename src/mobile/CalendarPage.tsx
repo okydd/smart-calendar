@@ -247,11 +247,19 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
             <EventFlags e={e} />
           </div>
           <div className="remind-time-line">
-            {showDate && dateText && !relLabel ? <span className="remind-date">{dateText}</span> : null}
-            {relLabel && <span className="remind-rel">{relLabel}</span>}
-            <span className={`remind-time${e.allDay || !e.startTime ? ' all-day' : ''}${struck ? ' struck' : ''}`}>
-              {timeText}
-            </span>
+            {showDate && dateText && <span className="remind-date">{dateText}</span>}
+            {relLabel ? (
+              <span className="remind-rel-time">
+                <span className="remind-rel">{relLabel}</span>
+                <span className={`remind-time${e.allDay || !e.startTime ? ' all-day' : ''}${struck ? ' struck' : ''}`}>
+                  {timeText}
+                </span>
+              </span>
+            ) : (
+              <span className={`remind-time${e.allDay || !e.startTime ? ' all-day' : ''}${struck ? ' struck' : ''}`}>
+                {timeText}
+              </span>
+            )}
             <span className={`remind-hint${expired ? ' expired' : ''}`}>{timeHint(d, e)}</span>
           </div>
         </div>

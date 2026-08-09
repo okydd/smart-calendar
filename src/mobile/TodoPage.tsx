@@ -92,13 +92,13 @@ export default function TodoPage() {
     const done: CalendarEvent[] = [];
 
     for (const e of filteredEvents) {
-      if (e.done) {
-        done.push(e);
-        continue;
-      }
-      // 今天单独成组；避免与「本周」重复
+      // 今天：无论是否完成都留在「今天待办」，完成/过期仅划线，不当即移入「已完成」
       if (e.date === todayStr) {
         todayItems.push(e);
+        continue;
+      }
+      if (e.done) {
+        done.push(e);
         continue;
       }
       const d = parseDateStr(e.date);
