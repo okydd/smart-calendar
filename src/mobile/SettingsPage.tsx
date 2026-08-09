@@ -16,8 +16,6 @@ import {
   NotificationOutlined,
   RightOutlined,
   UserOutlined,
-  SyncOutlined,
-  LogoutOutlined,
   CloudDownloadOutlined,
   SafetyCertificateOutlined,
   InfoCircleOutlined,
@@ -141,8 +139,6 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
     lastSyncAt,
     configured,
     userId,
-    signOut,
-    syncNow,
     syncNotifySettings,
     notifySettingsVersion
   } = useSync();
@@ -424,20 +420,6 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
               ? `已同步 ${dayjs(lastSyncAt).format('MM-DD HH:mm')}`
               : '已登录';
 
-  const handleSignOut = () => {
-    modal.confirm({
-      title: '退出登录',
-      content: '退出后本机数据仍在，重新登录同一账号即可继续同步。',
-      okText: '退出登录',
-      okButtonProps: { danger: true },
-      cancelText: '取消',
-      onOk: async () => {
-        await signOut();
-        message.success('已退出登录');
-      }
-    });
-  };
-
   const handleDedupe = () => {
     if (duplicateCount === 0) {
       message.success('没有发现重复事件');
@@ -514,34 +496,6 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
         </span>
         <RightOutlined className="set-row-arrow" />
       </button>
-
-      {/* 账号与同步 */}
-      <div className="set-group">
-        <div className="set-group-title">账号与同步</div>
-        <Row
-          icon={<SyncOutlined style={{ color: '#34c759' }} />}
-          label="立即同步"
-          desc={lastSyncAt ? `上次同步 ${dayjs(lastSyncAt).format('YYYY-MM-DD HH:mm')}` : '尚未同步'}
-          onClick={
-            email
-              ? async () => {
-                  await syncNow();
-                  message.success('已触发同步');
-                }
-              : undefined
-          }
-          right={email ? undefined : <span className="set-row-value">未登录</span>}
-        />
-        {email && (
-          <Row
-            icon={<LogoutOutlined />}
-            label="退出登录"
-            danger
-            onClick={handleSignOut}
-            right={<RightOutlined className="set-row-arrow" />}
-          />
-        )}
-      </div>
 
       {/* 提醒 */}
       <div className="set-group">
