@@ -70,6 +70,61 @@ body {
   background: transparent;
 }
 
+/* ---------- 子页面（提醒 / 数据 详情），微信设置风格 ---------- */
+/* 渐变顶栏 + 左侧返回箭头 + 居中标题，sticky 固定常驻顶部 */
+.sub-page {
+  display: block;
+}
+
+.sub-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  background: var(--c-gradient);
+  color: #fff;
+  padding: calc(var(--safe-top) + 8px) 6px 10px;
+  box-shadow: 0 8px 26px rgba(76, 110, 245, 0.18);
+}
+
+.sub-back {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  padding: 6px 14px 6px 8px;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sub-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 17px;
+  font-weight: 600;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.sub-right {
+  margin-left: auto;
+  padding-right: 8px;
+}
+
+.sub-page-body {
+  min-height: 100%;
+}
+
+.sub-page-gap {
+  height: calc(20px + var(--safe-bottom));
+}
+
 .topbar-row {
   display: flex;
   align-items: flex-start;

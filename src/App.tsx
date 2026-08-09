@@ -14,6 +14,8 @@ import EventView from './components/EventView';
 import CalendarPage from './mobile/CalendarPage';
 import TodoPage from './mobile/TodoPage';
 import SettingsPage from './mobile/SettingsPage';
+import ReminderSettingsPage from './mobile/ReminderSettingsPage';
+import DataSettingsPage from './mobile/DataSettingsPage';
 import SyncPanel from './mobile/SyncPanel';
 import ShareView from './mobile/ShareView';
 import { dayjs, lunarDateLabel, weekdayCN } from './utils/date';
@@ -31,6 +33,7 @@ function Shell() {
   const { openView } = useUI();
   const { userId } = useSync();
   const isSettings = location.pathname === '/settings';
+  const isSettingsSub = location.pathname.startsWith('/settings/');
   const [syncOpen, setSyncOpen] = useState(false);
 
   /** 事件到期提醒检查：打开即查、每 60 秒、回到前台/可见时各查一次 */
@@ -177,7 +180,7 @@ function Shell() {
     <div className="app-shell">
       {isSettings ? (
         <div className="topbar-spacer" />
-      ) : (
+      ) : isSettingsSub ? null : (
         <header className="topbar">
           <div className="topbar-row">
             <div className="topbar-title">
@@ -209,6 +212,8 @@ function Shell() {
               path="/settings"
               element={<SettingsPage onOpenSync={() => setSyncOpen(true)} />}
             />
+            <Route path="/settings/reminder" element={<ReminderSettingsPage />} />
+            <Route path="/settings/data" element={<DataSettingsPage />} />
             <Route path="/share/:id" element={<ShareView />} />
             <Route path="*" element={<Navigate to="/calendar" replace />} />
           </Routes>
