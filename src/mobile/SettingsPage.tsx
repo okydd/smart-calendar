@@ -497,6 +497,121 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
         <RightOutlined className="set-row-arrow" />
       </button>
 
+      {/* 导出 */}
+      <div className="set-actions">
+        <div className="set-group-title">导出</div>
+        <div className="set-range">
+          <WheelDatePicker label="导出开始日期" value={startDate} onChange={setStartDate} />
+          <WheelDatePicker label="导出结束日期" value={endDate} onChange={setEndDate} />
+        </div>
+        <div className="sheet-actions-row">
+          <div className="btn-wrap">
+            <button className="sheet-btn-v2 primary" onClick={() => setExportOpen(true)}>
+              <PictureOutlined className="ico" />
+              导出图片
+            </button>
+          </div>
+          <div className="btn-wrap">
+            <button className="sheet-btn-v2 success" onClick={handleExportData}>
+              <ExportOutlined className="ico" />
+              导出数据
+            </button>
+          </div>
+        </div>
+        <div className="sheet-actions-row">
+          <div className="btn-wrap">
+            <button className="sheet-btn-v2" onClick={() => fileRef.current?.click()}>
+              <UploadOutlined className="ico" />
+              导入json
+            </button>
+          </div>
+          <div className="btn-wrap">
+            <button className="sheet-btn-v2" onClick={() => navigate('/calendar')}>
+              <RollbackOutlined className="ico" />
+              返回日历
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 关于 */}
+      <div className="set-group">
+        <div className="set-group-title">关于</div>
+        <Row
+          icon={<CloudDownloadOutlined style={{ color: '#3b7cff' }} />}
+          label="版本升级"
+          desc={verMsg || (isLatest ? '点击检查是否有新版本' : `发现新版本 ${formatVersion(latest)}`)}
+          value={
+            verChecking ? (
+              <Spin size="small" />
+            ) : isLatest && verMsg ? (
+              <CheckCircleFilled style={{ color: '#34c759' }} />
+            ) : undefined
+          }
+          onClick={doCheckVersion}
+        />
+        <Row
+          icon={<InfoCircleOutlined style={{ color: '#8e8e93' }} />}
+          label="当前版本"
+          value={formatVersion(CURRENT_VERSION)}
+        />
+        <Row
+          icon={<AndroidOutlined style={{ color: '#34c759' }} />}
+          label="下载安卓安装包"
+          desc="固定地址，永远指向最新版 APK"
+          onClick={openApkDownload}
+        />
+        <Row
+          icon={<DesktopOutlined style={{ color: '#5e60ff' }} />}
+          label="电脑网页版地址"
+          desc={WEB_APP_URL}
+          onClick={() => copyAll(WEB_APP_URL, '网页版地址已复制')}
+        />
+      </div>
+
+      {/* 数据 */}
+      <div className="set-group">
+        <div className="set-group-title">数据</div>
+        <div className="set-search-row">
+          <SearchOutlined className="ico" />
+          <input
+            value={searchInput}
+            placeholder="搜索标题或备注关键词…"
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') setSearch(searchInput.trim());
+            }}
+          />
+          {searchInput && (
+            <button className="clr" onClick={() => { setSearchInput(''); setSearch(''); }} aria-label="清除">
+              <CloseOutlined />
+            </button>
+          )}
+          <button className="set-search-btn" onClick={() => setSearch(searchInput.trim())}>
+            搜索
+          </button>
+        </div>
+        <Row
+          icon={<InfoCircleOutlined style={{ color: '#8e8e93' }} />}
+          label="事件总数"
+          value={`${activeCount} 条`}
+        />
+        <Row
+          icon={<DeleteOutlined style={{ color: duplicateCount ? '#ff3b30' : '#8e8e93' }} />}
+          label="清理重复事件"
+          desc="标题、日期、时间完全相同的事件"
+          badge={duplicateCount}
+          value={duplicateCount ? `${duplicateCount} 条` : '无重复'}
+          onClick={handleDedupe}
+        />
+        <Row
+          icon={<SafetyCertificateOutlined style={{ color: '#34c759' }} />}
+          label="备份与灾难恢复"
+          desc="网页地址、安装包、云端账号、双备份"
+          onClick={() => setBackupOpen(true)}
+        />
+      </div>
+
       {/* 提醒 */}
       <div className="set-group">
         <div className="set-group-title">提醒</div>
@@ -565,120 +680,6 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
           }
           onClick={() => setNotifyOpen(true)}
         />
-      </div>
-
-      {/* 数据 */}
-      <div className="set-group">
-        <div className="set-group-title">数据</div>
-        <div className="set-search-row">
-          <SearchOutlined className="ico" />
-          <input
-            value={searchInput}
-            placeholder="搜索标题或备注关键词…"
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') setSearch(searchInput.trim());
-            }}
-          />
-          {searchInput && (
-            <button className="clr" onClick={() => { setSearchInput(''); setSearch(''); }} aria-label="清除">
-              <CloseOutlined />
-            </button>
-          )}
-          <button className="set-search-btn" onClick={() => setSearch(searchInput.trim())}>
-            搜索
-          </button>
-        </div>
-        <Row
-          icon={<InfoCircleOutlined style={{ color: '#8e8e93' }} />}
-          label="事件总数"
-          value={`${activeCount} 条`}
-        />
-        <Row
-          icon={<DeleteOutlined style={{ color: duplicateCount ? '#ff3b30' : '#8e8e93' }} />}
-          label="清理重复事件"
-          desc="标题、日期、时间完全相同的事件"
-          badge={duplicateCount}
-          value={duplicateCount ? `${duplicateCount} 条` : '无重复'}
-          onClick={handleDedupe}
-        />
-        <Row
-          icon={<SafetyCertificateOutlined style={{ color: '#34c759' }} />}
-          label="备份与灾难恢复"
-          desc="网页地址、安装包、云端账号、双备份"
-          onClick={() => setBackupOpen(true)}
-        />
-      </div>
-
-      {/* 关于 */}
-      <div className="set-group">
-        <div className="set-group-title">关于</div>
-        <Row
-          icon={<CloudDownloadOutlined style={{ color: '#3b7cff' }} />}
-          label="版本升级"
-          desc={verMsg || (isLatest ? '点击检查是否有新版本' : `发现新版本 ${formatVersion(latest)}`)}
-          value={
-            verChecking ? (
-              <Spin size="small" />
-            ) : isLatest && verMsg ? (
-              <CheckCircleFilled style={{ color: '#34c759' }} />
-            ) : undefined
-          }
-          onClick={doCheckVersion}
-        />
-        <Row
-          icon={<InfoCircleOutlined style={{ color: '#8e8e93' }} />}
-          label="当前版本"
-          value={formatVersion(CURRENT_VERSION)}
-        />
-        <Row
-          icon={<AndroidOutlined style={{ color: '#34c759' }} />}
-          label="下载安卓安装包"
-          desc="固定地址，永远指向最新版 APK"
-          onClick={openApkDownload}
-        />
-        <Row
-          icon={<DesktopOutlined style={{ color: '#5e60ff' }} />}
-          label="电脑网页版地址"
-          desc={WEB_APP_URL}
-          onClick={() => copyAll(WEB_APP_URL, '网页版地址已复制')}
-        />
-      </div>
-
-      {/* 底部四个按钮：导出图片 / 导出数据 ； 导入json / 返回日历 */}
-      <div className="set-actions">
-        <div className="set-range">
-          <WheelDatePicker label="导出开始日期" value={startDate} onChange={setStartDate} />
-          <WheelDatePicker label="导出结束日期" value={endDate} onChange={setEndDate} />
-        </div>
-        <div className="sheet-actions-row">
-          <div className="btn-wrap">
-            <button className="sheet-btn-v2 primary" onClick={() => setExportOpen(true)}>
-              <PictureOutlined className="ico" />
-              导出图片
-            </button>
-          </div>
-          <div className="btn-wrap">
-            <button className="sheet-btn-v2 success" onClick={handleExportData}>
-              <ExportOutlined className="ico" />
-              导出数据
-            </button>
-          </div>
-        </div>
-        <div className="sheet-actions-row">
-          <div className="btn-wrap">
-            <button className="sheet-btn-v2" onClick={() => fileRef.current?.click()}>
-              <UploadOutlined className="ico" />
-              导入json
-            </button>
-          </div>
-          <div className="btn-wrap">
-            <button className="sheet-btn-v2" onClick={() => navigate('/calendar')}>
-              <RollbackOutlined className="ico" />
-              返回日历
-            </button>
-          </div>
-        </div>
       </div>
 
       <input

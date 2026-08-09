@@ -3587,6 +3587,11 @@ body {
   margin-top: 12px;
 }
 
+/* 导出卡片：日期选择与下方按钮之间留出间距 */
+.set-actions .sheet-actions-row:first-child {
+  margin-top: 16px;
+}
+
 .set-range-col {
   flex: 1;
   min-width: 0;
