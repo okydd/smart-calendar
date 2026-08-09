@@ -146,8 +146,16 @@ export default function TodoPage() {
     const struck = !!e.done;
     const timeText = e.allDay || !e.startTime ? '全天' : e.startTime;
     const dateText = d.isValid() ? dateLabel(d, today) : '未设置日期';
+    // 办事清单状态边框分级（互斥）：已完成→无边框 / 重要→红边 / 今天→实蓝 / 其它→淡蓝
+    const stateCls = e.done
+      ? ' done-pill'
+      : e.important
+        ? ' important'
+        : e.date === todayStr
+          ? ' today'
+          : ' not-done';
     return (
-      <div className={`event-pill todo-item${e.important ? ' important' : ''}${e.done ? ' done-pill' : ' not-done'}`} key={e.id}>
+      <div className={`event-pill todo-item${stateCls}`} key={e.id}>
         <button
           className={`todo-check${e.done ? ' checked' : ''}`}
           onClick={() => toggleDone(e.id)}

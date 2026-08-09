@@ -646,10 +646,20 @@ body {
   border-color: rgba(59, 124, 255, 0.4);
 }
 
-/* 办事清单常规事件：参考重要事件边框效果（1.5px 实边），只换边框颜色为蓝色，背景保持原灰药丸 */
+/* 办事清单：状态边框分级（state class 互斥，专属规则保证优先级） */
+/* 其它未完成事件：淡蓝细边（与周/月提醒普通事件一致） */
 .event-pill.todo-item.not-done {
+  border-color: rgba(59, 124, 255, 0.4);
+}
+/* 今天待办：实蓝边框（1.5px，与重要事件同款仅换色） */
+.event-pill.todo-item.today {
   border: 1.5px solid #3b7cff;
 }
+/* 已完成事件：无边框 */
+.event-pill.todo-item.done-pill {
+  border: none;
+}
+/* 重要事件沿用上方 .event-pill.important 的实红边框，无需重复 */
 
 /* 日提醒事件：四边标准蓝色边框 + 浅蓝背景（不再用左侧加粗强调条，置于 .not-done 之后以保留今日强调） */
 .event-pill.event-pill-day {
