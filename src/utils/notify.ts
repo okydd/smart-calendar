@@ -1,6 +1,6 @@
 import type { CalendarEvent } from '../types';
 import { parseDateStr, timeRangeLabel, weekdayCN, dayjs } from './date';
-import { APK_DOWNLOAD_URL } from '../constants';
+import { APK_DOWNLOAD_URL, WEB_APP_URL, APK_RELEASE_PAGE } from '../constants';
 import { fireReminderNow, getStrongRemindPrefs } from './localNotify';
 
 /** 邮件末尾固定页脚：当前版本 APK 下载链接（需求1：邮件最后增加 APK 下载网址） */
@@ -259,6 +259,50 @@ export function buildFullEmailHtml(
   <p style="text-align:center;color:#9aa0b4;font-size:12px;margin-top:14px;">由「智能日历」自动生成</p>
   ${APK_FOOTER_HTML}
 </div>`;
+}
+
+/**
+ * 生成「每日自动推送」邮件正文（HTML）：
+ * - 含选取时间范围内每条事件的标题、日期、时间、备注、图片（与导出数据一致）；
+ * - 内置「下载完整 JSON 数据」按钮（data: 基链，体积极小时直接可点下载，过大则降级为提示）；
+ * - 末尾附 3 个常规链接：电脑网页版、安卓 APK 下载、GitHub 发布页。
+ * 返回 { html, withJson }，withJson=false 表示因体积极大未生成下载按钮。
+ */
+export function buildAutoExportEmailHtml(
+  events: CalendarEvent[],
+  opts: { rangeStart: string; rangeEnd: string; exportTime: string }
+): { html: string; withJson: boolean } {
+  const list = events.filter((e) => !e.deleted).sort((a, b) => (a.date < b.date ? -1 : 1));
+  const items = buildItemsHtml(events);
+  const json = JSON.stringify(list, null, 2);
+  const dataUrl = `data:application/json;base64,${toBase64(json)}`;
+  let withJson = false;
+  let jsonBtn: string;
+  if (byteLength(dataUrl) <= 28 * 1024) {
+    withJson = true;
+    jsonBtn = `<a href="${dataUrl}" download="calendar-events-${escapeHtml(opts.rangeStart)}_${escapeHtml(
+      opts.rangeEnd
+    )}.json" class="btn" style="display:inline-block;background:linear-gradient(135deg,#3b7cff,#5e60ff);color:#fff;font-size:14px;font-weight:600;padding:10px 18px;border-radius:10px;text-decoration:none;">⬇️ 下载完整 JSON 数据</a>`;
+  } else {
+    jsonBtn = `<div style="color:#999;font-size:12px;margin-top:10px;">本期数据较大，邮件内未生成下载链接，请在 APP 内「导出数据」获取 JSON。</div>`;
+  }
+  const html = `<div style="font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;background:#f3f4f8;color:#1c1c1e;padding:18px;margin:0;">
+  <div style="background:linear-gradient(135deg,#3b7cff,#5e60ff);color:#fff;border-radius:14px;padding:14px 18px;">
+    <h1 style="margin:0 0 6px;font-size:18px;">智能日历 · 每日自动数据推送</h1>
+    <p style="margin:2px 0;font-size:12px;opacity:.9;">时间范围：${escapeHtml(opts.rangeStart)} 至 ${escapeHtml(opts.rangeEnd)}</p>
+    <p style="margin:2px 0;font-size:12px;opacity:.9;">推送时间：${escapeHtml(opts.exportTime)} ｜ 共 ${list.length} 条事件</p>
+  </div>
+  ${items || '<p style="text-align:center;color:#9aa0b4;font-size:12px;margin-top:14px;">（该时间段无事件）</p>'}
+  <div style="text-align:center;margin-top:14px;">${jsonBtn}</div>
+  <div style="background:#fff;border-radius:12px;padding:14px 16px;margin-top:14px;">
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px;">相关链接</div>
+    <a href="${WEB_APP_URL}" style="display:block;color:#3b7cff;text-decoration:none;font-size:13px;margin:6px 0;">🔗 电脑网页版：${WEB_APP_URL}</a>
+    <a href="${APK_DOWNLOAD_URL}" style="display:block;color:#3b7cff;text-decoration:none;font-size:13px;margin:6px 0;">📱 安卓 APK 下载：${APK_DOWNLOAD_URL}</a>
+    <a href="${APK_RELEASE_PAGE}" style="display:block;color:#3b7cff;text-decoration:none;font-size:13px;margin:6px 0;">📦 GitHub 发布页：${APK_RELEASE_PAGE}</a>
+  </div>
+  <p style="text-align:center;color:#9aa0b4;font-size:12px;margin-top:14px;">由「智能日历」每日自动生成，无需手动操作</p>
+</div>`;
+  return { html, withJson };
 }
 
 /** 邮件附件（base64，不含 data: 前缀） */

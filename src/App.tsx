@@ -18,6 +18,7 @@ import SyncPanel from './mobile/SyncPanel';
 import ShareView from './mobile/ShareView';
 import { dayjs, lunarDateLabel, weekdayCN } from './utils/date';
 import { checkDueReminders } from './utils/notify';
+import { startAutoExportScheduler } from './utils/autoExport';
 import { setNativeBadge } from './utils/badge';
 import { hostImages } from './utils/imageHost';
 import { registerQuotaRescuer } from './utils/storage';
@@ -37,6 +38,14 @@ function Shell() {
   useEffect(() => {
     eventsRef.current = events;
   }, [events]);
+
+  /**
+   * 每日自动推送（方案A）：打开APP后当在后台静默把上个月1号~今天的数据发到邮箱，
+   * 不在页面暴露任何按钮/提示；仅登录且已配置邮箱、且当前>=5点、且当天未发过时触发。
+   */
+  useEffect(() => {
+    return startAutoExportScheduler(() => eventsRef.current, userId);
+  }, [userId]);
 
   /**
    * 注册 localStorage 配额满时的自动救援：把 base64 图片上传到 Supabase Storage 并替换为 URL，
