@@ -210,6 +210,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
   const renderEventRow = (e: CalendarEvent, showDate: boolean, isDay = false) => {
     const d = dayjs(e.date);
     const struck = !!e.done;
+    const expired = !e.done && d.isValid() && d.isBefore(today, 'day');
     const timeText = e.allDay || !e.startTime ? '全天' : e.startTime;
     const dateText =
       showDate && d.isValid()
@@ -258,7 +259,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
                 {timeText}
               </span>
             )}
-            <span className="remind-hint">{timeHint(d, e)}</span>
+            <span className={`remind-hint${struck || expired ? ' expired' : ''}`}>{timeHint(d, e)}</span>
           </div>
         </div>
       </div>
