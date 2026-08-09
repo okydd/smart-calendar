@@ -72,8 +72,8 @@ async function api(method, urlPath, body, tries = 5) {
       } catch {
         data = text;
       }
-      // 400 也重试：受限网络下大 body 偶发被中间层截断，GitHub 会回 malformed request
-      if (!res.ok && (res.status >= 500 || res.status === 400) && i < tries - 1) {
+      // 400/401 也重试：受限网络下大 body 偶发被中间层截断或瞬时返回 Bad credentials
+      if (!res.ok && (res.status >= 500 || res.status === 400 || res.status === 401) && i < tries - 1) {
         await new Promise((r) => setTimeout(r, 2500 * (i + 1)));
         continue;
       }
