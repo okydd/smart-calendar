@@ -92,7 +92,7 @@ export default function TodoPage() {
     const done: CalendarEvent[] = [];
 
     for (const e of filteredEvents) {
-      // 今天：无论是否完成都留在「今天待办」，完成/过期仅划线，不当即移入「已完成」
+      // 今天：无论是否完成都留在「今天待办」；仅「已完成」划线，不当即移入「已完成」；过期事件按正常样式显示
       if (e.date === todayStr) {
         todayItems.push(e);
         continue;
@@ -113,8 +113,7 @@ export default function TodoPage() {
       }
     }
 
-    const isStruck = (e: CalendarEvent) =>
-      !!e.done || (() => { const d = parseDateStr(e.date); return d.isValid() && d.isBefore(today, 'day'); })();
+    const isStruck = (e: CalendarEvent) => !!e.done;
     const sorterStruck = (a: CalendarEvent, b: CalendarEvent) => {
       const sa = isStruck(a) ? 1 : 0;
       const sb = isStruck(b) ? 1 : 0;
@@ -144,12 +143,11 @@ export default function TodoPage() {
   const renderItem = (e: CalendarEvent) => {
     const d = parseDateStr(e.date);
     const hint = d.isValid() ? statusHint(d, e, today) : '未设置日期';
-    const expired = !e.done && d.isValid() && d.isBefore(today, 'day');
-    const struck = e.done || expired;
+    const struck = !!e.done;
     const timeText = e.allDay || !e.startTime ? '全天' : e.startTime;
     const dateText = d.isValid() ? dateLabel(d, today) : '未设置日期';
     return (
-      <div className={`event-pill todo-item${e.important ? ' important' : ''}`} key={e.id}>
+      <div className={`event-pill todo-item${e.important ? ' important' : ''}${e.done ? ' done-pill' : ' not-done'}`} key={e.id}>
         <button
           className={`todo-check${e.done ? ' checked' : ''}`}
           onClick={() => toggleDone(e.id)}
@@ -168,7 +166,7 @@ export default function TodoPage() {
             <span className={`remind-time${e.allDay || !e.startTime ? ' all-day' : ''}${struck ? ' struck' : ''}`}>
               {timeText}
             </span>
-            <span className={`todo-days${expired ? ' expired' : e.done ? ' done' : ''}`}>{hint}</span>
+            <span className={`todo-days${e.done ? ' done' : ''}`}>{hint}</span>
           </div>
         </div>
       </div>

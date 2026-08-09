@@ -641,8 +641,13 @@ body {
   transform: scale(0.992);
 }
 
-/* 日提醒事件：四边标准蓝色边框 + 浅蓝背景（不再用左侧加粗强调条） */
-.event-pill-day {
+/* 未完成事件（周/月提醒、办事清单）统一淡蓝边框；已完成不显示，重要事件仍为红边 */
+.event-pill.not-done {
+  border-color: rgba(59, 124, 255, 0.4);
+}
+
+/* 日提醒事件：四边标准蓝色边框 + 浅蓝背景（不再用左侧加粗强调条，置于 .not-done 之后以保留今日强调） */
+.event-pill.event-pill-day {
   border: 1.5px solid #3b7cff;
   background: #f7faff;
   padding: 12px 14px;

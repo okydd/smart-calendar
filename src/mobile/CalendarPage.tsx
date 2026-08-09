@@ -165,8 +165,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
       }
     }
 
-    const isStruck = (e: CalendarEvent) =>
-      !!e.done || (dayjs(e.date).isValid() && dayjs(e.date).isBefore(today, 'day'));
+    const isStruck = (e: CalendarEvent) => !!e.done;
     const baseSorter = (a: CalendarEvent, b: CalendarEvent) => {
       if (a.date !== b.date) return a.date < b.date ? -1 : 1;
       if (a.allDay !== b.allDay) return a.allDay ? -1 : 1;
@@ -210,14 +209,13 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
   /** 渲染一条提醒：日提醒为单行（时间→标题→标签），其余两行；重要事件整圈红框 */
   const renderEventRow = (e: CalendarEvent, showDate: boolean, isDay = false) => {
     const d = dayjs(e.date);
-    const expired = !e.done && d.isValid() && d.isBefore(today, 'day');
-    const struck = e.done || expired;
+    const struck = !!e.done;
     const timeText = e.allDay || !e.startTime ? '全天' : e.startTime;
     const dateText =
       showDate && d.isValid()
         ? `${d.month() + 1}月${d.date()}日 ${WEEK_DAYS[(d.day() + 6) % 7]}`
         : '';
-    const cls = `event-pill${isDay ? ' event-pill-day' : ''}${e.important ? ' important' : ''}`;
+    const cls = `event-pill${isDay ? ' event-pill-day' : ''}${e.important ? ' important' : ''}${e.done ? ' done-pill' : ' not-done'}`;
     const titleCls = `remind-title${struck ? ' struck' : ''}`;
     // 周/月提醒：事件日期为今天/明天/后天时，在时间前加蓝色相对标签
     const relLabel = showDate && !isDay ? relativeDayLabel(d, today) : '';
@@ -260,7 +258,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
                 {timeText}
               </span>
             )}
-            <span className={`remind-hint${expired ? ' expired' : ''}`}>{timeHint(d, e)}</span>
+            <span className="remind-hint">{timeHint(d, e)}</span>
           </div>
         </div>
       </div>
