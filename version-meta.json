@@ -2,6 +2,14 @@
   "semver": "V1.8",
   "log": [
     {
+      "version": "V1.8.1",
+      "date": "2026-08-10",
+      "title": "修复「清除缓存并重载」后仍在错误面板（旧 SW 兜底错误响应）",
+      "summary": "用户反馈点「清除缓存并重载」后仍停在错误面板。根因：该按钮只清了 Cache API，但安卓在线壳 APK 的 WebView 中旧 Service Worker 仍在控制页面；当网络抖动导致新的带哈希 JS 文件请求失败时，SW（network-first）的兜底分支返回 Response.error()，而旧缓存里没有同名新文件，于是整包脚本加载失败、React 永不挂载，刷新后依旧白屏→错误面板。修复：①「清除缓存并重载」改为先 await 旧 SW 注销 + 缓存清空完成，再跳转，并在跳转 URL 写入 sessionStorage 标记 __freshLoad；main.tsx 识别该标记后本次加载跳过 SW 注册与版本自动刷新，以纯网络方式加载，避免被旧 SW 重新接管。② 错误面板增加诊断信息（UA / ServiceWorker 控制状态 / 在线状态 / 文档状态），并改为轮询式检测（文档未加载完成则等待，避免慢网络误报白屏），便于后续若仍失败可直接复制错误定位。③ 复制错误信息默认带上环境信息。本版不改变 V1.8 的首屏无 Capacitor 结论，仅加固恢复路径。",
+      "type": "fix",
+      "rollback": true
+    },
+    {
       "version": "V1.8",
       "date": "2026-08-10",
       "title": "白屏修复：Capacitor 移出首屏依赖图 + 三层防白屏兜底",
