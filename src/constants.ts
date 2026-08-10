@@ -104,6 +104,8 @@ export const TAG_ORDER: TagColor[] = ['purple', 'green', 'orange', 'red', 'blue'
 export const IMPORTANT_COLOR = '#ff3b30';
 /** 普通事件左边框色（灰色） */
 export const NORMAL_BORDER = '#e5e5ea';
+/** 普通事件（非重要）画布填充色 */
+export const EVENT_DEFAULT_COLOR = '#3b7cff';
 
 /** 提前提醒常用预设（标签可多选） */
 export const PRESET_REMINDERS: { label: string; unit: ReminderOffset['unit']; value: number }[] = [
