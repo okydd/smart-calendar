@@ -3,7 +3,7 @@ import { App } from 'antd';
 import { useCalendar } from '../context/CalendarContext';
 import { useUI } from '../context/UIContext';
 import { dayjs, monthGridDays, toDateStr } from '../utils/date';
-import { TAG_COLORS, getCanvasTheme } from '../constants';
+import { IMPORTANT_COLOR, EVENT_DEFAULT_COLOR, getCanvasTheme } from '../constants';
 import { useResolvedTheme } from '../utils/theme';
 import { setupHiDPICanvas, roundRect } from '../utils/canvas';
 import type { CalendarEvent } from '../types';
@@ -144,7 +144,7 @@ export default function MonthView() {
       const maxLines = Math.max(1, Math.floor((rowH - 30) / 19));
       dayEvents.slice(0, maxLines).forEach((ev) => {
         const isSel = ev.id === selectedEventId;
-        const color = TAG_COLORS[ev.tag].color;
+        const color = ev.important ? IMPORTANT_COLOR : EVENT_DEFAULT_COLOR;
         const dragging = draggingRef.current && downRef.current?.hitEvent?.id === ev.id;
         ctx.globalAlpha = dragging ? 0.3 : 1;
         ctx.fillStyle = color;
@@ -178,7 +178,7 @@ export default function MonthView() {
     // 拖拽跟随块
     if (draggingRef.current && dragPosRef.current && downRef.current?.hitEvent) {
       const ev = downRef.current.hitEvent;
-      const color = TAG_COLORS[ev.tag].color;
+      const color = ev.important ? IMPORTANT_COLOR : EVENT_DEFAULT_COLOR;
       const px = dragPosRef.current.x;
       const py = dragPosRef.current.y;
       ctx.globalAlpha = 0.95;
