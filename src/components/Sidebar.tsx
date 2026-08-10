@@ -10,7 +10,6 @@ import {
 import dayjs from 'dayjs';
 import { useCalendar } from '../context/CalendarContext';
 import { useUI } from '../context/UIContext';
-import { TAG_COLORS, TAG_ORDER } from '../constants';
 import { sanitizeImported } from '../utils/storage';
 import ExportModal from './ExportModal';
 
@@ -19,9 +18,6 @@ export default function Sidebar() {
   const {
     search,
     setSearch,
-    activeTags,
-    toggleTag,
-    clearTags,
     events,
     filteredEvents,
     importEvents
@@ -100,43 +96,6 @@ export default function Sidebar() {
         />
       </div>
 
-      {/* 标签筛选 */}
-      <div className="side-section">
-        <div
-          className="side-section-title"
-          style={{ display: 'flex', justifyContent: 'space-between' }}
-        >
-          <span>按标签筛选</span>
-          {activeTags.length > 0 && (
-            <span
-              style={{ cursor: 'pointer', color: 'var(--c-primary)' }}
-              onClick={clearTags}
-            >
-              清除
-            </span>
-          )}
-        </div>
-        <div className="tag-filter">
-          {TAG_ORDER.map((t) => {
-            const active = activeTags.includes(t);
-            const color = TAG_COLORS[t].color;
-            return (
-              <span
-                key={t}
-                className={`tag-chip${active ? ' active' : ''}`}
-                style={active ? { background: color } : undefined}
-                onClick={() => toggleTag(t)}
-              >
-                <span
-                  className="dot"
-                  style={{ background: active ? '#fff' : color }}
-                />
-                {TAG_COLORS[t].label}
-              </span>
-            );
-          })}
-        </div>
-      </div>
 
       <div className="side-divider" />
 
