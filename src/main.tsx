@@ -1,32 +1,45 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
-import { ConfigProvider, App as AntApp } from 'antd';
+import { ConfigProvider, App as AntApp, theme as antdTheme } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import 'antd/dist/reset.css';
 import './styles/global.css';
 import './styles/mobile.css';
 import App from './App';
+import { ThemeProvider, useResolvedTheme } from './utils/theme';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
+const FONT_FAMILY =
+  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+
+function AntdLayer({ children }: { children: React.ReactNode }) {
+  const resolved = useResolvedTheme();
+  return (
     <ConfigProvider
       locale={zhCN}
       theme={{
+        algorithm: resolved === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
           colorPrimary: '#3b7cff',
           borderRadius: 10,
-          fontFamily:
-            '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+          fontFamily: FONT_FAMILY
         }
       }}
     >
-      <AntApp>
+      <AntApp>{children}</AntApp>
+    </ConfigProvider>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <ThemeProvider>
+      <AntdLayer>
         <HashRouter>
           <App />
         </HashRouter>
-      </AntApp>
-    </ConfigProvider>
+      </AntdLayer>
+    </ThemeProvider>
   </React.StrictMode>
 );
 

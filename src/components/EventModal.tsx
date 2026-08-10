@@ -5,8 +5,8 @@ import dayjs from 'dayjs';
 import { useCalendar } from '../context/CalendarContext';
 import { useUI } from '../context/UIContext';
 import { hostImages } from '../utils/imageHost';
-import { IMPORTANT_COLOR, PRESET_REMINDERS } from '../constants';
-import type { CalendarEvent, ReminderOffset } from '../types';
+import { IMPORTANT_COLOR, PRESET_REMINDERS, TAG_COLORS, TAG_ORDER } from '../constants';
+import type { CalendarEvent, ReminderOffset, TagColor } from '../types';
 import WheelPicker, { WheelColumn } from './WheelPicker';
 
 const { TextArea } = Input;
@@ -81,6 +81,7 @@ interface InitialEvent {
   startTime?: string;
   description?: string;
   important?: boolean;
+  tag?: TagColor;
   images?: string[];
   reminder?: CalendarEvent['reminder'];
 }
@@ -100,6 +101,7 @@ export default function EventModal() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [importance, setImportance] = useState<'normal' | 'important'>('normal');
+  const [tag, setTag] = useState<TagColor>('purple');
   const [allDay, setAllDay] = useState(false);
   const [dateValues, setDateValues] = useState<[number, number, number]>([2026, 8, 5]);
   const [timeValues, setTimeValues] = useState<[number, number]>([9, 0]);
@@ -117,6 +119,7 @@ export default function EventModal() {
     setTitle(base.title ?? '');
     setDescription(base.description ?? '');
     setImportance(base.important ? 'important' : 'normal');
+    setTag((base.tag as TagColor) || 'purple');
     setImages(Array.isArray(base.images) ? base.images.slice(0, MAX_IMAGES) : []);
     const d = base.date ? dayjs(base.date, 'YYYY-MM-DD') : dayjs();
     setDateValues([d.year(), d.month() + 1, d.date()]);
@@ -208,7 +211,7 @@ export default function EventModal() {
         : `${String(timeValues[0]).padStart(2, '0')}:${String(timeValues[1]).padStart(2, '0')}`,
       endTime: '',
       description: description.trim(),
-      tag: 'purple',
+      tag,
       important: importance === 'important',
       images: savedImages,
       reminder: remindOffsets
@@ -313,6 +316,34 @@ export default function EventModal() {
               >
                 重要事件
               </button>
+            </div>
+          </div>
+
+          <div className="tag-block">
+            <div className="imp-label ev-section-title">事件分类</div>
+            <div className="tag-select-row">
+              {TAG_ORDER.map((t) => {
+                const active = tag === t;
+                return (
+                  <button
+                    type="button"
+                    key={t}
+                    className={`tag-chip-select${active ? ' active' : ''}`}
+                    onClick={() => setTag(t)}
+                    style={
+                      active
+                        ? { borderColor: TAG_COLORS[t].color, background: TAG_COLORS[t].color, color: '#fff' }
+                        : undefined
+                    }
+                  >
+                    <span
+                      className="tag-chip-dot"
+                      style={{ background: active ? '#fff' : TAG_COLORS[t].color }}
+                    />
+                    {TAG_COLORS[t].label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

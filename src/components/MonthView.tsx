@@ -3,7 +3,8 @@ import { App } from 'antd';
 import { useCalendar } from '../context/CalendarContext';
 import { useUI } from '../context/UIContext';
 import { dayjs, monthGridDays, toDateStr } from '../utils/date';
-import { TAG_COLORS, THEME } from '../constants';
+import { TAG_COLORS, getCanvasTheme } from '../constants';
+import { useResolvedTheme } from '../utils/theme';
 import { setupHiDPICanvas, roundRect } from '../utils/canvas';
 import type { CalendarEvent } from '../types';
 
@@ -40,6 +41,7 @@ export default function MonthView() {
     useCalendar();
   const { openCreate, setDetailOpen } = useUI();
   const { message } = App.useApp();
+  const theme = useResolvedTheme();
 
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -74,6 +76,7 @@ export default function MonthView() {
       sizeRef.current = { w, h };
     }
     const ctx = canvas.getContext('2d')!;
+    const ct = getCanvasTheme(theme);
     ctx.clearRect(0, 0, w, h);
 
     const cells: CellHit[] = [];
@@ -89,7 +92,7 @@ export default function MonthView() {
     ctx.textAlign = 'center';
     const wk = ['日', '一', '二', '三', '四', '五', '六'];
     for (let c = 0; c < 7; c++) {
-      ctx.fillStyle = c === 0 || c === 6 ? '#b0a8ff' : '#999';
+      ctx.fillStyle = c === 0 || c === 6 ? ct.headerWeekend : ct.headerNormal;
       ctx.font = `13px ${FONT}`;
       ctx.fillText(wk[c], c * colW + colW / 2, WEEK_HEADER / 2);
     }
@@ -103,15 +106,15 @@ export default function MonthView() {
       const isOther = day.month() !== currentDate.month();
       const isToday = day.isSame(today, 'day');
 
-      ctx.fillStyle = isWeekend ? THEME.weekendBg : '#ffffff';
+      ctx.fillStyle = isWeekend ? ct.weekendBg : ct.cellBg;
       ctx.fillRect(x, y, colW, rowH);
-      ctx.strokeStyle = '#f0f0f0';
+      ctx.strokeStyle = ct.cellBorder;
       ctx.lineWidth = 1;
       ctx.strokeRect(x + 0.5, y + 0.5, colW - 1, rowH - 1);
       cells.push({ day: toDateStr(day), x, y, w: colW, h: rowH });
 
       if (isToday) {
-        ctx.strokeStyle = THEME.todayBorder;
+        ctx.strokeStyle = ct.todayBorder;
         ctx.lineWidth = 2;
         ctx.strokeRect(x + 1, y + 1, colW - 2, rowH - 2);
       }
@@ -119,11 +122,11 @@ export default function MonthView() {
       // 日期数字
       ctx.textAlign = 'left';
       ctx.font = isToday ? `bold 14px ${FONT}` : `13px ${FONT}`;
-      ctx.fillStyle = isOther ? '#ccc' : isToday ? THEME.todayBorder : '#333';
+      ctx.fillStyle = isOther ? ct.dateOther : isToday ? ct.todayBorder : ct.dateNormal;
       const dStr = String(day.date());
       ctx.fillText(dStr, x + 8, y + 14);
       if (isToday) {
-        ctx.fillStyle = THEME.todayBorder;
+        ctx.fillStyle = ct.todayBorder;
         ctx.beginPath();
         ctx.arc(x + 12 + ctx.measureText(dStr).width + 8, y + 14, 3, 0, Math.PI * 2);
         ctx.fill();
@@ -148,7 +151,7 @@ export default function MonthView() {
         ctx.beginPath();
         ctx.arc(x + 12, ly + 7, 3, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = isSel ? THEME.todayBorder : '#555';
+        ctx.fillStyle = isSel ? ct.todayBorder : ct.eventText;
         ctx.font = `14px ${FONT}`;
         const title = ev.title.length > 7 ? `${ev.title.slice(0, 7)}…` : ev.title;
         ctx.fillText(title, x + 22, ly + 7);
@@ -157,7 +160,7 @@ export default function MonthView() {
         ly += 19;
       });
       if (dayEvents.length > maxLines) {
-        ctx.fillStyle = '#aaa';
+        ctx.fillStyle = ct.moreText;
         ctx.font = `11px ${FONT}`;
         ctx.fillText(`+${dayEvents.length - maxLines}`, x + 22, ly + 4);
       }
@@ -172,7 +175,7 @@ export default function MonthView() {
       const py = dragPosRef.current.y;
       ctx.globalAlpha = 0.95;
       roundRect(ctx, px - 12, py - 13, 130, 26, 6);
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = ct.dragBg;
       ctx.fill();
       ctx.strokeStyle = color;
       ctx.lineWidth = 1;
@@ -181,7 +184,7 @@ export default function MonthView() {
       ctx.beginPath();
       ctx.arc(px, py, 3, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#333';
+      ctx.fillStyle = ct.dragText;
       ctx.font = `14px ${FONT}`;
       ctx.textAlign = 'left';
       const t = ev.title.length > 9 ? `${ev.title.slice(0, 9)}…` : ev.title;
@@ -190,7 +193,7 @@ export default function MonthView() {
     }
 
     hitRef.current = { cells, events };
-  }, [filteredEvents, currentDate, selectedEventId]);
+  }, [filteredEvents, currentDate, selectedEventId, theme]);
 
   useEffect(() => {
     const wrap = wrapRef.current;

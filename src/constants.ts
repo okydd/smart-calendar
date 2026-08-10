@@ -25,6 +25,61 @@ export const THEME = {
   bgGray: '#f2f3f8'
 } as const;
 
+/** Canvas 绘制用的主题色板（亮/暗两套），供月/周/日视图读取 */
+export interface CanvasTheme {
+  cellBg: string;
+  weekendBg: string;
+  cellBorder: string;
+  todayBorder: string;
+  headerWeekend: string;
+  headerNormal: string;
+  dateOther: string;
+  dateNormal: string;
+  eventText: string;
+  moreText: string;
+  dragBg: string;
+  dragText: string;
+  danger: string;
+  axisText: string;
+}
+
+export function getCanvasTheme(mode: 'light' | 'dark'): CanvasTheme {
+  if (mode === 'dark') {
+    return {
+      cellBg: '#15171d',
+      weekendBg: '#1a1d27',
+      cellBorder: '#262a33',
+      todayBorder: '#5b8cff',
+      headerWeekend: '#8b83d6',
+      headerNormal: '#8b90a3',
+      dateOther: '#555555',
+      dateNormal: '#e8eaf0',
+      eventText: '#c8ccd6',
+      moreText: '#6b7280',
+      dragBg: '#2a2e38',
+      dragText: '#e8eaf0',
+      danger: '#ff6b6b',
+      axisText: '#8b90a3'
+    };
+  }
+  return {
+    cellBg: '#ffffff',
+    weekendBg: '#f9f9f9',
+    cellBorder: '#f0f0f0',
+    todayBorder: '#3b7cff',
+    headerWeekend: '#b0a8ff',
+    headerNormal: '#999999',
+    dateOther: '#cccccc',
+    dateNormal: '#333333',
+    eventText: '#555555',
+    moreText: '#aaaaaa',
+    dragBg: '#ffffff',
+    dragText: '#333333',
+    danger: '#ff3b30',
+    axisText: '#999999'
+  };
+}
+
 /** 标签颜色映射：标签 -> { 中文名, 色值 } */
 export const TAG_COLORS: Record<TagColor, { label: string; color: string }> = {
   purple: { label: '工作', color: '#7c4dff' },

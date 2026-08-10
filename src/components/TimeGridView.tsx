@@ -11,7 +11,8 @@ import {
   minutesToTime,
   type Dayjs
 } from '../utils/date';
-import { TAG_COLORS, THEME } from '../constants';
+import { TAG_COLORS, getCanvasTheme } from '../constants';
+import { useResolvedTheme } from '../utils/theme';
 import { setupHiDPICanvas, roundRect } from '../utils/canvas';
 import type { CalendarEvent } from '../types';
 
@@ -50,6 +51,7 @@ export default function TimeGridView() {
     useCalendar();
   const { openCreate, setDetailOpen } = useUI();
   const { message } = App.useApp();
+  const theme = useResolvedTheme();
 
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -79,6 +81,7 @@ export default function TimeGridView() {
       sizeRef.current = { w, h: TOTAL_H };
     }
     const ctx = canvas.getContext('2d')!;
+    const ct = getCanvasTheme(theme);
     ctx.clearRect(0, 0, w, TOTAL_H);
 
     const columns: Dayjs[] = view === 'day' ? [currentDate] : weekDays(currentDate);
@@ -90,10 +93,10 @@ export default function TimeGridView() {
     ctx.textAlign = 'right';
     for (let h = 0; h < 24; h++) {
       const y = TIME_AREA_TOP + h * ROW_H;
-      ctx.fillStyle = '#999';
+      ctx.fillStyle = ct.axisText;
       ctx.font = `12px ${FONT}`;
       ctx.fillText(`${String(h).padStart(2, '0')}:00`, TIME_W - 10, y);
-      ctx.strokeStyle = '#f0f0f0';
+      ctx.strokeStyle = ct.cellBorder;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(TIME_W, y + 0.5);
@@ -110,11 +113,11 @@ export default function TimeGridView() {
 
       // 列背景交替（周末浅灰）
       if (day.day() === 0 || day.day() === 6) {
-        ctx.fillStyle = THEME.weekendBg;
+        ctx.fillStyle = ct.weekendBg;
         ctx.fillRect(colX, DAY_HEADER, colW, TOTAL_H - DAY_HEADER);
       }
       // 列分隔线
-      ctx.strokeStyle = '#f0f0f0';
+      ctx.strokeStyle = ct.cellBorder;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(colX + 0.5, DAY_HEADER);
@@ -123,14 +126,14 @@ export default function TimeGridView() {
 
       // 日期标题
       ctx.textAlign = 'center';
-      ctx.fillStyle = isToday ? THEME.todayBorder : '#333';
+      ctx.fillStyle = isToday ? ct.todayBorder : ct.dateNormal;
       ctx.font = isToday ? `bold 14px ${FONT}` : `13px ${FONT}`;
       ctx.fillText(`${day.month() + 1}月${day.date()}日`, colX + colW / 2, DAY_HEADER / 2 - 6);
-      ctx.fillStyle = isToday ? THEME.todayBorder : '#999';
+      ctx.fillStyle = isToday ? ct.todayBorder : ct.axisText;
       ctx.font = `12px ${FONT}`;
       ctx.fillText(weekdayCN(day), colX + colW / 2, DAY_HEADER / 2 + 12);
       if (isToday) {
-        ctx.fillStyle = THEME.todayBorder;
+        ctx.fillStyle = ct.todayBorder;
         roundRect(ctx, colX + colW / 2 - 22, 4, 44, 4, 2);
         ctx.fill();
       }
@@ -185,17 +188,17 @@ export default function TimeGridView() {
         ctx.fillRect(bx, top, 4, blockH);
         ctx.restore();
         if (isSel) {
-          ctx.strokeStyle = THEME.todayBorder;
+          ctx.strokeStyle = ct.todayBorder;
           ctx.lineWidth = 2;
           roundRect(ctx, bx, top, bw, blockH, 6);
           ctx.stroke();
         }
-        ctx.fillStyle = '#333';
+        ctx.fillStyle = ct.eventText;
         ctx.font = `14px ${FONT}`;
         ctx.textAlign = 'left';
         const t = ev.title.length > 12 ? `${ev.title.slice(0, 12)}…` : ev.title;
         ctx.fillText(t, bx + 10, top + 13);
-        ctx.fillStyle = '#777';
+        ctx.fillStyle = ct.moreText;
         ctx.font = `11px ${FONT}`;
         ctx.fillText(
           `${ev.startTime}${ev.endTime ? ' - ' + ev.endTime : ''}`,
@@ -221,13 +224,13 @@ export default function TimeGridView() {
       if (isToday) {
         const nowMin = today.hour() * 60 + today.minute();
         const ly = TIME_AREA_TOP + (nowMin / 60) * ROW_H;
-        ctx.strokeStyle = THEME.danger;
+        ctx.strokeStyle = ct.danger;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(colX, ly);
         ctx.lineTo(colX + colW, ly);
         ctx.stroke();
-        ctx.fillStyle = THEME.danger;
+        ctx.fillStyle = ct.danger;
         ctx.beginPath();
         ctx.arc(colX, ly, 3, 0, Math.PI * 2);
         ctx.fill();
@@ -266,7 +269,7 @@ export default function TimeGridView() {
     }
 
     hitRef.current = hits;
-  }, [filteredEvents, currentDate, selectedEventId, view]);
+  }, [filteredEvents, currentDate, selectedEventId, view, theme]);
 
   useEffect(() => {
     const wrap = wrapRef.current;

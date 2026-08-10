@@ -93,7 +93,7 @@ export default function Sidebar() {
         <div className="side-section-title">搜索</div>
         <Input
           allowClear
-          prefix={<SearchOutlined style={{ color: '#bbb' }} />}
+          prefix={<SearchOutlined style={{ color: 'var(--c-text-gray)' }} />}
           placeholder="搜索标题或描述…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -109,7 +109,7 @@ export default function Sidebar() {
           <span>按标签筛选</span>
           {activeTags.length > 0 && (
             <span
-              style={{ cursor: 'pointer', color: '#6d5dfc' }}
+              style={{ cursor: 'pointer', color: 'var(--c-primary)' }}
               onClick={clearTags}
             >
               清除
