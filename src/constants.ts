@@ -41,6 +41,8 @@ export interface CanvasTheme {
   dragText: string;
   danger: string;
   axisText: string;
+  /** 非重要事件的极细淡蓝边框色（常规/已过期/已完成统一） */
+  eventBorder: string;
 }
 
 export function getCanvasTheme(mode: 'light' | 'dark'): CanvasTheme {
@@ -59,7 +61,8 @@ export function getCanvasTheme(mode: 'light' | 'dark'): CanvasTheme {
       dragBg: '#2a2e38',
       dragText: '#e8eaf0',
       danger: '#ff6b6b',
-      axisText: '#8b90a3'
+      axisText: '#8b90a3',
+      eventBorder: '#3a4a66'
     };
   }
   return {
@@ -76,9 +79,13 @@ export function getCanvasTheme(mode: 'light' | 'dark'): CanvasTheme {
     dragBg: '#ffffff',
     dragText: '#333333',
     danger: '#ff3b30',
-    axisText: '#999999'
+    axisText: '#999999',
+    eventBorder: '#cfe0ff'
   };
 }
+
+/** 分享/邮件链接的访问密码：打开链接须输入此密码方可查看内容 */
+export const SHARE_ACCESS_PASSWORD = '007722';
 
 /** 标签颜色映射：标签 -> { 中文名, 色值 } */
 export const TAG_COLORS: Record<TagColor, { label: string; color: string }> = {
