@@ -24,17 +24,9 @@ import {
 import {
   getStrongRemindPrefs,
   saveStrongRemindPrefs,
-  getNotifyPermission,
-  requestNotifyPermission,
-  syncScheduledReminders,
-  countScheduled,
-  testReminder,
-  unlockAudio,
-  isNativeApp,
-  collectUpcomingReminders,
-  type StrongRemindPrefs,
-  type PermState
-} from '../utils/localNotify';
+  type StrongRemindPrefs
+} from '../utils/remindPrefs';
+import type { PermState } from '../utils/localNotify';
 
 export default function ReminderSettingsPage() {
   const { message, modal } = App.useApp();
@@ -53,9 +45,30 @@ export default function ReminderSettingsPage() {
   const [perm, setPerm] = useState<PermState>('prompt');
   const [scheduled, setScheduled] = useState(0);
 
+  // 把依赖 Capacitor 的本地通知模块隔离为「按需动态加载」，避免其首屏求值
+  // 在部分运行环境（如安卓 WebView）导致整页白屏。加载完成前相关函数安全降级。
+  const lnRef = useRef<typeof import('../utils/localNotify') | null>(null);
+  const [lnReady, setLnReady] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    import('../utils/localNotify')
+      .then((m) => {
+        if (alive) {
+          lnRef.current = m;
+          setLnReady(true);
+        }
+      })
+      .catch(() => {
+        /* 加载失败不影响其余功能 */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const refreshRemindState = useCallback(async () => {
-    setPerm(await getNotifyPermission());
-    setScheduled(await countScheduled());
+    setPerm(await (lnRef.current?.getNotifyPermission() ?? 'unsupported'));
+    setScheduled(await (lnRef.current?.countScheduled() ?? 0));
   }, []);
 
   useEffect(() => {
@@ -66,9 +79,9 @@ export default function ReminderSettingsPage() {
     const next = { ...prefs, ...patch };
     setPrefs(next);
     saveStrongRemindPrefs(next);
-    unlockAudio();
+    lnRef.current?.unlockAudio();
     if (next.enabled && perm !== 'granted') {
-      const p = await requestNotifyPermission();
+      const p = await (lnRef.current?.requestNotifyPermission() ?? 'unsupported');
       setPerm(p);
       if (p !== 'granted') {
         message.warning(
@@ -78,7 +91,7 @@ export default function ReminderSettingsPage() {
         );
       }
     }
-    const n = await syncScheduledReminders(events);
+    const n = await (lnRef.current?.syncScheduledReminders(events) ?? 0);
     if (next.enabled) setScheduled(n);
     else setScheduled(0);
   };
@@ -92,12 +105,15 @@ export default function ReminderSettingsPage() {
       .join('|');
     if (sig === eventsSigRef.current) return;
     eventsSigRef.current = sig;
-    void syncScheduledReminders(events).then((n) => {
+    void (lnRef.current?.syncScheduledReminders(events) ?? Promise.resolve(0)).then((n) => {
       if (n) setScheduled(n);
     });
   }, [events]);
 
-  const upcomingCount = useMemo(() => collectUpcomingReminders(events).length, [events]);
+  const upcomingCount = useMemo(
+    () => (lnRef.current?.collectUpcomingReminders(events) ?? []).length,
+    [events, lnReady]
+  );
   const permLabel =
     perm === 'granted' ? '已授权' : perm === 'denied' ? '已拒绝' : perm === 'prompt' ? '待授权' : '不支持';
 
@@ -114,7 +130,7 @@ export default function ReminderSettingsPage() {
             label="强提醒"
             desc={
               prefs.enabled
-                ? isNativeApp()
+                ? lnRef.current?.isNativeApp()
                   ? `系统弹窗 · 已排期 ${scheduled || upcomingCount} 条（通知权限：${permLabel}）`
                   : `浏览器通知（权限：${permLabel}）`
                 : '关闭后仅推送到微信/钉钉'
@@ -139,10 +155,10 @@ export default function ReminderSettingsPage() {
                   label="开启通知权限"
                   desc="未授权时手机不会弹窗，请点此授权"
                   onClick={async () => {
-                    const p = await requestNotifyPermission();
+                    const p = await (lnRef.current?.requestNotifyPermission() ?? 'unsupported');
                     setPerm(p);
                     if (p === 'granted') {
-                      const n = await syncScheduledReminders(events);
+                      const n = await (lnRef.current?.syncScheduledReminders(events) ?? 0);
                       setScheduled(n);
                       message.success('已开启通知权限');
                     } else {
@@ -156,8 +172,8 @@ export default function ReminderSettingsPage() {
                 label="测试提醒效果"
                 desc="立即弹窗 + 振动 + 响铃"
                 onClick={async () => {
-                  unlockAudio();
-                  await testReminder();
+                  lnRef.current?.unlockAudio();
+                  await lnRef.current?.testReminder();
                   message.success('已触发测试提醒');
                 }}
               />
