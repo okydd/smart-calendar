@@ -22,6 +22,106 @@
     <meta name="apple-mobile-web-app-title" content="智能日历" />
 
     <title>智能日历</title>
+
+    <!--
+      白屏兜底（必须放在所有 module 脚本之前）。
+      React 的 ErrorBoundary 只能捕获「渲染阶段」错误；如果整个 JS 包在
+      解析 / 模块求值阶段就抛错（例如某个第三方模块在安卓 WebView 里不兼容），
+      React 根本没机会执行，页面就是纯白板。
+      这段脚本记录首个致命错误，并在 4 秒后检查 #root 是否仍为空，
+      是则渲染一个可读、可操作的错误面板，避免用户只看到白屏。
+    -->
+    <script>
+      (function () {
+        var fatal = [];
+        function push(msg) {
+          if (msg && fatal.indexOf(msg) === -1) fatal.push(msg);
+        }
+        window.addEventListener('error', function (e) {
+          if (e && e.target && e.target !== window && e.target.tagName) {
+            push('资源加载失败：' + (e.target.src || e.target.href || e.target.tagName));
+            return;
+          }
+          push((e && e.message ? e.message : '未知脚本错误') + (e && e.filename ? '\n@ ' + e.filename + ':' + e.lineno : ''));
+        }, true);
+        window.addEventListener('unhandledrejection', function (e) {
+          var r = e && e.reason;
+          push('未处理的异步错误：' + (r && r.message ? r.message : String(r)));
+        });
+        window.__bootFatal = fatal;
+
+        function esc(s) {
+          return String(s).replace(/[&<>]/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c];
+          });
+        }
+
+        function showFallback() {
+          var root = document.getElementById('root');
+          if (!root || root.childElementCount > 0) return;
+          var detail = fatal.length ? fatal.join('\n\n') : '页面脚本未能启动（无错误信息，通常是网络中断或缓存了损坏的文件）。';
+          root.innerHTML =
+            '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;font:14px/1.7 -apple-system,BlinkMacSystemFont,\'PingFang SC\',\'Microsoft YaHei\',sans-serif;color:#1f2329;background:#f5f6fa">' +
+            '<div style="max-width:520px;width:100%;background:#fff;border:1px solid #e5e6eb;border-radius:14px;padding:22px 20px;box-shadow:0 6px 24px rgba(0,0,0,.06)">' +
+            '<div style="font-size:17px;font-weight:600;margin-bottom:6px">页面未能正常启动</div>' +
+            '<div style="color:#646a73;margin-bottom:14px">已为你保留本地数据，不会丢失。请先尝试「清除缓存并重载」。</div>' +
+            '<pre id="bootErr" style="white-space:pre-wrap;word-break:break-all;background:#f7f8fa;border:1px solid #eceef1;border-radius:8px;padding:10px;max-height:190px;overflow:auto;color:#8a2b2b;font-size:12px;margin:0 0 16px">' +
+            esc(detail) +
+            '</pre>' +
+            '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+            '<button id="btnReload" style="flex:1;min-width:130px;height:40px;border:0;border-radius:8px;background:#3b7cff;color:#fff;font-size:14px">重新加载</button>' +
+            '<button id="btnHard" style="flex:1;min-width:130px;height:40px;border:1.5px solid #bfbfbf;border-radius:8px;background:#fff;color:#1f2329;font-size:14px">清除缓存并重载</button>' +
+            '<button id="btnCopy" style="flex:1;min-width:130px;height:40px;border:1.5px solid #bfbfbf;border-radius:8px;background:#fff;color:#1f2329;font-size:14px">复制错误信息</button>' +
+            '</div></div></div>';
+
+          document.getElementById('btnReload').onclick = function () {
+            location.reload();
+          };
+          document.getElementById('btnHard').onclick = function () {
+            var done = function () {
+              location.replace(location.pathname + '?_r=' + Date.now() + location.hash);
+            };
+            try {
+              var jobs = [];
+              if (window.caches && caches.keys) {
+                jobs.push(caches.keys().then(function (ks) {
+                  return Promise.all(ks.map(function (k) { return caches.delete(k); }));
+                }));
+              }
+              if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+                jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) {
+                  return Promise.all(rs.map(function (r) { return r.unregister(); }));
+                }));
+              }
+              // 只清版本戳，绝不动用户的日程数据
+              try { localStorage.removeItem('appVersion'); sessionStorage.clear(); } catch (_) {}
+              Promise.all(jobs).then(done, done);
+              setTimeout(done, 2500);
+            } catch (_) {
+              done();
+            }
+          };
+          document.getElementById('btnCopy').onclick = function () {
+            var t = detail + '\n\nUA: ' + navigator.userAgent + '\nURL: ' + location.href;
+            try {
+              navigator.clipboard.writeText(t);
+              document.getElementById('btnCopy').textContent = '已复制';
+            } catch (_) {
+              var ta = document.createElement('textarea');
+              ta.value = t;
+              document.body.appendChild(ta);
+              ta.select();
+              try { document.execCommand('copy'); document.getElementById('btnCopy').textContent = '已复制'; } catch (__) {}
+              document.body.removeChild(ta);
+            }
+          };
+        }
+
+        setTimeout(showFallback, 4000);
+        // 脚本明确报错时更快给出反馈
+        window.addEventListener('error', function () { setTimeout(showFallback, 1200); }, true);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
