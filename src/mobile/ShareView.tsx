@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Spin, Empty, Button, message } from 'antd';
-import { ArrowLeftOutlined, DownloadOutlined, CalendarOutlined } from '@ant-design/icons';
+import { Spin, Empty, Button, message, Input } from 'antd';
+import { ArrowLeftOutlined, DownloadOutlined, CalendarOutlined, LockOutlined } from '@ant-design/icons';
 import { readShare } from '../utils/share';
+import { SHARE_ACCESS_PASSWORD } from '../constants';
 import { parseDateStr, timeRangeLabel, weekdayCN, dayjs } from '../utils/date';
 import type { CalendarEvent } from '../types';
 
@@ -15,6 +16,8 @@ interface SharePayload {
   events?: CalendarEvent[];
 }
 
+const UNLOCK_KEY = 'shareUnlocked';
+
 export default function ShareView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -22,6 +25,42 @@ export default function ShareView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const msgApi = message;
+
+  // 访问密码门：链接带 ?pwd=007722 自动解锁；否则需手动输入；会话内记住已解锁
+  const [unlocked, setUnlocked] = useState<boolean>(() => {
+    try {
+      if (sessionStorage.getItem(UNLOCK_KEY) === '1') return true;
+    } catch {
+      /* ignore */
+    }
+    if (typeof location !== 'undefined') {
+      const pwd = new URLSearchParams(location.search).get('pwd');
+      if (pwd === SHARE_ACCESS_PASSWORD) {
+        try {
+          sessionStorage.setItem(UNLOCK_KEY, '1');
+        } catch {
+          /* ignore */
+        }
+        return true;
+      }
+    }
+    return false;
+  });
+  const [pwdInput, setPwdInput] = useState('');
+  const [pwdErr, setPwdErr] = useState('');
+
+  const tryUnlock = () => {
+    if (pwdInput === SHARE_ACCESS_PASSWORD) {
+      try {
+        sessionStorage.setItem(UNLOCK_KEY, '1');
+      } catch {
+        /* ignore */
+      }
+      setUnlocked(true);
+    } else {
+      setPwdErr('访问密码错误');
+    }
+  };
 
   useEffect(() => {
     let alive = true;
@@ -52,6 +91,42 @@ export default function ShareView() {
     () => (data?.events || []).filter((e: CalendarEvent) => !e.deleted),
     [data]
   );
+
+  // 未解锁：显示访问密码输入页
+  if (!unlocked) {
+    return (
+      <div className="share-page">
+        <div className="share-topbar">
+          <button className="share-back" onClick={() => navigate('/calendar')}>
+            <ArrowLeftOutlined /> 返回日历
+          </button>
+        </div>
+        <div className="share-lock">
+          <div className="share-lock-icon">
+            <LockOutlined />
+          </div>
+          <div className="share-lock-title">该分享链接需要访问密码</div>
+          <div className="share-lock-tip">请输入邮件中提供的访问密码以查看内容</div>
+          <Input.Password
+            className="share-lock-input"
+            placeholder="访问密码"
+            value={pwdInput}
+            onChange={(e) => {
+              setPwdInput(e.target.value);
+              setPwdErr('');
+            }}
+            onPressEnter={tryUnlock}
+            status={pwdErr ? 'error' : undefined}
+            autoFocus
+          />
+          {pwdErr && <div className="share-lock-err">{pwdErr}</div>}
+          <Button type="primary" block onClick={tryUnlock}>
+            查看内容
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const downloadJson = () => {
     if (!data) return;
