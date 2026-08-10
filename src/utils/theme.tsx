@@ -1,31 +1,12 @@
-import React, { createContext, useContext, useEffect, useLayoutEffect, useState } from 'react';
+import React, { createContext, useContext, useLayoutEffect, useState } from 'react';
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
 
+/**
+ * 主题开关已取消：产品决定只保留「常规（浅色）」主题。
+ * ThemeProvider 现在恒为浅色，仅保留上下文供 Canvas 视图取用（getCanvasTheme('light')）。
+ */
 const KEY = 'calendarTheme';
-
-function getSystemDark(): boolean {
-  return (
-    typeof window !== 'undefined' &&
-    !!window.matchMedia &&
-    window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
-}
-
-function readStored(): ThemeMode {
-  try {
-    const s = localStorage.getItem(KEY);
-    if (s === 'light' || s === 'dark' || s === 'auto') return s;
-  } catch {
-    /* ignore */
-  }
-  return 'light';
-}
-
-export function resolveMode(mode: ThemeMode, systemDark: boolean): 'light' | 'dark' {
-  if (mode === 'auto') return systemDark ? 'dark' : 'light';
-  return mode;
-}
 
 interface ThemeCtxValue {
   mode: ThemeMode;
@@ -40,35 +21,23 @@ const ThemeCtx = createContext<ThemeCtxValue>({
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [mode, setModeState] = useState<ThemeMode>(readStored);
-  const [systemDark, setSystemDark] = useState<boolean>(getSystemDark);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = () => setSystemDark(mq.matches);
-    if (mq.addEventListener) mq.addEventListener('change', handler);
-    else if ((mq as MediaQueryList & { addListener?: (h: () => void) => void }).addListener)
-      (mq as MediaQueryList & { addListener?: (h: () => void) => void }).addListener!(handler);
-    return () => {
-      if (mq.removeEventListener) mq.removeEventListener('change', handler);
-      else if ((mq as MediaQueryList & { removeListener?: (h: () => void) => void }).removeListener)
-        (mq as MediaQueryList & { removeListener?: (h: () => void) => void }).removeListener!(handler);
-    };
-  }, []);
-
-  const resolved = resolveMode(mode, systemDark);
+  // 恒为浅色，忽略本地存储与系统设置
+  const [mode] = useState<ThemeMode>('light');
+  const resolved: 'light' | 'dark' = 'light';
 
   useLayoutEffect(() => {
     document.documentElement.dataset.theme = resolved;
     try {
-      localStorage.setItem(KEY, mode);
+      localStorage.removeItem(KEY);
     } catch {
       /* ignore */
     }
     window.dispatchEvent(new CustomEvent('themechange', { detail: resolved }));
-  }, [resolved, mode]);
+  }, [resolved]);
 
-  const setMode = (m: ThemeMode) => setModeState(m);
+  const setMode = (_m: ThemeMode) => {
+    /* 主题切换已禁用 */
+  };
 
   return <ThemeCtx.Provider value={{ mode, resolved, setMode }}>{children}</ThemeCtx.Provider>;
 }
