@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Spin, Empty, Button, message, Input } from 'antd';
-import { ArrowLeftOutlined, DownloadOutlined, CalendarOutlined, LockOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, DownloadOutlined, CalendarOutlined, LockOutlined, AppstoreOutlined } from '@ant-design/icons';
 import { readShare } from '../utils/share';
 import { SHARE_ACCESS_PASSWORD } from '../constants';
 import { parseDateStr, timeRangeLabel, weekdayCN, dayjs } from '../utils/date';
@@ -17,6 +17,7 @@ interface SharePayload {
 }
 
 const UNLOCK_KEY = 'shareUnlocked';
+const ALL = '__all__';
 
 export default function ShareView() {
   const { id } = useParams<{ id: string }>();
@@ -92,6 +93,45 @@ export default function ShareView() {
     [data]
   );
 
+  /** 按日期分组（YYYY-MM-DD 字典序即时间序） */
+  const byDate = useMemo(() => {
+    const m = new Map<string, CalendarEvent[]>();
+    for (const e of events) {
+      const arr = m.get(e.date) || [];
+      arr.push(e);
+      m.set(e.date, arr);
+    }
+    return [...m.entries()]
+      .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+      .map(([date, list]) => ({ date, list }));
+  }, [events]);
+
+  /** 左侧导航：按 年→月 分组 */
+  const navGroups = useMemo(() => {
+    const groups: { key: string; label: string; dates: { date: string; list: CalendarEvent[] }[] }[] = [];
+    for (const g of byDate) {
+      const d = parseDateStr(g.date);
+      if (!d.isValid()) continue;
+      const key = `${d.year()}-${d.month() + 1}`;
+      const label = `${d.year()}年${d.month() + 1}月`;
+      let grp = groups.find((x) => x.key === key);
+      if (!grp) {
+        grp = { key, label, dates: [] };
+        groups.push(grp);
+      }
+      grp.dates.push(g);
+    }
+    return groups;
+  }, [byDate]);
+
+  const [sel, setSel] = useState<string>(ALL);
+
+  const current = useMemo(() => {
+    if (sel === ALL) return byDate;
+    const g = byDate.find((x) => x.date === sel);
+    return g ? [g] : [];
+  }, [sel, byDate]);
+
   // 未解锁：显示访问密码输入页
   if (!unlocked) {
     return (
@@ -138,6 +178,45 @@ export default function ShareView() {
     a.click();
     URL.revokeObjectURL(url);
     msgApi.success('已下载 JSON');
+  };
+
+  const renderCard = (e: CalendarEvent) => {
+    const d = parseDateStr(e.date);
+    const dateLabel = d.isValid()
+      ? `${d.year()}年${d.month() + 1}月${d.date()}日 ${weekdayCN(d)}`
+      : e.date;
+    return (
+      <div className="share-card" key={e.id}>
+        <div className="share-card-title">
+          {e.title}
+          {e.important && <span className="share-tag imp">重要</span>}
+          {e.done && <span className="share-tag done">已完成</span>}
+        </div>
+        <div className="share-card-meta">📅 {dateLabel} ｜ 🕒 {timeRangeLabel(e)}</div>
+        {e.description && <div className="share-card-desc">{e.description}</div>}
+        {e.images && e.images.length > 0 && (
+          <div className="share-card-imgs">
+            {e.images.map((src, i) => (
+              <img key={i} src={src} alt="事件图片" loading="lazy" />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderDayHead = (date: string, count: number) => {
+    const d = parseDateStr(date);
+    const label = d.isValid()
+      ? `${d.year()}年${d.month() + 1}月${d.date()}日 ${weekdayCN(d)}`
+      : date;
+    return (
+      <div className="share-day-head">
+        <span className="share-day-dot" />
+        <span className="share-day-label">{label}</span>
+        <span className="share-day-count">{count}</span>
+      </div>
+    );
   };
 
   if (loading) {
@@ -188,31 +267,51 @@ export default function ShareView() {
         </div>
       </div>
 
-      <div className="share-list">
-        {events.map((e) => {
-          const d = parseDateStr(e.date);
-          const dateLabel = d.isValid()
-            ? `${d.year()}年${d.month() + 1}月${d.date()}日 ${weekdayCN(d)}`
-            : e.date;
-          return (
-            <div className="share-card" key={e.id}>
-              <div className="share-card-title">
-                {e.title}
-                {e.important && <span className="share-tag imp">重</span>}
-                {e.done && <span className="share-tag done">已完成</span>}
-              </div>
-              <div className="share-card-meta">📅 {dateLabel} ｜ 🕒 {timeRangeLabel(e)}</div>
-              {e.description && <div className="share-card-desc">{e.description}</div>}
-              {e.images && e.images.length > 0 && (
-                <div className="share-card-imgs">
-                  {e.images.map((src, i) => (
-                    <img key={i} src={src} alt="事件图片" loading="lazy" />
-                  ))}
-                </div>
-              )}
+      <div className="share-shell">
+        {/* 左侧：年月日时间导航 */}
+        <aside className="share-nav">
+          <button
+            className={`share-nav-all${sel === ALL ? ' active' : ''}`}
+            onClick={() => setSel(ALL)}
+          >
+            <AppstoreOutlined /> 全部日期
+          </button>
+          {navGroups.map((g) => (
+            <div className="share-nav-group" key={g.key}>
+              <div className="share-nav-group-label">{g.label}</div>
+              {g.dates.map((d) => {
+                const dd = parseDateStr(d.date);
+                const dLabel = dd.isValid() ? `${dd.month() + 1}月${dd.date()}日 ${weekdayCN(dd)}` : d.date;
+                return (
+                  <button
+                    key={d.date}
+                    className={`share-nav-item${sel === d.date ? ' active' : ''}`}
+                    onClick={() => setSel(d.date)}
+                  >
+                    <span className="share-nav-date">{dLabel}</span>
+                    <span className="share-nav-count">{d.list.length}</span>
+                  </button>
+                );
+              })}
             </div>
-          );
-        })}
+          ))}
+        </aside>
+
+        {/* 中间：所选时间段/日期的全部事件完整信息 */}
+        <main className="share-body">
+          {current.length === 0 ? (
+            <div className="share-empty-body">（无事件）</div>
+          ) : (
+            current.map((g) => (
+              <section className="share-day" key={g.date}>
+                {renderDayHead(g.date, g.list.length)}
+                <div className="share-day-cards">
+                  {g.list.map((e) => renderCard(e))}
+                </div>
+              </section>
+            ))
+          )}
+        </main>
       </div>
 
       <div className="share-foot">
