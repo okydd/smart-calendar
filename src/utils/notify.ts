@@ -1,7 +1,7 @@
 import type { CalendarEvent } from '../types';
 import { parseDateStr, timeRangeLabel, weekdayCN, dayjs } from './date';
 import { APK_DOWNLOAD_URL, WEB_APP_URL, APK_RELEASE_PAGE } from '../constants';
-import { fireReminderNow, getStrongRemindPrefs } from './localNotify';
+import { getStrongRemindPrefs } from './remindPrefs';
 
 /** 邮件末尾固定页脚：当前版本 APK 下载链接（需求1：邮件最后增加 APK 下载网址） */
 export const APK_FOOTER_TEXT = APK_DOWNLOAD_URL
@@ -640,14 +640,19 @@ export async function checkDueReminders(events: CalendarEvent[]): Promise<void> 
       const desp = `时间：${d.month() + 1}月${d.date()}日 ${time}\n${
         e.description ? '备注：' + e.description : ''
       }`;
-      // 本机强提醒：弹窗 + 振动 + 铃声
+      // 本机强提醒：弹窗 + 振动 + 铃声（fireReminderNow 依赖 Capacitor，动态加载避免首屏引入）
       if (strongOn) {
         const unitCN = r.unit === 'day' ? '天' : r.unit === 'hour' ? '小时' : '分钟';
-        await fireReminderNow(
-          `⏰ ${e.title}`,
-          `${d.month() + 1}月${d.date()}日 ${time}（提前${r.value}${unitCN}提醒）` +
-            (e.description ? `\n${e.description.slice(0, 60)}` : '')
-        );
+        try {
+          const { fireReminderNow } = await import('./localNotify');
+          await fireReminderNow(
+            `⏰ ${e.title}`,
+            `${d.month() + 1}月${d.date()}日 ${time}（提前${r.value}${unitCN}提醒）` +
+              (e.description ? `\n${e.description.slice(0, 60)}` : '')
+          );
+        } catch {
+          /* 提醒触发失败不影响主流程 */
+        }
       }
       const tasks: Promise<{ ok: boolean; msg: string }>[] = [];
       if (wechatConfigured()) tasks.push(sendWechat(`事件提醒：${e.title}`, desp));
