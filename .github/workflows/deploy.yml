@@ -1,11 +1,11 @@
 name: Deploy to GitHub Pages
 
+# 注意：本工作流会以 force_orphan 方式把 dist/ 强制覆盖到 gh-pages，
+# 会清空 versions/ 历史快照目录，导致「版本回退」功能失效。
+# 自 2026-08-06 起，网页部署统一走 scripts/deploy-ghpages.mjs（Git Data API），
+# 它会完整保留 versions/<版本>/ 快照。因此此处不再监听 push 自动触发，避免误清空快照。
+# 如需手动全量发布（会清空 versions/ 快照，慎用），请在 Actions 页面手动触发本工作流。
 on:
-  push:
-    branches: [main, master]
-    paths-ignore:
-      # 保活工作流每天写入的心跳文件，与网站内容无关，不触发重新部署
-      - '.github/last-keepalive.txt'
   workflow_dispatch:
 
 permissions:
