@@ -1,6 +1,22 @@
 {
-  "semver": "V1.6",
+  "semver": "V1.8",
   "log": [
+    {
+      "version": "V1.8",
+      "date": "2026-08-10",
+      "title": "白屏修复：Capacitor 移出首屏依赖图 + 三层防白屏兜底",
+      "summary": "V1.6 首次引入本地强提醒（localNotify.ts + @capacitor/local-notifications），但 notify.ts / badge.ts / 应用顶层都静态引入了它，加上打包配置把所有 node_modules 兜底并入首屏必加载的 vendor chunk，使 Capacitor 在启动阶段就被求值；在安卓在线壳 APK 的 WebView 中该模块求值抛错，导致整包崩溃、页面白屏（V1.5 不含此依赖故正常）。本版三处修复：① 把纯 localStorage 开关抽到零依赖的 remindPrefs.ts，notify.ts / App.tsx / 提醒设置页改为静态引入 remindPrefs，仅在真正「触发提醒 / 排期 / 设置角标」时才动态 import；badge.ts 顶层的 registerPlugin('BadgePlugin') 也改为惰性执行。② vite manualChunks 对 @capacitor 返回 undefined，交由 Rollup 按可达性放入异步 chunk，首屏静态可达集合已实测不含任何 Capacitor 运行时代码。③ 新增两层白屏兜底：main.tsx 顶层 ErrorBoundary 捕获渲染错误，index.html 内联脚本捕获「整包解析/求值失败」这类 React 来不及执行的致命错误，4 秒后自动显示错误详情与「重新加载 / 清除缓存并重载 / 复制错误信息」，任何情况下都不再是纯白板。",
+      "type": "fix",
+      "rollback": true
+    },
+    {
+      "version": "V1.7",
+      "date": "2026-08-10",
+      "title": "白屏应急修复：强提醒模块改为动态导入 + 顶层错误边界",
+      "summary": "针对 V1.6 出现的启动白屏做第一轮应急处理：App.tsx 不再静态引入 localNotify，改为在提醒排期时动态 import；main.tsx 增加顶层 ErrorBoundary，渲染阶段报错时显示可读错误与「重试」而非白屏。该版本仅覆盖了应用顶层的引用，notify.ts 与 badge.ts 的静态引用未处理，因此白屏未被彻底根除，请优先使用 V1.8。",
+      "type": "fix",
+      "rollback": true
+    },
     {
       "version": "V1.6",
       "date": "2026-08-10",
