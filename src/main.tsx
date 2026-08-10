@@ -155,7 +155,23 @@ const RELOAD_GUARD = {
 // 网页、PWA、以及「在线壳模式」的原生 APK 都需要：
 // APK 通过 https 加载线上页面，SW 既提供离线缓存，也让版本更新自动生效。
 // 注册 Service Worker，实现离线可用；加时间戳防止浏览器/中间缓存旧 sw.js
-if ('serviceWorker' in navigator) {
+
+// 「清除缓存并重载」会在跳转型加载时写入该标记：本次仅做纯网络加载，
+// 跳过 SW 注册与自动刷新，避免被尚未完全注销的旧 SW 重新接管而再次卡死。
+// 只计算一次，供下方 SW 注册与版本自检共用。
+const FRESH_LOAD = (function (): boolean {
+  try {
+    if (sessionStorage.getItem('__freshLoad')) {
+      sessionStorage.removeItem('__freshLoad');
+      return true;
+    }
+  } catch {
+    /* ignore */
+  }
+  return false;
+})();
+
+if ('serviceWorker' in navigator && !FRESH_LOAD) {
   window.addEventListener('load', () => {
     const swUrl = `${import.meta.env.BASE_URL}sw.js?__v=${Date.now()}`;
     navigator.serviceWorker
@@ -199,6 +215,23 @@ if ('serviceWorker' in navigator) {
   const RELOAD_FLAG = 'appReloading';
   const BYPASS_FLAG = 'appBypassCache';
   const ss = RELOAD_GUARD;
+
+  // 强制全新加载：仅静默记录版本号，不做任何自动刷新，避免旧 SW 干扰。
+  if (FRESH_LOAD) {
+    fetch(VERSION_URL + '?_=' + Date.now(), { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (j && j.version) {
+          try {
+            localStorage.setItem(STORE_KEY, j.version);
+          } catch {
+            /* ignore */
+          }
+        }
+      })
+      .catch(() => {});
+    return;
+  }
 
   function reload(bypassCache: boolean) {
     if (!ss.can()) return;
