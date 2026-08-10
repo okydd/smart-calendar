@@ -95,18 +95,19 @@ export default function EventDetailPanel() {
           >
             编辑
           </Button>
-          <Popconfirm
-            title="删除该事件？"
-            description="此操作不可撤销"
-            okText="删除"
-            cancelText="取消"
-            okButtonProps={{ danger: true }}
-            onConfirm={() => deleteEvent(e.id)}
-          >
-            <Button danger icon={<DeleteOutlined />}>
-              删除
-            </Button>
-          </Popconfirm>
+        <Popconfirm
+          title="删除该事件？"
+          description="此操作不可撤销"
+          okText="删除"
+          cancelText="取消"
+          okButtonProps={{ danger: true, className: 'btn-dark-border' }}
+          cancelButtonProps={{ className: 'btn-dark-border' }}
+          onConfirm={() => deleteEvent(e.id)}
+        >
+          <Button danger className="btn-dark-border" icon={<DeleteOutlined />}>
+            删除
+          </Button>
+        </Popconfirm>
         </div>
       </div>
     </div>
