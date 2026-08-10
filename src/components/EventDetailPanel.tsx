@@ -2,7 +2,6 @@ import { Button, Popconfirm } from 'antd';
 import { EditOutlined, DeleteOutlined, CalendarOutlined, ClockCircleOutlined, FileTextOutlined, FileImageOutlined } from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
 import { useUI } from '../context/UIContext';
-import { TAG_COLORS } from '../constants';
 import { parseDateStr, weekdayCN, timeRangeLabel } from '../utils/date';
 import ImageViewer from './ImageViewer';
 
@@ -22,24 +21,11 @@ export default function EventDetailPanel() {
 
   const e = selectedEvent;
   const d = parseDateStr(e.date);
-  const tag = TAG_COLORS[e.tag];
 
   return (
     <div>
       <div className="detail-head">
         <h3>事件详情</h3>
-        <span className="detail-tag" style={{ background: tag.color }}>
-          <span
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              background: '#fff',
-              display: 'inline-block'
-            }}
-          />
-          {tag.label}
-        </span>
       </div>
 
       <div className="detail-body">
