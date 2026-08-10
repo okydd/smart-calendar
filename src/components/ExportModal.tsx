@@ -173,7 +173,7 @@ export default function ExportModal({ open, onClose, initialStart, initialEnd }:
             <DownloadOutlined />
             保存到相册
           </button>
-          <button className="export-close-btn" onClick={onClose}>
+          <button className="export-close-btn btn-dark-border" onClick={onClose}>
             关闭
           </button>
         </div>
