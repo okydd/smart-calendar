@@ -151,6 +151,14 @@ export default function MonthView() {
         ctx.beginPath();
         ctx.arc(x + 12, ly + 7, 3, 0, Math.PI * 2);
         ctx.fill();
+        // 非重要事件：极细淡蓝边框（常规/已过期/已完成统一）
+        if (!ev.important) {
+          ctx.strokeStyle = ct.eventBorder;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(x + 12, ly + 7, 5.5, 0, Math.PI * 2);
+          ctx.stroke();
+        }
         ctx.fillStyle = isSel ? ct.todayBorder : ct.eventText;
         ctx.font = `14px ${FONT}`;
         const title = ev.title.length > 7 ? `${ev.title.slice(0, 7)}…` : ev.title;
