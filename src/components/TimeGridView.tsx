@@ -152,6 +152,13 @@ export default function TimeGridView() {
         roundRect(ctx, bx, adY, bw, bh, 5);
         ctx.fillStyle = color;
         ctx.fill();
+        // 非重要事件：极细淡蓝边框（常规/已过期/已完成统一）
+        if (!ev.important) {
+          ctx.strokeStyle = ct.eventBorder;
+          ctx.lineWidth = 1;
+          roundRect(ctx, bx, adY, bw, bh, 5);
+          ctx.stroke();
+        }
         ctx.fillStyle = '#fff';
         ctx.font = `14px ${FONT}`;
         ctx.textAlign = 'left';
@@ -180,6 +187,13 @@ export default function TimeGridView() {
         roundRect(ctx, bx, top, bw, blockH, 6);
         ctx.fillStyle = `${color}22`;
         ctx.fill();
+        // 非重要事件：极细淡蓝边框（常规/已过期/已完成统一）
+        if (!ev.important) {
+          ctx.strokeStyle = ct.eventBorder;
+          ctx.lineWidth = 1;
+          roundRect(ctx, bx, top, bw, blockH, 6);
+          ctx.stroke();
+        }
         // 左侧色条
         ctx.save();
         roundRect(ctx, bx, top, bw, blockH, 6);
