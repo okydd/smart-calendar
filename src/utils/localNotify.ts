@@ -11,41 +11,12 @@ import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import type { CalendarEvent } from '../types';
 import { parseDateStr, dayjs } from './date';
+import { getStrongRemindPrefs, saveStrongRemindPrefs, type StrongRemindPrefs } from './remindPrefs';
+
+export type { StrongRemindPrefs };
 
 /** Android 通知渠道 ID：高优先级，带声音+振动，才会「横幅弹窗」 */
 const CHANNEL_ID = 'calendar-reminders';
-
-/** 强提醒开关（本机设置） */
-const PREF_KEY = 'calendarStrongRemind';
-
-export interface StrongRemindPrefs {
-  /** 总开关 */
-  enabled: boolean;
-  /** 响铃 */
-  sound: boolean;
-  /** 振动 */
-  vibrate: boolean;
-}
-
-const DEFAULT_PREFS: StrongRemindPrefs = { enabled: true, sound: true, vibrate: true };
-
-export function getStrongRemindPrefs(): StrongRemindPrefs {
-  try {
-    const raw = localStorage.getItem(PREF_KEY);
-    if (raw) return { ...DEFAULT_PREFS, ...JSON.parse(raw) };
-  } catch {
-    /* ignore */
-  }
-  return DEFAULT_PREFS;
-}
-
-export function saveStrongRemindPrefs(p: StrongRemindPrefs): void {
-  try {
-    localStorage.setItem(PREF_KEY, JSON.stringify(p));
-  } catch {
-    /* ignore */
-  }
-}
 
 /** 是否运行在原生安卓壳里 */
 export function isNativeApp(): boolean {
