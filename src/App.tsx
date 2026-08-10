@@ -21,7 +21,7 @@ import SyncPanel from './mobile/SyncPanel';
 import ShareView from './mobile/ShareView';
 import { dayjs, lunarDateLabel, weekdayCN } from './utils/date';
 import { checkDueReminders } from './utils/notify';
-import { syncScheduledReminders, requestNotifyPermission, getNotifyPermission, getStrongRemindPrefs } from './utils/localNotify';
+import { getStrongRemindPrefs } from './utils/remindPrefs';
 import { startAutoExportScheduler } from './utils/autoExport';
 import { setNativeBadge } from './utils/badge';
 import { hostImages } from './utils/imageHost';
@@ -62,6 +62,11 @@ function Shell() {
     if (!userId) return;
     let cancelled = false;
     (async () => {
+      const {
+        getNotifyPermission,
+        requestNotifyPermission,
+        syncScheduledReminders
+      } = await import('./utils/localNotify');
       const prefs = getStrongRemindPrefs();
       if (!prefs.enabled) return;
       const perm = await getNotifyPermission();
@@ -73,7 +78,9 @@ function Shell() {
         }
       }
       if (!cancelled) await syncScheduledReminders(eventsRef.current);
-    })();
+    })().catch(() => {
+      /* 提醒排期失败不影响主流程 */
+    });
     return () => {
       cancelled = true;
     };
@@ -82,11 +89,21 @@ function Shell() {
   /** 事件增删改或云同步后，重新排期未来提醒（防抖，避免频繁排期） */
   useEffect(() => {
     if (!userId) return;
-    if (!getStrongRemindPrefs().enabled) return;
-    const t = window.setTimeout(() => {
-      syncScheduledReminders(eventsRef.current).catch(() => {});
-    }, 500);
-    return () => window.clearTimeout(t);
+    let cancelled = false;
+    let timer = 0;
+    (async () => {
+      const { syncScheduledReminders } = await import('./utils/localNotify');
+      if (!getStrongRemindPrefs().enabled) return;
+      timer = window.setTimeout(() => {
+        if (!cancelled) syncScheduledReminders(eventsRef.current).catch(() => {});
+      }, 500);
+    })().catch(() => {
+      /* 忽略排期异常 */
+    });
+    return () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+    };
   }, [events, userId]);
 
   /**
