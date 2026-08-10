@@ -69,6 +69,14 @@ export default defineConfig({
          */
         manualChunks(id) {
           if (!id.includes('node_modules')) return;
+          /**
+           * Capacitor 必须【不指定】chunk，交给 Rollup 按可达性放置。
+           * 原因：它只在 localNotify.ts / badge.ts 里通过动态 import() 引用，
+           * 让 Rollup 自动归入异步 chunk 后，首屏不会加载、更不会求值它。
+           * 若在此处返回任何名字（含单独的 vendor-capacitor），都会变成
+           * 入口静态依赖 → 在安卓 WebView 里启动即求值抛错 → 整页白屏。
+           */
+          if (id.includes('@capacitor')) return;
           // Ant Design 生态（含 rc-component）存在包间循环引用，必须同 chunk
           if (
             id.includes('/antd/') ||
