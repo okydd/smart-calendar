@@ -733,29 +733,13 @@ body {
   transform: scale(0.992);
 }
 
-/* 未完成事件（周/月提醒、办事清单）统一淡蓝边框；已完成不显示，重要事件仍为红边 */
-.event-pill.not-done {
-  border-color: rgba(59, 124, 255, 0.4);
+/* 常规 / 已过期 / 已完成（非重要事件）：极细淡蓝边框统一（日历与办事清单一致）；重要事件保持红边 */
+.event-pill:not(.important) {
+  border: 1px solid #cfe0ff;
 }
 
-/* 办事清单：状态边框分级（state class 互斥，专属规则保证优先级） */
-/* 其它未完成事件：淡蓝细边（与周/月提醒普通事件一致） */
-.event-pill.todo-item.not-done {
-  border-color: rgba(59, 124, 255, 0.4);
-}
-/* 今天待办：淡蓝边框（与日提醒、周/月提醒普通事件一致） */
-.event-pill.todo-item.today {
-  border: 1.5px solid rgba(59, 124, 255, 0.4);
-}
-/* 已完成事件：无边框 */
-.event-pill.todo-item.done-pill {
-  border: none;
-}
-/* 重要事件沿用上方 .event-pill.important 的实红边框，无需重复 */
-
-/* 日提醒事件：四边淡蓝色边框 + 浅蓝背景 */
+/* 日提醒事件：浅蓝背景（边框由上方统一规则提供） */
 .event-pill.event-pill-day {
-  border: 1.5px solid rgba(59, 124, 255, 0.4);
   background: #f7faff;
   padding: 12px 14px;
 }
@@ -2122,32 +2106,9 @@ body {
   gap: 10px;
 }
 
-/* 主题外观分段控件 */
-.theme-seg {
-  display: inline-flex;
-  background: var(--c-soft);
-  border-radius: 9px;
-  padding: 2px;
-  gap: 2px;
-}
-
-.theme-seg-item {
-  border: none;
-  background: transparent;
-  color: var(--c-text-2);
-  font-size: 12px;
-  line-height: 1;
-  padding: 5px 11px;
-  border-radius: 7px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.theme-seg-item.active {
-  background: var(--c-card);
-  color: var(--c-primary);
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+/* 深色边框按钮（事件详情「删除/取消」、导出预览「关闭」共用） */
+.btn-dark-border {
+  border: 1.5px solid #2b2f38 !important;
 }
 
 /* 提前提醒 */
@@ -3465,6 +3426,53 @@ body {
 }
 .share-error {
   padding: 60px 20px;
+}
+
+/* ---------- 分享链接访问密码门 ---------- */
+.share-lock {
+  max-width: 320px;
+  margin: 14vh auto 0;
+  padding: 28px 22px 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  background: var(--c-card, #fff);
+  border: 1px solid var(--c-border, #eee);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(59, 124, 255, 0.10);
+}
+.share-lock-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--primary, #3b7cff);
+  background: #eef3ff;
+}
+.share-lock-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--c-text, #1d2129);
+  text-align: center;
+}
+.share-lock-tip {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--c-text-gray, #86909c);
+  text-align: center;
+}
+.share-lock-input {
+  width: 100%;
+}
+.share-lock-err {
+  width: 100%;
+  font-size: 12px;
+  color: #fa5252;
+  text-align: left;
 }
 
 /* ==================================================================
