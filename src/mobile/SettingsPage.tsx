@@ -17,7 +17,8 @@ import {
   DesktopOutlined,
   CheckCircleFilled,
   DatabaseOutlined,
-  BellOutlined
+  BellOutlined,
+  HistoryOutlined
 } from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
 import { useSync } from '../context/SyncContext';
@@ -25,7 +26,7 @@ import { dayjs } from '../utils/date';
 import { getNotifySettings, type NotifySettings } from '../utils/notify';
 import { copyText } from '../utils/clipboard';
 import { exportDataToEmail } from '../utils/exportData';
-import { CURRENT_VERSION, formatVersion, checkLatestVersion, applyLatestVersion } from '../utils/version';
+import { CURRENT_VERSION, SEMVER, formatVersion, formatSemver, checkLatestVersion, applyLatestVersion } from '../utils/version';
 import { APK_DOWNLOAD_URL, WEB_APP_URL } from '../constants';
 import ExportModal from '../components/ExportModal';
 
@@ -223,7 +224,13 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
         <Row
           icon={<InfoCircleOutlined style={{ color: '#8e8e93' }} />}
           label="当前版本"
-          value={formatVersion(CURRENT_VERSION)}
+          value={formatSemver(SEMVER)}
+        />
+        <Row
+          icon={<HistoryOutlined style={{ color: '#7048e8' }} />}
+          label="版本历史"
+          desc="查看各版本改动，可一键回退"
+          onClick={() => navigate('/settings/versions')}
         />
         <Row
           icon={<AndroidOutlined style={{ color: '#34c759' }} />}

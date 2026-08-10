@@ -16,6 +16,7 @@ import TodoPage from './mobile/TodoPage';
 import SettingsPage from './mobile/SettingsPage';
 import ReminderSettingsPage from './mobile/ReminderSettingsPage';
 import DataSettingsPage from './mobile/DataSettingsPage';
+import VersionHistoryPage from './mobile/VersionHistoryPage';
 import SyncPanel from './mobile/SyncPanel';
 import ShareView from './mobile/ShareView';
 import { dayjs, lunarDateLabel, weekdayCN } from './utils/date';
@@ -215,6 +216,7 @@ function Shell() {
             />
             <Route path="/settings/reminder" element={<ReminderSettingsPage />} />
             <Route path="/settings/data" element={<DataSettingsPage />} />
+            <Route path="/settings/versions" element={<VersionHistoryPage />} />
             <Route path="/share/:id" element={<ShareView />} />
             <Route path="*" element={<Navigate to="/calendar" replace />} />
           </Routes>

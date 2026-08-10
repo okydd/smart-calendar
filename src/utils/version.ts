@@ -4,11 +4,63 @@
  * - 当前版本：构建时由 vite define 注入的 __APP_VERSION__；
  * - 线上版本：读取部署目录下的 version.json（由 scripts/stamp-build.mjs 生成）。
  * 两者由同一次构建产出，字符串相等即代表已是最新。
+ *
+ * 语义版本（V主.次）与改动记录见 version-meta.json，
+ * 由 __APP_SEMVER__ 注入，供「版本历史 / 回退」展示。
  */
+
+import meta from '../../version-meta.json';
 
 /** 当前运行版本（构建时注入；开发模式下为 dev） */
 export const CURRENT_VERSION: string =
   typeof __APP_VERSION__ === 'string' && __APP_VERSION__ ? __APP_VERSION__ : 'dev';
+
+/** 当前运行的语义版本（构建时注入；开发模式下回退到 meta 默认值） */
+export const SEMVER: string =
+  typeof __APP_SEMVER__ === 'string' && __APP_SEMVER__ ? __APP_SEMVER__ : (meta.semver || 'V1.0');
+
+export type VersionChangeType = 'feature' | 'fix' | 'ui' | 'perf' | 'other';
+
+export interface VersionLogEntry {
+  /** 语义版本号，如 V1.0 */
+  version: string;
+  /** 发布日期 YYYY-MM-DD */
+  date: string;
+  /** 一句话标题 */
+  title: string;
+  /** 改动摘要 */
+  summary: string;
+  /** 改动类型（用于图标/配色） */
+  type: VersionChangeType;
+  /** 是否可直接回退（对应 versions/<版本>/ 快照是否存在） */
+  rollback?: boolean;
+}
+
+/** 改动记录（新→旧），来自 version-meta.json 的 log */
+export const VERSION_LOG: VersionLogEntry[] = Array.isArray(meta.log) ? (meta.log as VersionLogEntry[]) : [];
+
+/** 把 V1.0 显示为 V1.0（语义版本原样展示） */
+export function formatSemver(v: string | null | undefined): string {
+  if (!v) return '—';
+  return v;
+}
+
+export interface VersionHistoryItem {
+  entry: VersionLogEntry;
+  /** 是否为当前运行版本 */
+  current: boolean;
+  /** 是否可回退到该版本 */
+  canRollback: boolean;
+}
+
+/** 生成「版本历史」列表：标记当前版本，并判断是否可回退 */
+export function getVersionHistory(): VersionHistoryItem[] {
+  return VERSION_LOG.map((entry) => ({
+    entry,
+    current: entry.version === SEMVER,
+    canRollback: !!entry.rollback && entry.version !== SEMVER
+  }));
+}
 
 export interface VersionInfo {
   /** 当前运行版本 */

@@ -40,9 +40,17 @@ if (fs.existsSync(swPath)) {
   console.log('SW build time:', stamp);
 }
 
-// 2) 版本文件
+// 2) 版本文件：保留构建时间戳（用于「是否最新」判断），并附加语义版本号（V主.次）
+let semver = 'V1.0';
+try {
+  const metaRaw = fs.readFileSync(path.join(ROOT, 'version-meta.json'), 'utf8');
+  const meta = JSON.parse(metaRaw);
+  if (meta && typeof meta.semver === 'string') semver = meta.semver;
+} catch {
+  /* 读不到用默认 */
+}
 fs.writeFileSync(
   path.join(DIST, 'version.json'),
-  JSON.stringify({ version, buildTime: version }, null, 2) + '\n'
+  JSON.stringify({ version, buildTime: version, semver }, null, 2) + '\n'
 );
-console.log('version:', version);
+console.log('version:', version, '| semver:', semver);

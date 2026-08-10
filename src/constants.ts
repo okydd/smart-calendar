@@ -69,3 +69,11 @@ export const WEB_APP_URL = 'https://okydd.github.io/smart-calendar/';
 
 /** APK 发布页（可查看历史版本 / 手动下载） */
 export const APK_RELEASE_PAGE = 'https://github.com/okydd/smart-calendar/releases/tag/apk';
+
+/**
+ * 一键回退令牌（可选）。
+ * 留空时，「版本历史」页的「回退」按钮仅做提示（需开发者用 scripts/rollback.mjs 执行），
+ * 不会把任何密钥写进前端。若填入一个仅含 `actions:write` 或 `contents:write` 权限的
+ * 细粒度 PAT，则可在 APP 内直接触发回退。公开仓库下请勿填入高权限令牌。
+ */
+export const ROLLBACK_PAT = '';

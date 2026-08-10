@@ -27,6 +27,16 @@ try {
   /* 开发模式下写不了也不影响 */
 }
 
+/** 语义版本号（V主.次），来自 version-meta.json，供「版本历史 / 回退」展示 */
+let APP_SEMVER = 'V1.0'
+try {
+  const metaRaw = fs.readFileSync(path.resolve(import.meta.dirname, 'version-meta.json'), 'utf8')
+  const meta = JSON.parse(metaRaw)
+  if (meta && typeof meta.semver === 'string') APP_SEMVER = meta.semver
+} catch {
+  /* 读不到用默认值 */
+}
+
 // https://vitejs.dev/config/
 // base 使用相对路径 './'，这样无论部署在域名根目录还是
 // GitHub Pages 的 /<仓库名>/ 子路径下，资源引用都能正确解析。
@@ -34,7 +44,8 @@ export default defineConfig({
   base: './',
   plugins: [react()],
   define: {
-    __APP_VERSION__: JSON.stringify(APP_VERSION)
+    __APP_VERSION__: JSON.stringify(APP_VERSION),
+    __APP_SEMVER__: JSON.stringify(APP_SEMVER)
   },
   server: {
     host: true,
