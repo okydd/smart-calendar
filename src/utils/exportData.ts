@@ -12,6 +12,7 @@ import {
 } from './notify';
 import { createShare } from './share';
 import { copyText } from './clipboard';
+import { SHARE_ACCESS_PASSWORD } from '../constants';
 
 /**
  * 把指定日期范围内的事件清单发到邮箱（复用「导出数据」逻辑），供设置页与数据详情页共用。
@@ -58,6 +59,7 @@ export async function exportDataToEmail(opts: {
           '────────────',
           '📎 完整事件在线查看：',
           share.viewerUrl,
+          `🔒 该链接需访问密码才能查看：访问密码 ${SHARE_ACCESS_PASSWORD}`,
           '',
           '⬇️ 下载完整 JSON 数据：',
           share.url
