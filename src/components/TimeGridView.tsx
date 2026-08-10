@@ -11,7 +11,7 @@ import {
   minutesToTime,
   type Dayjs
 } from '../utils/date';
-import { TAG_COLORS, getCanvasTheme } from '../constants';
+import { IMPORTANT_COLOR, EVENT_DEFAULT_COLOR, getCanvasTheme } from '../constants';
 import { useResolvedTheme } from '../utils/theme';
 import { setupHiDPICanvas, roundRect } from '../utils/canvas';
 import type { CalendarEvent } from '../types';
@@ -142,7 +142,7 @@ export default function TimeGridView() {
       const allDay = filteredEvents.filter((e) => e.date === dayStr && e.allDay);
       let adY = DAY_HEADER + 3;
       allDay.forEach((ev) => {
-        const color = TAG_COLORS[ev.tag].color;
+        const color = ev.important ? IMPORTANT_COLOR : EVENT_DEFAULT_COLOR;
         const bx = colX + 4;
         const bw = colW - 8;
         const bh = ALLDAY_H - 6;
@@ -174,7 +174,7 @@ export default function TimeGridView() {
         .filter((e) => e.date === dayStr && !e.allDay)
         .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
       timed.forEach((ev) => {
-        const color = TAG_COLORS[ev.tag].color;
+        const color = ev.important ? IMPORTANT_COLOR : EVENT_DEFAULT_COLOR;
         const startMin = timeToMinutes(ev.startTime);
         const endMin = ev.endTime ? timeToMinutes(ev.endTime) : startMin + 60;
         const top = TIME_AREA_TOP + (startMin / 60) * ROW_H;
@@ -254,7 +254,7 @@ export default function TimeGridView() {
     // 拖拽跟随
     if (draggingRef.current && dragPosRef.current && downRef.current) {
       const hit = downRef.current.hit;
-      const color = TAG_COLORS[hit.ev.tag].color;
+      const color = hit.ev.important ? IMPORTANT_COLOR : EVENT_DEFAULT_COLOR;
       const px = dragPosRef.current.x;
       const py = dragPosRef.current.y;
       if (hit.kind === 'time') {
