@@ -18,8 +18,7 @@ import {
   CheckCircleFilled,
   DatabaseOutlined,
   BellOutlined,
-  HistoryOutlined,
-  BulbOutlined
+  HistoryOutlined
 } from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
 import { useSync } from '../context/SyncContext';
@@ -29,7 +28,6 @@ import { copyText } from '../utils/clipboard';
 import { exportDataToEmail } from '../utils/exportData';
 import { CURRENT_VERSION, SEMVER, formatVersion, formatSemver, checkLatestVersion, applyLatestVersion } from '../utils/version';
 import { APK_DOWNLOAD_URL, WEB_APP_URL } from '../constants';
-import { useTheme, type ThemeMode } from '../utils/theme';
 import ExportModal from '../components/ExportModal';
 
 export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void }) {
@@ -37,8 +35,6 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
   const navigate = useNavigate();
   const { events, search, setSearch } = useCalendar();
   const { status, email, lastSyncAt, configured, userId, notifySettingsVersion } = useSync();
-  const themeMode = useTheme();
-  const THEME_LABELS: Record<ThemeMode, string> = { light: '浅色', dark: '深色', auto: '自动' };
 
   const [searchInput, setSearchInput] = useState(search);
   const [exportOpen, setExportOpen] = useState(false);
@@ -166,30 +162,6 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
         </span>
         <RightOutlined className="set-row-arrow" />
       </button>
-
-      {/* 外观偏好 */}
-      <div className="set-group">
-        <div className="set-group-title">外观</div>
-        <Row
-          icon={<BulbOutlined style={{ color: '#7048e8' }} />}
-          label="主题外观"
-          desc="深色模式更护眼，自动跟随系统"
-          right={
-            <div className="theme-seg" onClick={(e) => e.stopPropagation()}>
-              {(['light', 'dark', 'auto'] as ThemeMode[]).map((m) => (
-                <button
-                  type="button"
-                  key={m}
-                  className={`theme-seg-item${themeMode.mode === m ? ' active' : ''}`}
-                  onClick={() => themeMode.setMode(m)}
-                >
-                  {THEME_LABELS[m]}
-                </button>
-              ))}
-            </div>
-          }
-        />
-      </div>
 
       {/* 导出 */}
       <div className="set-actions">
