@@ -57,12 +57,11 @@ export async function exportDataToEmail(opts: {
           concise,
           '',
           '────────────',
-          '📎 完整事件在线查看：',
-          share.viewerUrl,
-          `🔒 该链接需访问密码才能查看：访问密码 ${SHARE_ACCESS_PASSWORD}`,
+          `🔒 以下分享内容均需访问密码：${SHARE_ACCESS_PASSWORD}`,
           '',
-          '⬇️ 下载完整 JSON 数据：',
-          share.url
+          '📎 完整事件在线查看（含下载 JSON）：',
+          share.viewerUrl,
+          '（在密码保护页面内点击「下载JSON」即可获取完整数据）'
         ].join('\n') + APK_FOOTER_TEXT;
       const r = await sendEmail('智能日历 数据导出', body);
       await copyText(share.viewerUrl);
