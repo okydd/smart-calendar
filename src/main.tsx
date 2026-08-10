@@ -12,6 +12,71 @@ import { ThemeProvider, useResolvedTheme } from './utils/theme';
 const FONT_FAMILY =
   '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
+/** 顶层错误边界：任何渲染期异常都显示为可读提示而非白板，并给出重试入口 */
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { error: Error | null }> {
+  state: { error: Error | null } = { error: null };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('App crashed:', error, info);
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 24,
+            fontFamily: FONT_FAMILY,
+            color: '#333',
+            background: '#fff',
+            textAlign: 'center'
+          }}
+        >
+          <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>页面加载出错</div>
+          <pre
+            style={{
+              maxWidth: '90vw',
+              maxHeight: '40vh',
+              overflow: 'auto',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-all',
+              fontSize: 12,
+              color: '#d4380d',
+              background: '#fff1f0',
+              border: '1px solid #ffccc7',
+              borderRadius: 8,
+              padding: 12,
+              marginBottom: 16
+            }}
+          >
+            {String(this.state.error?.stack || this.state.error?.message || this.state.error)}
+          </pre>
+          <button
+            onClick={() => location.reload()}
+            style={{
+              padding: '10px 24px',
+              fontSize: 15,
+              color: '#fff',
+              background: '#3b7cff',
+              border: 'none',
+              borderRadius: 10
+            }}
+          >
+            重试
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function AntdLayer({ children }: { children: React.ReactNode }) {
   const resolved = useResolvedTheme();
   return (
@@ -33,13 +98,15 @@ function AntdLayer({ children }: { children: React.ReactNode }) {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ThemeProvider>
-      <AntdLayer>
-        <HashRouter>
-          <App />
-        </HashRouter>
-      </AntdLayer>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AntdLayer>
+          <HashRouter>
+            <App />
+          </HashRouter>
+        </AntdLayer>
+      </ThemeProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );
 
