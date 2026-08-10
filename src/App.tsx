@@ -21,6 +21,7 @@ import SyncPanel from './mobile/SyncPanel';
 import ShareView from './mobile/ShareView';
 import { dayjs, lunarDateLabel, weekdayCN } from './utils/date';
 import { checkDueReminders } from './utils/notify';
+import { syncScheduledReminders, requestNotifyPermission, getNotifyPermission, getStrongRemindPrefs } from './utils/localNotify';
 import { startAutoExportScheduler } from './utils/autoExport';
 import { setNativeBadge } from './utils/badge';
 import { hostImages } from './utils/imageHost';
@@ -51,6 +52,42 @@ function Shell() {
   useEffect(() => {
     return startAutoExportScheduler(() => eventsRef.current, userId);
   }, [userId]);
+
+  /**
+   * 预约系统级提醒（钉钉式强提醒的关键）：登录后首次把未来提醒同步到原生/系统通知，
+   * 这样即使 APP 在后台、锁屏甚至被杀，到点也会横幅弹窗 + 响铃 + 振动。
+   * Web/PWA 无系统级排期能力，此步自动跳过，仅运行时弹通知。
+   */
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    (async () => {
+      const prefs = getStrongRemindPrefs();
+      if (!prefs.enabled) return;
+      const perm = await getNotifyPermission();
+      if (perm === 'prompt') {
+        try {
+          await requestNotifyPermission();
+        } catch {
+          /* 部分浏览器需用户手势才能授权，忽略 */
+        }
+      }
+      if (!cancelled) await syncScheduledReminders(eventsRef.current);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  /** 事件增删改或云同步后，重新排期未来提醒（防抖，避免频繁排期） */
+  useEffect(() => {
+    if (!userId) return;
+    if (!getStrongRemindPrefs().enabled) return;
+    const t = window.setTimeout(() => {
+      syncScheduledReminders(eventsRef.current).catch(() => {});
+    }, 500);
+    return () => window.clearTimeout(t);
+  }, [events, userId]);
 
   /**
    * 注册 localStorage 配额满时的自动救援：把 base64 图片上传到 Supabase Storage 并替换为 URL，
