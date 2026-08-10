@@ -56,15 +56,31 @@
           });
         }
 
+        function diag() {
+          var sw = 'unknown';
+          try {
+            if (!('serviceWorker' in navigator)) sw = '不支持';
+            else if (navigator.serviceWorker.controller) sw = '已控制本页';
+            else sw = '未控制';
+          } catch (_) {}
+          return [
+            'UA: ' + navigator.userAgent,
+            'URL: ' + location.href,
+            '在线状态: ' + (navigator.onLine ? '在线' : '离线'),
+            'ServiceWorker: ' + sw,
+            '文档状态: ' + document.readyState
+          ].join('\n');
+        }
+
         function showFallback() {
           var root = document.getElementById('root');
           if (!root || root.childElementCount > 0) return;
-          var detail = fatal.length ? fatal.join('\n\n') : '页面脚本未能启动（无错误信息，通常是网络中断或缓存了损坏的文件）。';
+          var detail = (fatal.length ? fatal.join('\n\n') + '\n\n' : '') + '—— 环境信息 ——\n' + diag();
           root.innerHTML =
             '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;font:14px/1.7 -apple-system,BlinkMacSystemFont,\'PingFang SC\',\'Microsoft YaHei\',sans-serif;color:#1f2329;background:#f5f6fa">' +
             '<div style="max-width:520px;width:100%;background:#fff;border:1px solid #e5e6eb;border-radius:14px;padding:22px 20px;box-shadow:0 6px 24px rgba(0,0,0,.06)">' +
             '<div style="font-size:17px;font-weight:600;margin-bottom:6px">页面未能正常启动</div>' +
-            '<div style="color:#646a73;margin-bottom:14px">已为你保留本地数据，不会丢失。请先尝试「清除缓存并重载」。</div>' +
+            '<div style="color:#646a73;margin-bottom:14px">已为你保留本地数据，不会丢失。请先尝试「清除缓存并重载」（会跳过 Service Worker，以纯网络方式重新加载）。</div>' +
             '<pre id="bootErr" style="white-space:pre-wrap;word-break:break-all;background:#f7f8fa;border:1px solid #eceef1;border-radius:8px;padding:10px;max-height:190px;overflow:auto;color:#8a2b2b;font-size:12px;margin:0 0 16px">' +
             esc(detail) +
             '</pre>' +
@@ -78,31 +94,34 @@
             location.reload();
           };
           document.getElementById('btnHard').onclick = function () {
-            var done = function () {
-              location.replace(location.pathname + '?_r=' + Date.now() + location.hash);
+            // 关键：先真正等 SW 注销 + 缓存清空完成，再以「纯网络全新加载」方式跳转。
+            // 仅清 Cache API 不够——若旧 SW 仍在控制页面，它仍可能把新 JS 请求兜底成错误。
+            var finish = function () {
+              try { sessionStorage.setItem('__freshLoad', '1'); } catch (_) {}
+              location.replace(location.pathname + '?_r=' + Date.now() + (location.hash || ''));
+            };
+            var clearCaches = function () {
+              if (window.caches && caches.keys) {
+                return caches.keys().then(function (ks) {
+                  return Promise.all(ks.map(function (k) { return caches.delete(k); }));
+                }).catch(function () {});
+              }
+              return Promise.resolve();
             };
             try {
-              var jobs = [];
-              if (window.caches && caches.keys) {
-                jobs.push(caches.keys().then(function (ks) {
-                  return Promise.all(ks.map(function (k) { return caches.delete(k); }));
-                }));
-              }
               if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
-                jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) {
+                navigator.serviceWorker.getRegistrations().then(function (rs) {
                   return Promise.all(rs.map(function (r) { return r.unregister(); }));
-                }));
+                }).then(clearCaches).then(finish, finish);
+              } else {
+                clearCaches().then(finish, finish);
               }
-              // 只清版本戳，绝不动用户的日程数据
-              try { localStorage.removeItem('appVersion'); sessionStorage.clear(); } catch (_) {}
-              Promise.all(jobs).then(done, done);
-              setTimeout(done, 2500);
             } catch (_) {
-              done();
+              finish();
             }
           };
           document.getElementById('btnCopy').onclick = function () {
-            var t = detail + '\n\nUA: ' + navigator.userAgent + '\nURL: ' + location.href;
+            var t = detail;
             try {
               navigator.clipboard.writeText(t);
               document.getElementById('btnCopy').textContent = '已复制';
@@ -117,12 +136,24 @@
           };
         }
 
-        setTimeout(showFallback, 4000);
-        // 脚本明确报错时更快给出反馈
-        window.addEventListener('error', function () { setTimeout(showFallback, 1200); }, true);
+        // 轮询式检测：避免慢网络下误报白屏（脚本还在下载时不急着弹面板）。
+        // 已挂载（childElementCount>0）或尚未加载完成则继续等待；文档加载完成且仍为空才判定为真正失败。
+        var shown = false;
+        function maybeShow() {
+          if (shown) return;
+          var root = document.getElementById('root');
+          if (root && root.childElementCount > 0) return;
+          if (document.readyState !== 'complete') return;
+          shown = true;
+          showFallback();
+        }
+        window.addEventListener('load', maybeShow);
+        setTimeout(maybeShow, 4000);
+        setTimeout(maybeShow, 8000);
+        setTimeout(maybeShow, 15000);
       })();
     </script>
-    <script type="module" crossorigin src="./assets/index-D5BVPV1L.js"></script>
+    <script type="module" crossorigin src="./assets/index-CCWtg21Q.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/vendor-react-DFxU1kFX.js">
     <link rel="modulepreload" crossorigin href="./assets/vendor-C8IKlzsv.js">
     <link rel="modulepreload" crossorigin href="./assets/vendor-antd-DmqbMkae.js">
