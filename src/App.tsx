@@ -30,7 +30,7 @@ import type { CalendarEvent } from './types';
 function Shell() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { activeTags, clearTags, events, search, setSearch, filteredEvents, updateEvent } = useCalendar();
+  const { events, search, setSearch, filteredEvents, updateEvent } = useCalendar();
   const { openView } = useUI();
   const { userId } = useSync();
   const isSettings = location.pathname === '/settings';
@@ -195,12 +195,6 @@ function Shell() {
             </div>
           </div>
 
-          {activeTags.length > 0 && (
-            <div className="filter-hint">
-              已按 {activeTags.length} 个标签筛选
-              <button onClick={clearTags}>清除</button>
-            </div>
-          )}
         </header>
       )}
 
