@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { message } from 'antd';
 import { dayjs, type Dayjs } from '../utils/date';
-import type { CalendarEvent, TagColor, ViewMode } from '../types';
+import type { CalendarEvent, ViewMode } from '../types';
 import { loadEvents, saveEvents } from '../utils/storage';
 import { SAMPLE_EVENT_IDS } from '../data/sampleEvents';
 import { countDuplicates, dedupeEvents } from '../utils/dedupe';
@@ -49,16 +49,12 @@ interface CalendarContextValue {
   selectedEvent: CalendarEvent | null;
   /** 搜索关键字 */
   search: string;
-  /** 激活的标签筛选 */
-  activeTags: TagColor[];
   /** 本地数据版本号，每次变更自增，供同步引擎监听 */
   revision: number;
   setView: (v: ViewMode) => void;
   setCurrentDate: (d: Dayjs) => void;
   selectEvent: (id: string | null) => void;
   setSearch: (s: string) => void;
-  toggleTag: (t: TagColor) => void;
-  clearTags: () => void;
   addEvent: (e: Omit<CalendarEvent, 'id'>) => void;
   updateEvent: (id: string, patch: Partial<CalendarEvent>) => void;
   deleteEvent: (id: string) => void;
@@ -83,7 +79,6 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
   const [currentDate, setCurrentDate] = useState<Dayjs>(dayjs());
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [activeTags, setActiveTags] = useState<TagColor[]>([]);
   const [revision, setRevision] = useState(0);
 
   // 始终持有最新数据引用，供同步引擎在异步回调中读取
@@ -132,14 +127,13 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
   const filteredEvents = useMemo(() => {
     const kw = search.trim().toLowerCase();
     return events.filter((e) => {
-      if (activeTags.length && !activeTags.includes(e.tag)) return false;
       if (kw) {
         const hay = `${e.title} ${e.description || ''}`.toLowerCase();
         if (!hay.includes(kw)) return false;
       }
       return true;
     });
-  }, [events, search, activeTags]);
+  }, [events, search]);
 
   const selectedEvent = useMemo(
     () => events.find((e) => e.id === selectedEventId) ?? null,
@@ -147,14 +141,6 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
   );
 
   const selectEvent = useCallback((id: string | null) => setSelectedEventId(id), []);
-
-  const toggleTag = useCallback((t: TagColor) => {
-    setActiveTags((prev) =>
-      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]
-    );
-  }, []);
-
-  const clearTags = useCallback(() => setActiveTags([]), []);
 
   const addEvent = useCallback(
     (e: Omit<CalendarEvent, 'id'>) => {
@@ -297,14 +283,11 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
     selectedEventId,
     selectedEvent,
     search,
-    activeTags,
     revision,
     setView,
     setCurrentDate,
     selectEvent,
     setSearch,
-    toggleTag,
-    clearTags,
     addEvent,
     updateEvent,
     deleteEvent,
