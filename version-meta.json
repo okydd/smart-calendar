@@ -2,6 +2,14 @@
   "semver": "V1.8",
   "log": [
     {
+      "version": "V1.8.2",
+      "date": "2026-08-11",
+      "title": "消除错误面板「偶尔闪一下」+ 自愈合重试",
+      "summary": "用户反馈页面不稳定、错误面板偶尔闪过。根因：在线壳 APK 弱网下某个带哈希 JS 包偶发加载失败，SW 兜底返回错误→React 短时未挂载→内联兜底面板在加载间隙一闪而过（旧实现直接替换 #root，且个别 WebView 的 load 事件早于模块执行，导致面板先现、React 后覆盖）。修复：① 错误面板改为「浮层」（append 到 body，不再写 #root），即使短暂出现也不破坏已渲染内容；② main.tsx 在挂载后调用 window.__hideBootFallback 立即移除浮层（自愈合，用户无感）；③ 若失败是「资源加载失败」且在线，自动以纯网络方式（__freshLoad，跳过 SW）重试一次，通常直接恢复、根本不出现面板；④ 轮询检测增加 window.__appReady 早退，避免误报。验证：本地正常渲染 OK；模拟整包崩溃确认 bootFallback 为 body 直接子元素、#root 不被污染；线上（移动 UA，12s 等待）渲染正常（root 10142 字符、__appReady=true、无浮层、无 pageerror）。注：verify-live.mjs 默认等待由 8s 放宽到 12s，避免弱网下误判「异常」。",
+      "type": "fix",
+      "rollback": true
+    },
+    {
       "version": "V1.8.1",
       "date": "2026-08-10",
       "title": "修复「清除缓存并重载」后仍在错误面板（旧 SW 兜底错误响应）",
