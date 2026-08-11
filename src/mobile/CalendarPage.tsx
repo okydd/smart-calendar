@@ -74,17 +74,18 @@ function relativeDayLabel(d: Dayjs, today: Dayjs): string {
 export default function CalendarPage({ showFab = true }: { showFab?: boolean }) {
   const { filteredEvents, currentDate, setCurrentDate } = useCalendar();
   const { openCreate, openView } = useUI();
-  const { userId, syncNow } = useSync();
+  const { userId, silentSync } = useSync();
   const [slide, setSlide] = useState<'' | 'slide-left' | 'slide-right'>('');
   const [monthView, setMonthView] = useState<Dayjs | null>(null);
   const [expanded, setExpanded] = useState(false);
   const touchRef = useRef<{ x: number; y: number } | null>(null);
 
-  /** 进入日历页时立即同步一次：确保日/周/月提醒打开即显示完整数据，
-   *  不依赖手动刷新或等待定时轮询（解决「日提醒数量不能及时同步」）。 */
+  /** 进入日历页时静默同步一次：确保日/周/月提醒打开即显示完整数据，
+   *  不依赖手动刷新或等待定时轮询（解决「日提醒数量不能及时同步」）；
+   *  走后台静默通道，不在前台显示「同步中」。 */
   useEffect(() => {
-    if (userId) void syncNow();
-  }, [userId, syncNow]);
+    if (userId) void silentSync();
+  }, [userId, silentSync]);
 
   const today = dayjs();
   // 日历网格：默认收起只显示「选中日所在周 + 下一周」（14 天）；展开后显示完整月份（6 周）
@@ -348,9 +349,9 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
           <span
             className={`today-tag${isToday ? ' active' : ''}`}
             onClick={goToday}
-            aria-label="返回今天"
+            aria-label="今日提醒数"
           >
-            今
+            {dayEvents.length}
           </span>
         </div>
         {dayEvents.length === 0 ? (
