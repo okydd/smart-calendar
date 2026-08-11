@@ -110,6 +110,16 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>
 );
 
+// 应用已挂载：通知内联兜底脚本移除可能短暂出现的错误浮层（自愈合，避免「闪一下」）。
+try {
+  if (typeof window !== 'undefined' && (window as any).__hideBootFallback) {
+    (window as any).__hideBootFallback();
+  }
+  (window as any).__appReady = true;
+} catch {
+  /* ignore */
+}
+
 /**
  * 自动刷新熔断器（SW 更新与版本自检共用）。
  * 没有它时，CDN 传播期返回不一致的版本信息会导致无限刷新 → 页面永远白屏。
