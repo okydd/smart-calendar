@@ -52,7 +52,7 @@ try {
   console.log('[goto] 失败:', e.message);
   ok = false;
 }
-await page.waitForTimeout(Number(process.env.WAIT_MS || 8000));
+await page.waitForTimeout(Number(process.env.WAIT_MS || 12000));
 
 const info = await page.evaluate(() => {
   const r = document.getElementById('root');
