@@ -1,6 +1,14 @@
 {
-  "semver": "V1.8",
+  "semver": "V1.8.3",
   "log": [
+    {
+      "version": "V1.8.3",
+      "date": "2026-08-11",
+      "title": "修复页面自动时不时刷新闪动（自动更新机制误触发）",
+      "summary": "用户反馈页面已无错误面板，但每个页面会自动时不时刷新闪动。根因：① Service Worker 注册 URL 带 Date.now() 时间戳，每次页面加载都被浏览器当成「不同的 SW」→ 触发 updatefound → 新 SW 激活 → 自动重载；被会话级熔断限制为 2 次，但切回 APP/重新打开（新的 navigation）又来一次，表现为「时不时闪」。② checkAppUpdate 用 version.json 的「构建时间戳」比对版本，而 CDN 多节点传播期可能返回不同时间戳，造成比对横跳、反复重载。修复：① SW 注册改用固定 URL（去掉时间戳），SW 更新改由 updateViaCache:'none' + 构建时注入的 __BUILD_TIME__（每次部署字节不同）自动完成；② 版本比较改用 semver（部署后固定不变，不受 CDN 时间戳抖动影响）；③ 所有自动刷新统一为「纯网络 + 跳过 SW 注册」的 FRESH_LOAD 方式，且 SW updatefound 与 checkAppUpdate 共用同一熔断（RELOAD_GUARD，同会话最多 2 次、间隔≥60s），避免两者叠加成连环刷新；④ 熔断间隔由 15s 放宽到 60s。至此平时（无新部署）页面不再自动刷新，仅在真正发布新版本时一次性平滑更新。",
+      "type": "fix",
+      "rollback": true
+    },
     {
       "version": "V1.8.2",
       "date": "2026-08-11",
