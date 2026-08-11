@@ -23,9 +23,9 @@ import { fetchCloudNotify, pushCloudNotify } from '../sync/notifySettings';
 
 const TABLE = 'calendar_events';
 const LAST_SYNC_KEY = 'calendarLastSync';
-/** 轮询间隔：60 秒拉一次云端。仅在已登录且开启同步时轮询；本地无变更时
- *  仅做轻量拉取，不会推送；可见性/在线状态变化才会立即触发，页面负担很小。 */
-const POLL_MS = 60_000;
+/** 轮询间隔：5 分钟拉一次云端（个人日历无需秒级实时，降低频率避免前台频繁动作）。
+ *  仅在已登录且页面可见时轮询；本地变更/切回前台/网络恢复由事件立即触发（均走静默同步）。 */
+const POLL_MS = 300_000;
 /** 本地变更后延迟推送，合并高频操作 */
 const PUSH_DEBOUNCE_MS = 1500;
 
@@ -50,6 +50,8 @@ interface SyncContextValue {
   signOut: () => Promise<void>;
   sendReset: (email: string) => Promise<string | null>;
   syncNow: () => Promise<void>;
+  /** 后台静默同步：轮询/获焦/联网/进入页面等自动触发，不显示前台提示 */
+  silentSync: () => Promise<void>;
   /** 当前登录用户 id（未登录为 null） */
   userId: string | null;
   /** 通知设置云端同步版本号，变化时本机设置已被云端覆盖 */
@@ -104,62 +106,74 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   /** 同步进行中又来了新变更时置位，结束后补一次 */
   const dirtyRef = useRef(false);
 
-  /** 核心同步流程：拉取 → 合并 → 回写本地 → 推送差异 */
-  const syncNow = useCallback(async () => {
-    const supabase = getClient();
-    const uid = userIdRef.current;
-    if (!supabase || !uid) return;
-    if (runningRef.current) {
-      dirtyRef.current = true;
-      return;
-    }
-    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-      setStatus('offline');
-      return;
-    }
-    runningRef.current = true;
-    setStatus('syncing');
-    setError(null);
-    try {
-      const { data, error: selErr } = await supabase
-        .from(TABLE)
-        .select('*')
-        .eq('user_id', uid);
-      if (selErr) throw new Error(selErr.message);
+  /** 核心同步流程：拉取 → 合并 → 回写本地 → 推送差异。
+   *  silent=true 时【不切换可见状态】，用于后台轮询/获焦/联网等自动同步，
+   *  前台不显示「同步中」；用户主动点击「立即同步」时 silent=false，会显示同步状态。 */
+  const runSync = useCallback(
+    async (silent: boolean) => {
+      const supabase = getClient();
+      const uid = userIdRef.current;
+      if (!supabase || !uid) return;
+      if (runningRef.current) {
+        dirtyRef.current = true;
+        return;
+      }
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        if (!silent) setStatus('offline');
+        return;
+      }
+      runningRef.current = true;
+      if (!silent) {
+        setStatus('syncing');
+        setError(null);
+      }
+      try {
+        const { data, error: selErr } = await supabase
+          .from(TABLE)
+          .select('*')
+          .eq('user_id', uid);
+        if (selErr) throw new Error(selErr.message);
 
-      const remote = ((data ?? []) as RemoteRow[]).map(rowToEvent);
-      const local = snapshot();
-      const { merged, toPush } = mergeEvents(local, remote);
+        const remote = ((data ?? []) as RemoteRow[]).map(rowToEvent);
+        const local = snapshot();
+        const { merged, toPush } = mergeEvents(local, remote);
 
-      applyMerged(merged);
+        applyMerged(merged);
 
-      if (toPush.length) {
-        // 分批上传，避免单请求过大
-        const rows = toPush.map((e) => eventToRow(e, uid));
-        for (let i = 0; i < rows.length; i += 200) {
-          const { error: upErr } = await supabase
-            .from(TABLE)
-            .upsert(rows.slice(i, i + 200), { onConflict: 'user_id,id' });
-          if (upErr) throw new Error(upErr.message);
+        if (toPush.length) {
+          // 分批上传，避免单请求过大
+          const rows = toPush.map((e) => eventToRow(e, uid));
+          for (let i = 0; i < rows.length; i += 200) {
+            const { error: upErr } = await supabase
+              .from(TABLE)
+              .upsert(rows.slice(i, i + 200), { onConflict: 'user_id,id' });
+            if (upErr) throw new Error(upErr.message);
+          }
+        }
+
+        const now = new Date().toISOString();
+        localStorage.setItem(LAST_SYNC_KEY, now);
+        setLastSyncAt(now);
+        if (!silent) setStatus('idle');
+      } catch (e) {
+        const msg = humanizeError(e instanceof Error ? e.message : String(e));
+        setError(msg);
+        if (!silent) setStatus('error');
+      } finally {
+        runningRef.current = false;
+        if (dirtyRef.current) {
+          dirtyRef.current = false;
+          void runSync(silent);
         }
       }
+    },
+    [snapshot, applyMerged]
+  );
 
-      const now = new Date().toISOString();
-      localStorage.setItem(LAST_SYNC_KEY, now);
-      setLastSyncAt(now);
-      setStatus('idle');
-    } catch (e) {
-      const msg = humanizeError(e instanceof Error ? e.message : String(e));
-      setError(msg);
-      setStatus('error');
-    } finally {
-      runningRef.current = false;
-      if (dirtyRef.current) {
-        dirtyRef.current = false;
-        void syncNow();
-      }
-    }
-  }, [snapshot, applyMerged]);
+  /** 前台可见同步：用户主动点击「立即同步」时使用，会显示同步状态。 */
+  const syncNow = useCallback(() => runSync(false), [runSync]);
+  /** 后台静默同步：轮询/获焦/联网/进入页面自动触发，不显示任何前台提示。 */
+  const silentSync = useCallback(() => runSync(true), [runSync]);
 
   /** 登录后从云端拉取通知设置并覆盖本地（云端无记录时本地不变） */
   const pullNotify = useCallback(async () => {
@@ -199,7 +213,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
         setUserId(s.user.id);
         setEmail(s.user.email ?? null);
         setStatus('idle');
-        void syncNow();
+        void silentSync();
         void pullNotify();
       } else {
         setStatus('signedOut');
@@ -229,24 +243,24 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [configured]);
 
-  /** 本地数据变更 → 防抖推送 */
+  /** 本地数据变更 → 防抖推送（静默，不在前台显示） */
   useEffect(() => {
     if (revision === 0 || !userIdRef.current) return;
-    const t = setTimeout(() => void syncNow(), PUSH_DEBOUNCE_MS);
+    const t = setTimeout(() => void silentSync(), PUSH_DEBOUNCE_MS);
     return () => clearTimeout(t);
-  }, [revision, syncNow]);
+  }, [revision, silentSync]);
 
-  /** 定时轮询 + 回到前台 + 网络恢复时同步 */
+  /** 定时轮询 + 回到前台 + 网络恢复时同步（均走静默，不显示前台提示） */
   useEffect(() => {
     if (!configured) return;
     const timer = setInterval(() => {
-      if (userIdRef.current && document.visibilityState === 'visible') void syncNow();
+      if (userIdRef.current && document.visibilityState === 'visible') void silentSync();
     }, POLL_MS);
     const onFocus = () => {
-      if (userIdRef.current && document.visibilityState === 'visible') void syncNow();
+      if (userIdRef.current && document.visibilityState === 'visible') void silentSync();
     };
     const onOnline = () => {
-      if (userIdRef.current) void syncNow();
+      if (userIdRef.current) void silentSync();
     };
     document.addEventListener('visibilitychange', onFocus);
     window.addEventListener('focus', onFocus);
@@ -362,6 +376,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       signOut,
       sendReset,
       syncNow,
+      silentSync,
       userId,
       notifySettingsVersion,
       syncNotifySettings
@@ -381,6 +396,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       signOut,
       sendReset,
       syncNow,
+      silentSync,
       userId,
       notifySettingsVersion,
       syncNotifySettings
