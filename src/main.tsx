@@ -128,7 +128,7 @@ const RELOAD_GUARD = {
   COUNT_KEY: 'appReloadCount',
   LAST_KEY: 'appReloadAt',
   MAX: 2,
-  MIN_INTERVAL_MS: 15000,
+  MIN_INTERVAL_MS: 60000,
   get(k: string) {
     try {
       return sessionStorage.getItem(k);
@@ -164,7 +164,9 @@ const RELOAD_GUARD = {
 // 注册 Service Worker / 自动更新。
 // 网页、PWA、以及「在线壳模式」的原生 APK 都需要：
 // APK 通过 https 加载线上页面，SW 既提供离线缓存，也让版本更新自动生效。
-// 注册 Service Worker，实现离线可用；加时间戳防止浏览器/中间缓存旧 sw.js
+// 注册 Service Worker，实现离线可用。注意：注册 URL 必须是固定的（不带时间戳），
+// 否则每次页面加载都会被当成「不同的 SW」而触发更新 → 自动刷新循环。SW 的更新
+// 由 updateViaCache:'none' + 构建时注入的 __BUILD_TIME__（每次部署字节不同）自动完成。
 
 // 「清除缓存并重载」会在跳转型加载时写入该标记：本次仅做纯网络加载，
 // 跳过 SW 注册与自动刷新，避免被尚未完全注销的旧 SW 重新接管而再次卡死。
@@ -182,8 +184,9 @@ const FRESH_LOAD = (function (): boolean {
 })();
 
 if ('serviceWorker' in navigator && !FRESH_LOAD) {
+  const hadController = !!navigator.serviceWorker.controller; // 注册前是否已被旧 SW 控制，用于区分「首次安装」与「真正更新」
   window.addEventListener('load', () => {
-    const swUrl = `${import.meta.env.BASE_URL}sw.js?__v=${Date.now()}`;
+    const swUrl = `${import.meta.env.BASE_URL}sw.js`;
     navigator.serviceWorker
       .register(swUrl, { updateViaCache: 'none' })
       .then((reg) => {
@@ -193,12 +196,18 @@ if ('serviceWorker' in navigator && !FRESH_LOAD) {
           const newWorker = reg.installing;
           if (!newWorker) return;
           newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
-              // 已有旧 SW 控制页面，刷新以使用新版本（受熔断限制，避免无限重载）
-              if (!RELOAD_GUARD.get('appReloading') && RELOAD_GUARD.can()) {
-                RELOAD_GUARD.set('appReloading', '1');
+            // 仅在「替换已存在的旧 SW」时重载；首次安装（hadController=false）不重载，
+            // 否则 SW 接管（clients.claim）会让每次打开 APP 都触发一次刷新 → 反复闪动。
+            if (newWorker.state === 'activated' && navigator.serviceWorker.controller && hadController) {
+              if (RELOAD_GUARD.can()) {
                 RELOAD_GUARD.mark();
-                location.reload();
+                try {
+                  sessionStorage.setItem('__freshLoad', '1');
+                } catch {
+                  /* ignore */
+                }
+                const sep = location.href.includes('?') ? '&' : '?';
+                location.replace(location.href.split('#')[0] + sep + '_nocache=' + Date.now() + (location.hash || ''));
               }
             }
           });
@@ -222,18 +231,16 @@ if ('serviceWorker' in navigator && !FRESH_LOAD) {
 (function checkAppUpdate() {
   const VERSION_URL = `${import.meta.env.BASE_URL}version.json`;
   const STORE_KEY = 'appVersion';
-  const RELOAD_FLAG = 'appReloading';
-  const BYPASS_FLAG = 'appBypassCache';
   const ss = RELOAD_GUARD;
 
-  // 强制全新加载：仅静默记录版本号，不做任何自动刷新，避免旧 SW 干扰。
+  // 强制全新加载（来自「清除缓存并重载」）：仅记录当前 semver，不再触发任何刷新，避免旧 SW 干扰。
   if (FRESH_LOAD) {
     fetch(VERSION_URL + '?_=' + Date.now(), { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
-        if (j && j.version) {
+        if (j && j.semver) {
           try {
-            localStorage.setItem(STORE_KEY, j.version);
+            localStorage.setItem(STORE_KEY, j.semver);
           } catch {
             /* ignore */
           }
@@ -243,23 +250,10 @@ if ('serviceWorker' in navigator && !FRESH_LOAD) {
     return;
   }
 
-  function reload(bypassCache: boolean) {
-    if (!ss.can()) return;
-    ss.mark();
-    if (bypassCache) {
-      ss.set(BYPASS_FLAG, '1');
-      const sep = location.href.includes('?') ? '&' : '?';
-      location.href = location.href.split('#')[0] + sep + '_nocache=' + Date.now() + location.hash;
-    } else {
-      ss.set(RELOAD_FLAG, '1');
-      location.reload();
-    }
-  }
-
   fetch(VERSION_URL + '?_=' + Date.now(), { cache: 'no-store' })
     .then((r) => (r.ok ? r.json() : null))
     .then((j) => {
-      if (!j || !j.version) return;
+      if (!j || !j.semver) return;
       let cur: string | null = null;
       try {
         cur = localStorage.getItem(STORE_KEY);
@@ -273,32 +267,25 @@ if ('serviceWorker' in navigator && !FRESH_LOAD) {
           /* ignore */
         }
       };
-      if (!cur) {
-        remember(j.version);
+      // 没有记录，或已是最新版本（用 semver 比较，部署后固定不变，不会因 CDN 抖动误判）：仅记录，不刷新。
+      if (!cur || cur === j.semver) {
+        remember(j.semver);
         return;
       }
-      if (cur === j.version) {
-        // 版本一致：说明已经是最新，清掉本次会话的刷新标记与计数
-        ss.del(BYPASS_FLAG);
-        ss.del(RELOAD_FLAG);
-        ss.del(ss.COUNT_KEY);
-        ss.del(ss.LAST_KEY);
+      // 发现新版本：受熔断限制下，以「纯网络 + 跳过 SW 注册」方式重载，
+      // 立即摘取最新版本，且不会与 SW 的 updatefound 刷新叠加成连环刷新。
+      if (!ss.can()) {
+        remember(j.semver); // 已达刷新上限：记录版本号，等下次打开再更新。
         return;
       }
-      // 版本不一致：先记录目标版本
-      remember(j.version);
-      if (ss.get(BYPASS_FLAG)) {
-        // 已经绕过缓存刷新过一次仍不一致：清 SW 后再试一次（同样受熔断限制）
-        ss.del(BYPASS_FLAG);
-        if (!ss.can()) return;
-        ss.mark();
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.ready.then((reg) => reg.unregister()).catch(() => {});
-        }
-        setTimeout(() => location.reload(), 300);
-        return;
+      ss.mark();
+      try {
+        sessionStorage.setItem('__freshLoad', '1');
+      } catch {
+        /* ignore */
       }
-      reload(!!ss.get(RELOAD_FLAG));
+      const sep = location.href.includes('?') ? '&' : '?';
+      location.replace(location.href.split('#')[0] + sep + '_nocache=' + Date.now() + (location.hash || ''));
     })
     .catch(() => {
       /* 忽略网络异常（如离线） */
