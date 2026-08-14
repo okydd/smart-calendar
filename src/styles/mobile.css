@@ -831,6 +831,12 @@ body {
   font-weight: normal;
 }
 
+/* 办事清单：过期（未完成但日期已过）事件时间同灰显，覆盖默认蓝色 */
+.remind-time.expired {
+  color: #8a8f9e !important;
+  font-weight: normal;
+}
+
 .remind-hint {
   margin-left: auto;
   color: #3b7cff;
