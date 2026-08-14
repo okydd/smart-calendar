@@ -1,4 +1,4 @@
-import type { CalendarEvent } from '../types';
+import type { CalendarEvent, ReminderOffset } from '../types';
 
 /** 云端表行结构（snake_case） */
 export interface RemoteRow {
@@ -16,6 +16,8 @@ export interface RemoteRow {
   important: boolean;
   /** 关联图片（dataURL 数组），存为 jsonb */
   images: string[];
+  /** 提前提醒偏移量（可多个），存为 jsonb */
+  reminder: ReminderOffset[] | null;
   updated_at: string;
 }
 
@@ -36,6 +38,7 @@ export function rowToEvent(r: RemoteRow): CalendarEvent {
     deleted: Boolean(r.deleted),
     important: Boolean(r.important),
     images: Array.isArray(r.images) ? (r.images as string[]) : [],
+    reminder: Array.isArray(r.reminder) ? (r.reminder as ReminderOffset[]) : undefined,
     updatedAt: r.updated_at
   };
 }
@@ -56,6 +59,7 @@ export function eventToRow(e: CalendarEvent, userId: string): RemoteRow {
     deleted: Boolean(e.deleted),
     important: Boolean(e.important),
     images: Array.isArray(e.images) ? e.images : [],
+    reminder: Array.isArray(e.reminder) ? e.reminder : [],
     updated_at: e.updatedAt || new Date(0).toISOString()
   };
 }
@@ -137,6 +141,18 @@ export function mergeEvents(
       if (Array.isArray(other.images) && other.images.length > 0) {
         winner = { ...winner, images: other.images };
         push = true; // 带图版本需要写回（本地或云端）
+        pull = false;
+      }
+    }
+
+    // 自愈：提醒（reminder）同理，避免同步中静默丢失。
+    // 历史原因：reminder 字段曾未写入 RemoteRow/云表，导致云同步把多提醒事件
+    // 的提醒整体清空、进而原生排期被 cancelAllScheduled 全部取消（最早一个响后其余失效）。
+    if (!Array.isArray(winner.reminder) || winner.reminder.length === 0) {
+      const otherRem = winner === r ? l : r;
+      if (Array.isArray(otherRem.reminder) && otherRem.reminder.length > 0) {
+        winner = { ...winner, reminder: otherRem.reminder };
+        push = true; // 带提醒版本需要写回（本地或云端）
         pull = false;
       }
     }
