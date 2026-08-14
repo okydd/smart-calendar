@@ -1,6 +1,14 @@
 {
-  "semver": "V1.8.7",
+  "semver": "V1.8.8",
   "log": [
+    {
+      "version": "V1.8.8",
+      "date": "2026-08-14",
+      "title": "办事清单「已完成」状态文字改为灰色（修复无效 CSS 变量致变黑）",
+      "summary": "用户反馈办事清单中已完成事件的日期、时间、完成状态应用灰色字而非黑色。排查：日期（.remind-date 硬编码 #8a8f9e）与时间（.remind-time.struck 硬编码 #8a8f9e）本就灰显；但完成状态 .todo-days.done 与 .todo-days.expired 用了浅色 :root 中自引用的无效变量 --c-text-gray: var(--c-text-gray)，在浅色主题下解析失败、回退为继承的近黑色文字，故「已完成」三个字显示为黑色。修复：将 .todo-days.done/.expired 的颜色改为硬编码 #8a8f9e，与日期、时间一致，确保已完成/过期事件的日期、时间、完成状态三处统一灰显。后天/明天的蓝色药丸（请求1）在 V1.8.7 已实现：renderItem 对后天事件只渲染「后天」药丸+时间、不再显示日期与星期，样式与周提醒的 .remind-rel 一致（蓝字+浅蓝背景色块）。",
+      "type": "fix",
+      "rollback": true
+    },
     {
       "version": "V1.8.7",
       "date": "2026-08-14",
