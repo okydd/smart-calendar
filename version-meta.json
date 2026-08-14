@@ -1,11 +1,19 @@
 {
-  "semver": "V1.8.8",
+  "semver": "V1.8.9",
   "log": [
+    {
+      "version": "V1.8.9",
+      "date": "2026-08-14",
+      "title": "办事清单：后天/明天药丸显示字面「明天/后天」+ 已完成事件日期统一灰显",
+      "summary": "用户反馈 V1.8.7/1.8.8 部署后办事清单仍是老样子。排查根因：renderItem 的 relLabel 误用 dateLabel，而 dateLabel 对后天返回「月日 星期」(如 8月16日 周六) 而非「后天」二字，导致后天事件仍显示日期与星期；周提醒用的是另一函数 relativeDayLabel 直接返回「后天」，两者未对齐。修复：① relLabel 改为字面返回「明天/后天」(对齐周提醒)；② 已完成(done)事件不再显示蓝色相对药丸，改回普通日期文本(由 .remind-date 灰显)，确保已完成事件的日期、时间(struck)、完成状态(done)三处统一灰显。时间灰显由 .remind-time.struck/.expired(#8a8f9e) 负责，状态由 .todo-days.done/.expired(#8a8f9e) 负责。",
+      "type": "fix",
+      "rollback": true
+    },
     {
       "version": "V1.8.8",
       "date": "2026-08-14",
       "title": "办事清单「已完成」状态文字改为灰色（修复无效 CSS 变量致变黑）",
-      "summary": "用户反馈办事清单中已完成事件的日期、时间、完成状态应用灰色字而非黑色。排查：日期（.remind-date 硬编码 #8a8f9e）与时间（.remind-time.struck 硬编码 #8a8f9e）本就灰显；但完成状态 .todo-days.done 与 .todo-days.expired 用了浅色 :root 中自引用的无效变量 --c-text-gray: var(--c-text-gray)，在浅色主题下解析失败、回退为继承的近黑色文字，故「已完成」三个字显示为黑色。修复：将 .todo-days.done/.expired 的颜色改为硬编码 #8a8f9e，与日期、时间一致，确保已完成/过期事件的日期、时间、完成状态三处统一灰显。后天/明天的蓝色药丸（请求1）在 V1.8.7 已实现：renderItem 对后天事件只渲染「后天」药丸+时间、不再显示日期与星期，样式与周提醒的 .remind-rel 一致（蓝字+浅蓝背景色块）。",
+      "summary": "用户反馈办事清单中已完成事件的日期、时间、完成状态应用灰色字而非黑色。排查：日期（.remind-date 硬编码 #8a8f9e）与时间（.remind-time.struck 硬编码 #8a8f9e）本就灰显；但完成状态 .todo-days.done 与 .todo-days.expired 用了浅色 :root 中自引用的无效变量 --c-text-gray: var(--c-text-gray)，在浅色主题下解析失败、回退为继承的近黑色文字，故「已完成」三个字显示为黑色。修复：将 .todo-days.done/.expired 的颜色改为硬编码 #8a8f9e，与日期、时间一致，确保已完成/过期事件的日期、时间、完成状态三处统一灰显。",
       "type": "fix",
       "rollback": true
     },
