@@ -1101,12 +1101,12 @@ body {
 }
 
 .todo-days.expired {
-  color: var(--c-text-gray);
+  color: #8a8f9e;
   font-weight: normal;
 }
 
 .todo-days.done {
-  color: var(--c-text-gray);
+  color: #8a8f9e;
   font-weight: normal;
 }
 
