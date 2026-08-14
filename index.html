@@ -146,22 +146,36 @@
           if (fb && fb.parentNode) fb.parentNode.removeChild(fb);
         };
 
-        // 轮询式检测：已挂载（__appReady 或 root 有内容）或尚未加载完成则继续等待；
-        // 文档加载完成且仍为空，才判定为真正失败而弹出浮层。
-        // 若失败是「资源加载失败」且在线，则先自动以纯网络方式重试一次（自愈合），通常用户无感。
+        // 判断是否为「可恢复」的加载类致命错误：资源/模块/chunk 加载失败。
+        // 这类错误多因部署后 CDN 传播不一致（某个 JS chunk 暂时缺失）导致，
+        // 纯网络重试一次通常即可自愈；其余异步错误不触发自动重试，避免误刷。
+        function recoverable(f) {
+          return /资源加载失败|动态导入|dynamically imported|Loading chunk|ChunkLoadError|模块脚本|module script|Failed to fetch dynamically/i.test(f);
+        }
+
+        // 轮询式检测：已挂载（__appReady 或 root 有内容）则正常；
+        // 若捕获到「可恢复的加载错误」且在线，先纯网络重试一次（自愈合，用户通常无感）；
+        // 重试后仍失败，或已挂载却带可恢复致命错误，则弹出浮层供手动恢复；
+        // 否则文档加载完成且 root 仍为空，才判定为真正失败而弹面板。
         var shown = false;
         function maybeShow() {
           if (shown) return;
-          if (window.__appReady) return;
           var root = document.getElementById('root');
-          if (root && root.childElementCount > 0) return;
-          if (document.readyState !== 'complete') return;
-          var transient = navigator.onLine && fatal.some(function (f) { return /资源加载失败/.test(f); });
-          if (transient && !sessionStorage.getItem('__autoRetry')) {
+          var mounted = window.__appReady || (root && root.childElementCount > 0);
+          // 可恢复加载错误 + 在线 + 未重试过 → 纯网络全新加载一次（自愈）
+          if (fatal.some(recoverable) && navigator.onLine && !sessionStorage.getItem('__autoRetry')) {
             try { sessionStorage.setItem('__autoRetry', '1'); } catch (_) {}
             freshReload();
             return;
           }
+          // 已挂载但存在可恢复致命错误（如某 chunk 加载失败）→ 弹浮层，避免静默白屏
+          if (mounted && fatal.some(recoverable)) {
+            shown = true;
+            showFallback();
+            return;
+          }
+          if (mounted) return; // 正常挂载，无需面板
+          if (document.readyState !== 'complete') return;
           shown = true;
           showFallback();
         }
