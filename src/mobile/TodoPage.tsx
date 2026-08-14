@@ -140,8 +140,14 @@ export default function TodoPage() {
     const d = parseDateStr(e.date);
     const hint = d.isValid() ? statusHint(d, e, today) : '未设置日期';
     const struck = !!e.done;
+    const expired = !e.done && d.isValid() && d.isBefore(today, 'day');
     const timeText = e.allDay || !e.startTime ? '全天' : e.startTime;
     const dateText = d.isValid() ? dateLabel(d, today) : '未设置日期';
+    // 明天 / 后天：像周提醒那样，在时间前加蓝色相对标签（药丸 + 背景色块）
+    const relLabel =
+      d.isValid() && (d.isSame(today.add(1, 'day'), 'day') || d.isSame(today.add(2, 'day'), 'day'))
+        ? dateLabel(d, today)
+        : '';
     // 办事清单状态边框分级（互斥）：重要→红边 / 今天(含已完成)→实蓝 / 其它未完成→淡蓝 / 其它已完成→无边框
     const stateCls = e.important
       ? ' important'
@@ -150,6 +156,7 @@ export default function TodoPage() {
         : e.done
           ? ' done-pill'
           : ' not-done';
+    const timeCls = `remind-time${e.allDay || !e.startTime ? ' all-day' : ''}${struck ? ' struck' : ''}${expired ? ' expired' : ''}`;
     return (
       <div className={`event-pill todo-item${stateCls}`} key={e.id}>
         <button
@@ -166,11 +173,18 @@ export default function TodoPage() {
             <EventFlags e={e} />
           </div>
           <div className="remind-time-line">
-            <span className="remind-date">{dateText}</span>
-            <span className={`remind-time${e.allDay || !e.startTime ? ' all-day' : ''}${struck ? ' struck' : ''}`}>
-              {timeText}
-            </span>
-            <span className={`todo-days${e.done ? ' done' : ''}`}>{hint}</span>
+            {relLabel ? (
+              <span className="remind-rel-time">
+                <span className="remind-rel">{relLabel}</span>
+                <span className={timeCls}>{timeText}</span>
+              </span>
+            ) : (
+              <>
+                <span className="remind-date">{dateText}</span>
+                <span className={timeCls}>{timeText}</span>
+              </>
+            )}
+            <span className={`todo-days${e.done ? ' done' : ''}${expired ? ' expired' : ''}`}>{hint}</span>
           </div>
         </div>
       </div>
