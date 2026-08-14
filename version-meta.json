@@ -1,6 +1,14 @@
 {
-  "semver": "V1.8.5",
+  "semver": "V1.8.6",
   "log": [
+    {
+      "version": "V1.8.6",
+      "date": "2026-08-14",
+      "title": "部署传播期白屏自愈：chunk 加载失败自动重试并弹恢复面板",
+      "summary": "用户反馈 V1.8.5 部署后打开 APP 直接白屏、且连错误面板都没有。根因不是代码崩溃，而是 GitHub Pages 多节点 CDN 在部署后存在传播不一致窗口：新 index.html 与入口 chunk 先发布，而入口依赖的某个共享/懒加载 chunk（如 index-DNzFMgCo.js）滞后约数分钟才上线；用户在此期间打开，入口动态 import 该缺失 chunk → 404 → 白屏。由于 React 已挂载（#root 有内容），旧兜底面板被 childElementCount>0 判断抑制，故「连错误面板都没有」。修复：① 内联兜底面板新增「可恢复加载错误」识别（资源加载失败/动态导入/Loading chunk/ChunkLoadError/模块脚本/Failed to fetch dynamically），当捕获到此类错误且在线时，先以纯网络全新加载（__freshLoad，跳过 SW）自动重试一次实现自愈；② 已挂载却出现可恢复致命错误时也弹出浮层恢复面板，避免静默白屏；③ 重试仅限一次（sessionStorage __autoRetry 熔断），仍失败才显示面板。此改动不改变正常渲染路径，仅在部署传播窗口或弱网偶发缺 chunk 时生效，用户通常无感即恢复。APK 为在线壳，网页更新即生效，重开 APP 即可。",
+      "type": "fix",
+      "rollback": true
+    },
     {
       "version": "V1.8.5",
       "date": "2026-08-14",
