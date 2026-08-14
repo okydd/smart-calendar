@@ -1,6 +1,14 @@
 {
-  "semver": "V1.8.4",
+  "semver": "V1.8.5",
   "log": [
+    {
+      "version": "V1.8.5",
+      "date": "2026-08-14",
+      "title": "修复多提醒事件经云同步后其余提醒被取消（reminder 字段未同步）",
+      "summary": "用户反馈新建事件并设置多个提醒后，最早一个响完，其余提醒被后台默认取消、不再生效。根因：云同步层 src/sync/merge.ts 的 RemoteRow / rowToEvent / eventToRow 从未映射 reminder 字段，且云表 calendar_events 也缺该列。云同步（mergeEvents 以云端行胜出，含时间戳相同分支 winner=云端行）会把事件原有的 reminder 整体清空；事件变更随即触发 syncScheduledReminders 调用 cancelAllScheduled() 把已排期的原生通知全部取消，并因 reminder 为空不再重排，于是后续提醒全部失效。修复：① 云端表新增 reminder jsonb 列（默认 '[]'）；② merge.ts 的 RemoteRow 增加 reminder 字段、rowToEvent/eventToRow 双向映射；③ mergeEvents 增加提醒自愈（任一方有提醒而胜出方无，则补回并写回），避免 LWW 静默丢提醒。本地存储本就保留 reminder，故未登录/纯本地用户不受影响；已登录用户升级后新建或编辑过的事件将正确保留多个提醒并全部按原生通知响铃。注意：在修复前已被旧同步清掉提醒的存量事件，需重新编辑保存一次以把提醒写回云端。",
+      "type": "fix",
+      "rollback": true
+    },
     {
       "version": "V1.8.4",
       "date": "2026-08-11",
