@@ -158,6 +158,23 @@ const RELOAD_GUARD = {
   mark() {
     this.set(this.COUNT_KEY, String(Number(this.get(this.COUNT_KEY) || '0') + 1));
     this.set(this.LAST_KEY, String(Date.now()));
+  },
+  /**
+   * 彻底重置刷新额度。关键修复：手机 APK 的 WebView 会长期保留 sessionStorage，
+   * 导致 appReloadCount 永久卡在 MAX、自动更新被永久熔断、用户永远停留在旧版本。
+   * 因此在「检测到真正的新版本/SW」时调用本方法，给本次部署一个全新额度，确保更新能真正生效。
+   */
+  reset() {
+    this.set(this.COUNT_KEY, '0');
+    this.set(this.LAST_KEY, '0');
+  },
+  /** 仅当目标版本变化时才重置额度，避免对同一版本反复重置而失去熔断保护（防 CDN 传播期死循环） */
+  TARGET_KEY: 'appReloadTarget',
+  resetFor(target: string) {
+    if (this.get(this.TARGET_KEY) !== target) {
+      this.set(this.TARGET_KEY, target);
+      this.reset();
+    }
   }
 };
 
@@ -195,6 +212,8 @@ if ('serviceWorker' in navigator && !FRESH_LOAD) {
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
           if (!newWorker) return;
+          // 发现新 SW：重置刷新额度，确保本次部署能真正刷新（否则 WebView 复用 sessionStorage 会让额度永久耗尽）
+          RELOAD_GUARD.reset();
           newWorker.addEventListener('statechange', () => {
             // 仅在「替换已存在的旧 SW」时重载；首次安装（hadController=false）不重载，
             // 否则 SW 接管（clients.claim）会让每次打开 APP 都触发一次刷新 → 反复闪动。
@@ -272,6 +291,8 @@ if ('serviceWorker' in navigator && !FRESH_LOAD) {
         remember(j.semver);
         return;
       }
+      // 发现真正的新版本：重置刷新额度（按目标版本去重，避免对同一版本反复重置而失去熔断保护）
+      RELOAD_GUARD.resetFor(j.semver);
       // 发现新版本：受熔断限制下，以「纯网络 + 跳过 SW 注册」方式重载，
       // 立即摘取最新版本，且不会与 SW 的 updatefound 刷新叠加成连环刷新。
       if (!ss.can()) {
