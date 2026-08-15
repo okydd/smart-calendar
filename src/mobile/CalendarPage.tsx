@@ -219,17 +219,24 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
         : '';
     const cls = `event-pill${isDay ? ' event-pill-day' : ''}${e.important ? ' important' : ''}${e.done ? ' done-pill' : ' not-done'}`;
     const titleCls = `remind-title${struck ? ' struck' : ''}`;
-    // 周/月提醒：事件日期为今天/明天/后天时，在时间前加蓝色相对标签
-    const relLabel = showDate && !isDay ? relativeDayLabel(d, today) : '';
+    // 周/月提醒：事件日期为今天/明天/后天时，在时间前加蓝色相对标签；已完成事件不显示蓝色药丸（改灰显+删除线）
+    const relLabel = showDate && !isDay && !e.done ? relativeDayLabel(d, today) : '';
 
     // 日提醒：一行显示「时间(底色药丸) + 标题 + 重要/注/图」，不显示倒计时
     if (isDay) {
       return (
         <div key={e.id} className={cls} onClick={() => openView(e)}>
           <div className="remind-oneline">
-            <span className={`day-time${e.allDay || !e.startTime ? ' all-day' : ''}${struck ? ' struck' : ''}`}>
-              {timeText}
-            </span>
+            {d.isSame(today, 'day') && !e.done ? (
+              <span className="remind-rel-time">
+                <span className="remind-rel">今天</span>
+                <span className={`day-time${e.allDay || !e.startTime ? ' all-day' : ''}`}>{timeText}</span>
+              </span>
+            ) : (
+              <span className={`day-time${e.allDay || !e.startTime ? ' all-day' : ''}${struck ? ' struck' : ''}`}>
+                {timeText}
+              </span>
+            )}
             <span className={titleCls}>{e.title}</span>
             {e.important && <span className="imp-flag">重</span>}
             <EventFlags e={e} />
@@ -247,16 +254,18 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
             <EventFlags e={e} />
           </div>
           <div className="remind-time-line">
-            {showDate && dateText && <span className="remind-date">{dateText}</span>}
+            {showDate && dateText && (
+              <span className={`remind-date${struck ? ' struck' : ''}${expired ? ' expired' : ''}`}>{dateText}</span>
+            )}
             {relLabel ? (
               <span className="remind-rel-time">
                 <span className="remind-rel">{relLabel}</span>
-                <span className={`remind-time${e.allDay || !e.startTime ? ' all-day' : ''}${struck ? ' struck' : ''}`}>
+                <span className={`remind-time${e.allDay || !e.startTime ? ' all-day' : ''}${struck ? ' struck' : ''}${expired ? ' expired' : ''}`}>
                   {timeText}
                 </span>
               </span>
             ) : (
-              <span className={`remind-time${e.allDay || !e.startTime ? ' all-day' : ''}${struck ? ' struck' : ''}`}>
+              <span className={`remind-time${e.allDay || !e.startTime ? ' all-day' : ''}${struck ? ' struck' : ''}${expired ? ' expired' : ''}`}>
                 {timeText}
               </span>
             )}
