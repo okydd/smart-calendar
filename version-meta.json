@@ -1,6 +1,14 @@
 {
-  "semver": "V1.8.9",
+  "semver": "V1.9.0",
   "log": [
+    {
+      "version": "V1.9.0",
+      "date": "2026-08-15",
+      "title": "日历+办事清单：今天蓝色药丸 + 过期/完成事件日期时间灰显删除线",
+      "summary": "用户两点诉求：① 今天的事件在时间前加蓝色「今天」药丸（与明天/后天一致）；② 已过期与已完成的事件，日期与时间均灰色字 + 删除线。改动：TodoPage.relLabel 增加 today 分支(字面「今天」)，已完成不显示药丸改灰显日期；CalendarPage.relLabel 加 !e.done 抑制已完成蓝色药丸、日提醒今天事件加「今天」药丸；日期 span 均加 struck/expired 类；时间 span 加 expired 类。CSS 新增 .remind-date.struck/.expired 与 .remind-time.expired 的 text-decoration:line-through，并把 .remind-time.struck/.day-time.struck 合并规则的删除线补上；新增 .remind-rel-time .day-time 中性化让日提醒药丸内时间去自带蓝底。标题删除线沿用既有 .remind-title.struck。",
+      "type": "fix",
+      "rollback": true
+    },
     {
       "version": "V1.8.9",
       "date": "2026-08-14",
