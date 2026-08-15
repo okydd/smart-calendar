@@ -816,6 +816,12 @@ body {
   color: #8a8f9e;
 }
 
+/* 已过期 / 已完成：日期同灰 + 删除线（与周提醒/月提醒/办事清单一致） */
+.remind-date.struck,
+.remind-date.expired {
+  text-decoration: line-through;
+}
+
 .remind-time {
   color: #3b7cff;
   font-weight: 500;
@@ -835,6 +841,7 @@ body {
 .remind-time.expired {
   color: #8a8f9e !important;
   font-weight: normal;
+  text-decoration: line-through;
 }
 
 .remind-hint {
@@ -881,6 +888,7 @@ body {
 .day-time.struck,
 .remind-time.struck {
   color: #8a8f9e !important;
+  text-decoration: line-through;
 }
 
 .remind-tags {
@@ -1539,6 +1547,15 @@ body {
   background: transparent;
   padding: 0;
   margin: 0;
+}
+
+/* 日提醒「今天」药丸内的时间：去掉 day-time 自带蓝色背景，融入药丸（蓝字） */
+.remind-rel-time .day-time {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  color: #3b7cff;
+  font-weight: 600;
 }
 
 /* 需求4：版本升级进度遮罩，避免用户误以为卡死 */
