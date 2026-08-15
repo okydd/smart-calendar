@@ -1,6 +1,14 @@
 {
-  "semver": "V1.9.0",
+  "semver": "V1.9.1",
   "log": [
+    {
+      "version": "V1.9.1",
+      "date": "2026-08-15",
+      "title": "修复自动更新被永久熔断（WebView sessionStorage 复用致额度耗尽、用户卡在旧版本）",
+      "summary": "用户多次反馈部署后界面「还是老样子」，确认线上 V1.9.0 已含全部所需样式（.remind-rel 蓝字、.remind-rel-time 浅蓝药丸背景 #3b7cff1a、.remind-date/.remind-time.expired 灰字），根因是设备缓存了旧版本未更新。RELOAD_GUARD 的刷新额度存于 sessionStorage，而手机 APK 的 WebView 长期复用该 sessionStorage，导致 appReloadCount 永久停在 MAX=2、自动更新被永久熔断、用户永远停在旧版本。修复：新增 reset()/resetFor(target) 方法，在 SW updatefound（发现新 SW）与 checkAppUpdate 检测到真正新版本时重置额度（resetFor 按目标版本去重，避免 CDN 传播期对同一版本反复重置失去熔断保护），确保本次及以后部署能真正推送到设备。前端渲染逻辑与 V1.9.0 一致。",
+      "type": "fix",
+      "rollback": true
+    },
     {
       "version": "V1.9.0",
       "date": "2026-08-15",
