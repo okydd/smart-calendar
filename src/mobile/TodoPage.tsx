@@ -143,13 +143,16 @@ export default function TodoPage() {
     const expired = !e.done && d.isValid() && d.isBefore(today, 'day');
     const timeText = e.allDay || !e.startTime ? '全天' : e.startTime;
     const dateText = d.isValid() ? dateLabel(d, today) : '未设置日期';
-    // 明天 / 后天：像周提醒那样，在时间前加蓝色相对标签（药丸 + 背景色块），直接显示「明天 / 后天」二字
-    // 已完成事件不显示蓝色药丸，改回普通日期（保证日期 / 时间 / 状态统一灰显）
+    // 今天 / 明天 / 后天：像周提醒那样，在时间前加蓝色相对标签（药丸 + 背景色块），直接显示字面「今天 / 明天 / 后天」
+    // 已完成事件不显示蓝色药丸，改回普通日期（保证日期 / 时间 / 状态统一灰显 + 删除线）
     const relLabel =
-      !e.done && d.isValid() && (d.isSame(today.add(1, 'day'), 'day') || d.isSame(today.add(2, 'day'), 'day'))
+      !e.done && d.isValid() &&
+      (d.isSame(today, 'day') || d.isSame(today.add(1, 'day'), 'day') || d.isSame(today.add(2, 'day'), 'day'))
         ? d.isSame(today.add(2, 'day'), 'day')
           ? '后天'
-          : '明天'
+          : d.isSame(today.add(1, 'day'), 'day')
+            ? '明天'
+            : '今天'
         : '';
     // 办事清单状态边框分级（互斥）：重要→红边 / 今天(含已完成)→实蓝 / 其它未完成→淡蓝 / 其它已完成→无边框
     const stateCls = e.important
@@ -183,7 +186,7 @@ export default function TodoPage() {
               </span>
             ) : (
               <>
-                <span className="remind-date">{dateText}</span>
+                <span className={`remind-date${struck ? ' struck' : ''}${expired ? ' expired' : ''}`}>{dateText}</span>
                 <span className={timeCls}>{timeText}</span>
               </>
             )}
