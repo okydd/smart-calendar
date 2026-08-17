@@ -12,7 +12,7 @@ import { UIProvider, useUI } from './context/UIContext';
 import EventModal from './components/EventModal';
 import EventView from './components/EventView';
 import CalendarPage from './mobile/CalendarPage';
-import TodoPage from './mobile/TodoPage';
+import QuestionsPage from './mobile/QuestionsPage';
 import SettingsPage from './mobile/SettingsPage';
 import ReminderSettingsPage from './mobile/ReminderSettingsPage';
 import DataSettingsPage from './mobile/DataSettingsPage';
@@ -257,7 +257,7 @@ function Shell() {
           <Routes>
             <Route path="/" element={<Navigate to="/calendar" replace />} />
             <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/todos" element={<TodoPage />} />
+            <Route path="/todos" element={<QuestionsPage />} />
             <Route
               path="/settings"
               element={<SettingsPage onOpenSync={() => setSyncOpen(true)} />}
@@ -285,7 +285,7 @@ function Shell() {
           onClick={() => navigate('/todos')}
         >
           <UnorderedListOutlined className="tab-ico" />
-          办事清单
+          思考题
         </button>
         <button
           className={`tabbar-item${tab === 'settings' ? ' active' : ''}`}
