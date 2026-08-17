@@ -1,6 +1,14 @@
 {
-  "semver": "V1.9.9",
+  "semver": "V1.9.10",
   "log": [
+    {
+      "version": "V1.9.10",
+      "date": "2026-08-17",
+      "title": "思考题详情：完成/编辑/删除三按钮一行均布 + X 突出 + 去掉议题日期前缀 + 弹窗居中",
+      "summary": "思考题详情弹层（QuestionsPage）四处调整：① 取消 iOS 开关，恢复为「完成」按钮（.q-btn.done，绿色渐变实心，文案「标注完毕/取消标注」），与「编辑」「删除」三按钮在同一行 flex:1 平均分布（.q-actions）。② 右上角关闭 X 改为 32px 圆形灰底背景、18px 图标、加 z-index，明显且不与长标题重叠；详情题目 .q-detail-title 加 padding-right:36px 预留 X 空间。③ 详情日期前缀「议题日期：」四字删除，仅保留日历图标 + 日期（.q-detail-meta）。④ Modal 加 centered 属性改为垂直居中显示（不再贴屏幕上方）。",
+      "type": "feat",
+      "rollback": true
+    },
     {
       "version": "V1.9.9",
       "date": "2026-08-17",
