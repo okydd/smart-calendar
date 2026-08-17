@@ -1,6 +1,14 @@
 {
-  "semver": "V1.9.5",
+  "semver": "V1.9.6",
   "log": [
+    {
+      "version": "V1.9.6",
+      "date": "2026-08-17",
+      "title": "已完成卡片头部对齐周提醒结构 + 支持按月查看切换日期",
+      "summary": "把日历底部「已完成」卡片头部从原来的折叠按钮（.done-collapse）改为与周提醒完全一致的标题结构：图标(CalendarOutlined)+「已完成」标签+范围+计数，并复用已预留的 .remind-header.done 绿色徽章。新增独立的 doneMonthView 状态，点「按月查看」可切换查看指定月份的已完成/已过期事件（左右箭头翻月、返回全部），与月提醒的 monthView 完全解耦。卡片始终渲染（空也显示框），列表直接展示（不再折叠）。移除 doneExpanded 折叠状态与旧的 allArchivedEvents（改为 doneArchivedEvents）。",
+      "type": "feat",
+      "rollback": true
+    },
     {
       "version": "V1.9.5",
       "date": "2026-08-17",
