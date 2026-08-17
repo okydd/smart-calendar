@@ -4381,6 +4381,16 @@ body {
   border-color: #a8e6c0;
   background: #f2fbf5;
 }
+/* 选中态（非今日）：淡蓝边框 + 极浅蓝底，与左侧选中日期锚点一致 */
+.q-card.sel {
+  border: 2px solid var(--c-primary-light);
+  background: #eef3ff;
+}
+/* 今日：蓝色边框 + 浅蓝底，与左侧今日日期锚点（蓝底方块）呼应 */
+.q-card.today {
+  border: 2px solid var(--c-primary);
+  background: #eef3ff;
+}
 .q-card-done-tag {
   font-size: 11px;
   color: #1f9d52;
