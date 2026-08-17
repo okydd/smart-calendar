@@ -65,6 +65,14 @@ export default function QuestionsPage() {
     [questions]
   );
 
+  // 高亮日期：默认今天（若今天有题），否则最近一个日期；点击日期可切换。
+  // 全屏最多只允许一张卡片出现淡蓝边框：只高亮 activeDate 对应的「第一张」卡片。
+  const highlightId = useMemo(() => {
+    if (!activeDate) return null;
+    const idx = sorted.findIndex((q) => q.date === activeDate);
+    return idx >= 0 ? sorted[idx].id : null;
+  }, [sorted, activeDate]);
+
   const selected = questions.find((q) => q.id === detailId) || null;
 
   // 设置页搜索思考题后跳转而来：自动打开对应详情并消费意图
@@ -81,9 +89,11 @@ export default function QuestionsPage() {
     setNoteOpen(false);
   }, [detailId]);
 
-  // 默认高亮最新日期
+  // 默认高亮：今天（若今天有题）否则最近一个日期
   useEffect(() => {
-    if (dateKeys.length && !activeDate) setActiveDate(dateKeys[0]);
+    if (dateKeys.length && !activeDate) {
+      setActiveDate(dateKeys.includes(todayStr) ? todayStr : dateKeys[0]);
+    }
   }, [dateKeys]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const scrollToDate = (dk: string) => {
@@ -176,15 +186,14 @@ export default function QuestionsPage() {
             </div>
           ) : (
             sorted.map((q) => {
-              const qToday = q.date === todayStr;
-              const qSel = !qToday && q.date === activeDate;
+              const qHi = q.id === highlightId;
               return (
               <div
                 key={q.id}
                 ref={(el) => {
                   dateRefs.current[q.date] = el;
                 }}
-                className={`q-card${q.done ? ' done' : ''}${qToday ? ' today' : ''}${qSel ? ' sel' : ''}`}
+                className={`q-card${q.done ? ' done' : ''}${qHi ? ' hi' : ''}`}
                 onClick={() => setDetailId(q.id)}
               >
                 <div className="q-card-top">
