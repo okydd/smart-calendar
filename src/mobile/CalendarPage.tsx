@@ -78,6 +78,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
   const [slide, setSlide] = useState<'' | 'slide-left' | 'slide-right'>('');
   const [monthView, setMonthView] = useState<Dayjs | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [doneExpanded, setDoneExpanded] = useState(false);
   const touchRef = useRef<{ x: number; y: number } | null>(null);
 
   /** 进入日历页时静默同步一次：确保日/周/月提醒打开即显示完整数据，
@@ -128,7 +129,8 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
   };
 
   // 日 / 周 / 月 分组（周一为每周第一天）
-  const { dayEvents, weekEvents, monthEvents, monthRangeLabel, weekRangeLabel } = useMemo(() => {
+  const { dayEvents, weekEvents, monthActiveEvents, monthDoneEvents, monthRangeLabel, weekRangeLabel } =
+    useMemo(() => {
     // 周/月提醒范围固定在「今天所在周」，切换选中日期不会让周/月提醒消失
     const mondayThis = today.isoWeekday(1);
     const weekStart = mondayThis;
@@ -182,11 +184,15 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
 
     day.sort(sorterStruck);
     week.sort(sorterStruck);
-    month.sort(sorterStruck);
+    month.sort(baseSorter); // 先按时间排序，再拆分「已完成」到底部独立区块
+
+    // 月提醒：已完成事件从主列表移出，单独放在下方可折叠区块（保持原样式/功能）
+    const monthActiveEvents = month.filter((e) => !e.done);
+    const monthDoneEvents = month.filter((e) => !!e.done).reverse(); // 已完成按日期倒序（近的在前）
 
     const monthRangeLabel = `${wk3Start.month() + 1}月${wk3Start.date()}日 - ${wk4End.month() + 1}月${wk4End.date()}日`;
     const weekRangeLabel = `${weekStart.month() + 1}月${weekStart.date()}日 - ${nextWeekEnd.month() + 1}月${nextWeekEnd.date()}日`;
-    return { dayEvents: day, weekEvents: week, monthEvents: month, monthRangeLabel, weekRangeLabel };
+    return { dayEvents: day, weekEvents: week, monthActiveEvents, monthDoneEvents, monthRangeLabel, weekRangeLabel };
   }, [filteredEvents, currentDate]);
 
   /** 按月查看：该月所有事件（按天归组） */
@@ -201,6 +207,13 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
         return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
       });
   }, [filteredEvents, monthView]);
+
+  // 按月查看：同样把已完成事件拆到下方可折叠区块
+  const monthViewActive = useMemo(() => monthViewEvents.filter((e) => !e.done), [monthViewEvents]);
+  const monthViewDone = useMemo(
+    () => monthViewEvents.filter((e) => !!e.done).reverse(),
+    [monthViewEvents]
+  );
 
   const selectedKey = toDateStr(currentDate);
   const isToday = currentDate.isSame(today, 'day');
@@ -435,18 +448,52 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
 
         {monthView ? (
           <>
-            {monthViewEvents.length === 0 ? (
+            {monthViewActive.length === 0 ? (
               <div className="empty-remind">本月暂无安排</div>
             ) : (
-              <div className="remind-list">{monthViewEvents.map((e) => renderEventRow(e, true))}</div>
+              <div className="remind-list">{monthViewActive.map((e) => renderEventRow(e, true))}</div>
+            )}
+            {monthViewDone.length > 0 && (
+              <div className="done-collapse">
+                <button
+                  className="done-collapse-btn"
+                  onClick={() => setDoneExpanded((v) => !v)}
+                  aria-label={doneExpanded ? '收起已完成' : '展开已完成'}
+                >
+                  <DownOutlined className={doneExpanded ? 'flip' : ''} />
+                  已完成（{monthViewDone.length}）
+                </button>
+                {doneExpanded && (
+                  <div className="remind-list done-list">
+                    {monthViewDone.map((e) => renderEventRow(e, true))}
+                  </div>
+                )}
+              </div>
             )}
           </>
         ) : (
           <>
-            {monthEvents.length === 0 ? (
+            {monthActiveEvents.length === 0 ? (
               <div className="empty-remind">近 4 周暂无更多安排</div>
             ) : (
-              <div className="remind-list">{monthEvents.map((e) => renderEventRow(e, true))}</div>
+              <div className="remind-list">{monthActiveEvents.map((e) => renderEventRow(e, true))}</div>
+            )}
+            {monthDoneEvents.length > 0 && (
+              <div className="done-collapse">
+                <button
+                  className="done-collapse-btn"
+                  onClick={() => setDoneExpanded((v) => !v)}
+                  aria-label={doneExpanded ? '收起已完成' : '展开已完成'}
+                >
+                  <DownOutlined className={doneExpanded ? 'flip' : ''} />
+                  已完成（{monthDoneEvents.length}）
+                </button>
+                {doneExpanded && (
+                  <div className="remind-list done-list">
+                    {monthDoneEvents.map((e) => renderEventRow(e, true))}
+                  </div>
+                )}
+              </div>
             )}
           </>
         )}
