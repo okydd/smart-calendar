@@ -4300,23 +4300,23 @@ body {
   font-size: 11px;
   color: #8a8f9e;
 }
-/* 选中态（非今日）：淡蓝边框 + 极浅蓝底，文字转主题蓝 */
+/* 选中态 / 今日：统一 1px 淡蓝边框 + 极浅蓝底，文字转主题蓝 */
 .q-date-chip.active {
   background: #eef3ff;
-  border: 2px solid var(--c-primary-light);
+  border: 1px solid var(--c-primary-light);
 }
 .q-date-chip.active .q-day,
 .q-date-chip.active .q-wk {
   color: var(--c-primary);
 }
-/* 今日：保留蓝色背景方框（与选中态区分，优先级更高） */
+/* 今日：与选中态一致，1px 淡蓝边框（不再用蓝底方块） */
 .q-date-chip.today {
-  background: var(--c-primary);
-  border-color: var(--c-primary);
+  background: #eef3ff;
+  border: 1px solid var(--c-primary-light);
 }
 .q-date-chip.today .q-day,
 .q-date-chip.today .q-wk {
-  color: #fff;
+  color: var(--c-primary);
 }
 
 /* 右侧主区 */
@@ -4381,14 +4381,10 @@ body {
   border-color: #a8e6c0;
   background: #f2fbf5;
 }
-/* 选中态（非今日）：淡蓝边框 + 极浅蓝底，与左侧选中日期锚点一致 */
-.q-card.sel {
-  border: 2px solid var(--c-primary-light);
-  background: #eef3ff;
-}
-/* 今日：蓝色边框 + 浅蓝底，与左侧今日日期锚点（蓝底方块）呼应 */
-.q-card.today {
-  border: 2px solid var(--c-primary);
+/* 高亮态：仅 activeDate 对应的第一张卡片（今天或选中日期），1px 淡蓝边框 + 极浅蓝底；
+   全屏同时最多 1 张出现此边框（由 QuestionsPage 的 highlightId 保证） */
+.q-card.hi {
+  border: 1px solid var(--c-primary-light);
   background: #eef3ff;
 }
 .q-card-done-tag {
