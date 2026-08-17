@@ -4407,7 +4407,19 @@ body {
   flex: 0 0 auto;
 }
 .q-dot.done {
-  background: #34c759; /* 已完成 */
+  width: 18px;
+  height: 18px;
+  background: #34c759; /* 已完成：绿色方块 + 白色对钩 */
+  border-radius: 5px;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(52, 199, 89, 0.35);
+}
+.q-dot.done .anticon {
+  font-size: 11px;
+  line-height: 1;
 }
 .q-card-title {
   font-size: 15px;
@@ -4435,49 +4447,151 @@ body {
   display: flex;
   flex-direction: column;
 }
-.q-detail-meta {
-  font-size: 13px;
-  color: #8a8f9e;
-}
 .q-detail-title {
-  margin-top: 8px;
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 19px;
+  font-weight: 700;
   color: #1f2330;
   line-height: 1.4;
+  letter-spacing: 0.2px;
 }
-.q-detail-body {
-  margin-top: 12px;
+.q-detail-meta {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #8a8f9e;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.q-detail-meta .anticon {
+  font-size: 13px;
+}
+/* 备注信息块 */
+.q-detail-note {
+  margin-top: 14px;
+  background: #f7f8fc;
+  border: 1px solid #eef0f6;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.q-note-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8a8f9e;
+  margin-bottom: 6px;
+  letter-spacing: 0.3px;
+}
+.q-detail-note-body {
   font-size: 14px;
   line-height: 1.7;
   color: #3a3f4d;
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* 完成状态开关行 */
+.q-detail-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18px;
+  padding: 12px 14px;
+  background: #fbfcfe;
+  border: 1px solid #eef0f6;
+  border-radius: 14px;
+}
+.q-toggle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.q-toggle-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2330;
+}
+.q-toggle-state {
+  font-size: 12px;
+  color: #8a8f9e;
+}
+.q-toggle-state.on {
+  color: #34c759;
+  font-weight: 600;
+}
+/* iOS 风格开关 */
+.q-switch {
+  position: relative;
+  width: 50px;
+  height: 30px;
+  border: none;
+  border-radius: 15px;
+  background: #d7dae2;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.26s cubic-bezier(0.4, 0.1, 0.25, 1);
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.q-switch.on {
+  background: linear-gradient(135deg, #34c759, #22b35a);
+  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.4);
+}
+.q-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(16, 24, 40, 0.25);
+  transition: transform 0.26s cubic-bezier(0.4, 0.1, 0.25, 1);
+}
+.q-switch.on .q-switch-knob {
+  transform: translateX(20px);
+}
+.q-switch:active .q-switch-knob {
+  width: 28px;
+}
+
+/* 操作按钮：编辑 + 删除，高级质感 */
 .q-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 16px;
-  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
 }
 .q-btn {
+  flex: 1;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  border: 1px solid #d7dae2;
-  background: #fff;
-  color: #3a3f4d;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 13px;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+  transition: transform 0.16s, box-shadow 0.2s, background 0.2s;
+  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.08);
 }
 .q-btn:active {
-  background: #f2f3f6;
+  transform: scale(0.98);
 }
+/* 编辑：主题渐变主按钮 */
+.q-btn.edit {
+  background: var(--c-gradient);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(76, 110, 245, 0.32);
+}
+.q-btn.edit:active {
+  background: linear-gradient(135deg, #3b5bdb, #5b3fb8);
+}
+/* 删除：白底红字描边，悬停浅红 */
 .q-btn.danger {
+  background: #fff;
   color: #e03131;
-  border-color: #ffc9c9;
+  border: 1.5px solid #ffc9c9;
+  box-shadow: 0 4px 14px rgba(224, 49, 49, 0.1);
 }
 .q-btn.danger:active {
   background: #fff0f0;
