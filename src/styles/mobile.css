@@ -933,6 +933,15 @@ body {
   transform: scale(0.9);
 }
 
+/* 绿色变体（思考题页新建） */
+.fab.green {
+  background: linear-gradient(135deg, #34c759, #28a745);
+  box-shadow: 0 8px 22px rgba(52, 199, 89, 0.42);
+}
+.fab.green:active {
+  background: linear-gradient(135deg, #2fb350, #239a3e);
+}
+
 /* ===================== 办事清单页 ===================== */
 .todo-group {
   margin-bottom: 14px;
@@ -3932,15 +3941,33 @@ body {
   padding: 0 2px;
 }
 
-.set-search-btn {
-  border: none;
-  border-radius: 9px;
-  background: linear-gradient(135deg, #5e60ff, #3b7cff);
-  color: #fff;
-  font-size: 13px;
-  padding: 6px 14px;
-  cursor: pointer;
+/* 搜索类型切换 */
+.set-search-seg {
+  margin: 2px 12px 10px;
 }
+.set-search-seg .ant-segmented-item {
+  font-size: 13px;
+}
+
+/* 内联搜索结果 */
+.set-search-result {
+  margin: 2px 12px 6px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.set-search-result .search-result-item {
+  border-bottom: 1px solid #f0f1f5;
+}
+.set-search-result .search-result-item:last-child {
+  border-bottom: none;
+}
+.set-search-result .search-empty {
+  text-align: center;
+  color: #8a8f9e;
+  font-size: 13px;
+  padding: 16px 0;
+}
+
 
 /* ---------- 底部按钮区 ---------- */
 .set-actions {
@@ -4290,68 +4317,7 @@ body {
   flex-direction: column;
   min-height: 0;
 }
-.q-main-head {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 12px 14px;
-  border-bottom: 1px solid #ececf0;
-}
-.q-add-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border: none;
-  border-radius: 8px;
-  background: var(--c-primary);
-  color: #fff;
-  font-size: 13px;
-  padding: 6px 12px;
-  cursor: pointer;
-}
-.q-add-btn:active {
-  background: var(--c-primary-light);
-}
-
-/* 顶部双搜索 */
-.q-search {
-  display: flex;
-  gap: 8px;
-  padding: 10px 14px;
-  border-bottom: 1px solid #f0f1f5;
-}
-.q-search-date,
-.q-search-kw {
-  border: 1px solid #d7dae2;
-  border-radius: 8px;
-  padding: 7px 10px;
-  font-size: 13px;
-  color: #2b2f3a;
-  outline: none;
-  box-sizing: border-box;
-  font-family: inherit;
-  background: #f7f8fc;
-}
-.q-search-date {
-  width: 150px;
-}
-.q-search-kw {
-  flex: 1;
-  min-width: 0;
-}
-.q-search-date:focus,
-.q-search-kw:focus {
-  border-color: var(--c-primary);
-}
-.q-search-clear {
-  border: 1px solid #d7dae2;
-  background: #fff;
-  border-radius: 8px;
-  padding: 0 10px;
-  font-size: 13px;
-  color: #8a8f9e;
-  cursor: pointer;
-}
+/* 增加按钮已改为右下角可拖动绿色 FAB */
 
 /* 连续列表 */
 .q-list {
@@ -4400,26 +4366,18 @@ body {
   font-size: 12px;
   color: #8a8f9e;
 }
-.q-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-  flex: 0 0 auto;
+/* 已完成：卡片淡绿色边框 + 淡绿底，不再用右上角绿方块 */
+.q-card.done {
+  border-color: #a8e6c0;
+  background: #f2fbf5;
 }
-.q-dot.done {
-  width: 18px;
-  height: 18px;
-  background: #34c759; /* 已完成：绿色方块 + 白色对钩 */
-  border-radius: 5px;
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 6px rgba(52, 199, 89, 0.35);
-}
-.q-dot.done .anticon {
+.q-card-done-tag {
   font-size: 11px;
-  line-height: 1;
+  color: #1f9d52;
+  background: #e3f7ea;
+  border-radius: 6px;
+  padding: 1px 7px;
+  flex: 0 0 auto;
 }
 .q-card-title {
   font-size: 15px;
