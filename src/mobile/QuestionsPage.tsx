@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, message } from 'antd';
 import {
-  PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   CheckOutlined,
@@ -11,6 +10,7 @@ import {
 import { useCalendar } from '../context/CalendarContext';
 import { dayjs, weekdayCN } from '../utils/date';
 import type { CalendarEvent } from '../types';
+import Fab from '../components/Fab';
 
 function fmtDate(dateStr: string): string {
   const d = dayjs(dateStr);
@@ -20,21 +20,25 @@ function fmtDate(dateStr: string): string {
 
 /**
  * 思考题页（独立新类型，不进日历/提醒）：
- * 方案B —— 左侧平铺日期锚点（点日期滚动定位），顶部「按日期 + 按关键词」双搜索，
- * 右侧所有思考题连续平铺，列表项不显示操作按钮；点卡片弹出详情，详情里才有
- * 标注完毕 / 修改 / 删除。完成状态用卡片右上角绿色小方块表示（仅已完成时显示）。
+ * 左侧平铺日期锚点（点日期滚动定位），所有思考题按日期倒序连续平铺，列表项不显示操作按钮；
+ * 点卡片弹出详情，详情里才有 标注完毕 / 修改 / 删除。搜索统一收到「设置」页，本页不再提供搜索。
+ * 完成状态用卡片淡绿色边框表示（仅已完成时显示）。新建用右下角可拖动的绿色 FAB。
  */
 export default function QuestionsPage() {
-  const { allEvents, addEvent, updateEvent, deleteEvent, toggleDone } = useCalendar();
+  const {
+    allEvents,
+    addEvent,
+    updateEvent,
+    deleteEvent,
+    toggleDone,
+    focusQuestionId,
+    setFocusQuestionId
+  } = useCalendar();
 
   const questions = useMemo(
     () => allEvents.filter((e) => e.kind === 'question' && !e.deleted),
     [allEvents]
   );
-
-  // 顶部双搜索
-  const [searchDate, setSearchDate] = useState(''); // YYYY-MM-DD
-  const [keyword, setKeyword] = useState('');
 
   // 左侧日期锚点（取所有题目的日期，倒序，近的在前）
   const dateKeys = useMemo(() => {
@@ -52,20 +56,21 @@ export default function QuestionsPage() {
   const listRef = useRef<HTMLDivElement>(null);
   const dateRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const filtered = useMemo(() => {
-    const kw = keyword.trim();
-    return questions
-      .filter((q) => !searchDate || (q.date || '').startsWith(searchDate))
-      .filter(
-        (q) =>
-          !kw ||
-          q.title.toLowerCase().includes(kw.toLowerCase()) ||
-          (q.description || '').toLowerCase().includes(kw.toLowerCase())
-      )
-      .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  }, [questions, searchDate, keyword]);
+  // 按日期倒序展示
+  const sorted = useMemo(
+    () => [...questions].sort((a, b) => (b.date || '').localeCompare(a.date || '')),
+    [questions]
+  );
 
   const selected = questions.find((q) => q.id === detailId) || null;
+
+  // 设置页搜索思考题后跳转而来：自动打开对应详情并消费意图
+  useEffect(() => {
+    if (focusQuestionId) {
+      setDetailId(focusQuestionId);
+      setFocusQuestionId(null);
+    }
+  }, [focusQuestionId, setFocusQuestionId]);
 
   // 默认高亮最新日期
   useEffect(() => {
@@ -151,64 +156,27 @@ export default function QuestionsPage() {
         )}
       </div>
 
-      {/* 右侧：搜索 + 连续列表 */}
+      {/* 右侧：连续列表（搜索已集中到「设置」） */}
       <div className="q-main">
-        <div className="q-main-head">
-          <button className="q-add-btn" onClick={openCreate}>
-            <PlusOutlined /> 增加
-          </button>
-        </div>
-
-        <div className="q-search">
-          <input
-            type="date"
-            className="q-search-date"
-            value={searchDate}
-            onChange={(e) => setSearchDate(e.target.value)}
-            placeholder="按日期"
-          />
-          <input
-            className="q-search-kw"
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            placeholder="按关键词搜索"
-          />
-          {(searchDate || keyword) && (
-            <button
-              className="q-search-clear"
-              onClick={() => {
-                setSearchDate('');
-                setKeyword('');
-              }}
-            >
-              清除
-            </button>
-          )}
-        </div>
-
         <div className="q-list" ref={listRef}>
-          {filtered.length === 0 ? (
+          {sorted.length === 0 ? (
             <div className="q-list-empty">
               <FileTextOutlined className="q-empty-ico" />
-              <p>{questions.length === 0 ? '暂无思考题，点击「增加」新建' : '没有匹配的思考题'}</p>
+              <p>暂无思考题，点击右下角「+」新建</p>
             </div>
           ) : (
-            filtered.map((q) => (
+            sorted.map((q) => (
               <div
                 key={q.id}
                 ref={(el) => {
                   dateRefs.current[q.date] = el;
                 }}
-                className="q-card"
+                className={`q-card${q.done ? ' done' : ''}`}
                 onClick={() => setDetailId(q.id)}
               >
                 <div className="q-card-top">
                   <span className="q-card-date">{fmtDate(q.date)}</span>
-                  {q.done && (
-                    <span className="q-dot done">
-                      <CheckOutlined />
-                    </span>
-                  )}
+                  {q.done && <span className="q-card-done-tag">已完成</span>}
                 </div>
                 <div className="q-card-title">{q.title}</div>
                 {q.description && <div className="q-card-desc">{q.description}</div>}
@@ -217,6 +185,9 @@ export default function QuestionsPage() {
           )}
         </div>
       </div>
+
+      {/* 右下角可拖动的绿色新建 FAB */}
+      <Fab color="green" onClick={openCreate} />
 
       {/* 详情弹层：操作按钮在此出现 */}
       <Modal
