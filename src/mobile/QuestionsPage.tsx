@@ -175,13 +175,16 @@ export default function QuestionsPage() {
               <p>暂无思考题，点击右下角「+」新建</p>
             </div>
           ) : (
-            sorted.map((q) => (
+            sorted.map((q) => {
+              const qToday = q.date === todayStr;
+              const qSel = !qToday && q.date === activeDate;
+              return (
               <div
                 key={q.id}
                 ref={(el) => {
                   dateRefs.current[q.date] = el;
                 }}
-                className={`q-card${q.done ? ' done' : ''}`}
+                className={`q-card${q.done ? ' done' : ''}${qToday ? ' today' : ''}${qSel ? ' sel' : ''}`}
                 onClick={() => setDetailId(q.id)}
               >
                 <div className="q-card-top">
@@ -190,7 +193,8 @@ export default function QuestionsPage() {
                 </div>
                 <div className="q-card-title">{q.title}</div>
               </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
