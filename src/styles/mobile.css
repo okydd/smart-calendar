@@ -4230,28 +4230,75 @@ body {
   padding: 0;
   box-sizing: border-box;
 }
-.q-tree {
-  width: 44%;
-  max-width: 330px;
+/* 左侧：平铺日期锚点 */
+.q-dates {
+  width: 76px;
+  flex: 0 0 76px;
   border-right: 1px solid #ececf0;
+  background: #f7f8fc;
+  overflow-y: auto;
+  padding: 10px 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+.q-dates-empty {
+  padding: 24px 8px;
+  color: #8a8f9e;
+  font-size: 12px;
+  text-align: center;
+}
+.q-date-chip {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  border: 1px solid #ececf0;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  padding: 0;
+}
+.q-date-chip .q-day {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2b2f3a;
+  line-height: 1;
+}
+.q-date-chip .q-wk {
+  font-size: 11px;
+  color: #8a8f9e;
+}
+.q-date-chip.active {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+}
+.q-date-chip.active .q-day,
+.q-date-chip.active .q-wk {
+  color: #fff;
+}
+
+/* 右侧主区 */
+.q-main {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: #fafafb;
 }
-.q-tree-head {
+.q-main-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 12px;
+  padding: 12px 14px;
   border-bottom: 1px solid #ececf0;
-  position: sticky;
-  top: 0;
-  background: #fafafb;
-  z-index: 1;
 }
-.q-tree-title {
-  font-size: 15px;
+.q-title {
+  font-size: 16px;
   font-weight: 600;
   color: #1f2330;
 }
@@ -4264,142 +4311,145 @@ body {
   background: var(--c-primary);
   color: #fff;
   font-size: 13px;
-  padding: 6px 10px;
+  padding: 6px 12px;
   cursor: pointer;
 }
 .q-add-btn:active {
   background: var(--c-primary-light);
 }
-.q-tree-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding-bottom: 16px;
-}
-.q-empty {
-  padding: 24px 16px;
-  color: #8a8f9e;
-  font-size: 13px;
-  text-align: center;
-}
 
-.q-month-head,
-.q-date-head {
+/* 顶部双搜索 */
+.q-search {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
-  cursor: pointer;
-  user-select: none;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #f0f1f5;
 }
-.q-month-head {
-  background: #f0f1f5;
-  font-weight: 600;
-  color: #1f2330;
-  font-size: 13px;
-}
-.q-date-head {
-  padding-left: 22px;
-  font-size: 12px;
-  color: #555;
-}
-.q-month-head .anticon,
-.q-date-head .anticon {
-  font-size: 10px;
-  color: #9aa0ad;
-  transition: transform 0.15s;
-}
-.anticon.flip {
-  transform: rotate(-90deg);
-}
-.q-month-label {
-  flex: 1;
-}
-.q-date-label {
-  flex: 1;
-}
-.q-count {
-  min-width: 18px;
-  text-align: center;
-  font-size: 11px;
-  color: #fff;
-  background: #c4c8d4;
-  border-radius: 9px;
-  padding: 0 5px;
-}
-.q-month-head .q-count {
-  background: var(--c-primary);
-}
-
-.q-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 10px 8px 34px;
-  cursor: pointer;
-  border-left: 3px solid transparent;
-}
-.q-item-title {
-  flex: 1;
+.q-search-date,
+.q-search-kw {
+  border: 1px solid #d7dae2;
+  border-radius: 8px;
+  padding: 7px 10px;
   font-size: 13px;
   color: #2b2f3a;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  background: #f7f8fc;
 }
-.q-item.active {
-  background: #e9f0ff;
-  border-left-color: var(--c-primary);
+.q-search-date {
+  width: 150px;
 }
-.q-item.done .q-item-title {
-  color: #8a8f9e;
-  text-decoration: line-through;
-}
-.q-done-ico {
-  color: #2f9e44;
-  font-size: 12px;
-}
-
-/* 右侧详情 */
-.q-detail {
+.q-search-kw {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
-  overflow-y: auto;
 }
-.q-detail-head {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
+.q-search-date:focus,
+.q-search-kw:focus {
+  border-color: var(--c-primary);
 }
-.q-detail-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1f2330;
-  flex: 1;
-  line-height: 1.4;
-}
-.q-status {
-  font-size: 12px;
-  padding: 3px 8px;
-  border-radius: 10px;
-  white-space: nowrap;
-  background: #fff3bf;
-  color: #b08900;
-}
-.q-status.done {
-  background: #e6fcf0;
-  color: #2f9e44;
-}
-.q-detail-meta {
-  margin-top: 8px;
+.q-search-clear {
+  border: 1px solid #d7dae2;
+  background: #fff;
+  border-radius: 8px;
+  padding: 0 10px;
   font-size: 13px;
   color: #8a8f9e;
+  cursor: pointer;
+}
+
+/* 连续列表 */
+.q-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.q-list-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #8a8f9e;
+  gap: 8px;
+}
+.q-empty-ico {
+  font-size: 40px;
+}
+.q-list-empty p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* 题卡（无操作按钮，状态用右上角小方块） */
+.q-card {
+  border: 1px solid #ececf0;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.q-card:active {
+  background: #f7f8fc;
+}
+.q-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.q-card-date {
+  font-size: 12px;
+  color: #8a8f9e;
+}
+.q-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: #3b7cff; /* 思考中 */
+  flex: 0 0 auto;
+}
+.q-dot.done {
+  background: #34c759; /* 已完成 */
+}
+.q-card-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: #1f2330;
+  line-height: 1.4;
+}
+.q-card-desc {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #8a8f9e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* 详情弹层（操作按钮在此出现） */
+.q-detail {
+  display: flex;
+  flex-direction: column;
+}
+.q-detail-meta {
+  font-size: 13px;
+  color: #8a8f9e;
+}
+.q-detail-title {
+  margin-top: 8px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #1f2330;
+  line-height: 1.4;
 }
 .q-detail-body {
   margin-top: 12px;
-  flex: 1;
   font-size: 14px;
   line-height: 1.7;
   color: #3a3f4d;
@@ -4433,26 +4483,6 @@ body {
 }
 .q-btn.danger:active {
   background: #fff0f0;
-}
-
-.q-detail-empty {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #8a8f9e;
-}
-.q-empty-ico {
-  font-size: 40px;
-  margin-bottom: 12px;
-}
-.q-detail-empty p {
-  margin: 2px 0;
-  font-size: 14px;
-}
-.q-detail-empty .sub {
-  font-size: 12px;
 }
 
 /* 思考题弹窗表单 */
