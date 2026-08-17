@@ -109,6 +109,7 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
       setVerMsg(`发现新版本 ${formatVersion(info.latest)}`);
       modal.confirm({
         title: '发现新版本',
+        centered: true,
         content: (
           <div style={{ lineHeight: 1.8 }}>
             <div>当前版本：{formatVersion(CURRENT_VERSION)}</div>
