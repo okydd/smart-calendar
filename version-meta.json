@@ -1,6 +1,14 @@
 {
-  "semver": "V1.9.7",
+  "semver": "V1.9.8",
   "log": [
+    {
+      "version": "V1.9.8",
+      "date": "2026-08-17",
+      "title": "思考题：删除蓝色状态方块 + 顶部去掉标题 + 标题两行省略号",
+      "summary": "思考题页（QuestionsPage）三处精简：① 右上角蓝色「思考中」状态方块删除——它对所有未完成项都是蓝色、不区分任何东西、无实际作用；仅保留完成的绿色小方块（q.done 时才渲染 .q-dot.done）。② 顶部「思考题」汉字标题删除（底部 Tab 已有菜单名），头部只保留「+ 增加」按钮右对齐。③ 题卡标题 .q-card-title 加 -webkit-line-clamp:2 两行截断 + 省略号。同步删除废弃的 .q-title CSS。",
+      "type": "feat",
+      "rollback": true
+    },
     {
       "version": "V1.9.7",
       "date": "2026-08-17",
