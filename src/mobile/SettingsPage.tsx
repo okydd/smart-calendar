@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { App, Spin } from 'antd';
+import { App, Segmented, Spin } from 'antd';
 import WheelDatePicker from '../components/WheelDatePicker';
 import { Row } from './SettingRows';
 import NotifySettingsModal from './NotifySettingsModal';
+import { useUI } from '../context/UIContext';
 import {
   PictureOutlined,
   ExportOutlined,
@@ -33,10 +34,29 @@ import ExportModal from '../components/ExportModal';
 export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void }) {
   const { message, modal } = App.useApp();
   const navigate = useNavigate();
-  const { events, search, setSearch } = useCalendar();
+  const { events, allEvents, setFocusQuestionId } = useCalendar();
+  const { openView } = useUI();
   const { status, email, lastSyncAt, configured, userId, notifySettingsVersion } = useSync();
 
-  const [searchInput, setSearchInput] = useState(search);
+  const [searchTab, setSearchTab] = useState<'calendar' | 'question'>('calendar');
+  const [searchInput, setSearchInput] = useState('');
+
+  // 思考题全集（与日历相互独立，不进日历/提醒/全局搜索）
+  const questionsAll = useMemo(
+    () => allEvents.filter((e) => e.kind === 'question' && !e.deleted),
+    [allEvents]
+  );
+
+  // 设置页集中搜索：实时过滤，不写入全局 search
+  const searchResults = useMemo(() => {
+    const kw = searchInput.trim().toLowerCase();
+    if (!kw) return [];
+    const pool = searchTab === 'calendar' ? events : questionsAll;
+    return pool
+      .filter((e) => `${e.title} ${e.description || ''}`.toLowerCase().includes(kw))
+      .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+      .slice(0, 50);
+  }, [searchInput, searchTab, events, questionsAll]);
   const [exportOpen, setExportOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs());
   const [endDate, setEndDate] = useState(dayjs().add(1, 'month'));
@@ -163,26 +183,56 @@ export default function SettingsPage({ onOpenSync }: { onOpenSync: () => void })
         <RightOutlined className="set-row-arrow" />
       </button>
 
-      {/* 导出 */}
+      {/* 集中搜索：日历 / 思考题 可切换 */}
       <div className="set-actions">
+        <div className="set-group-title">搜索</div>
+        <Segmented
+          className="set-search-seg"
+          block
+          value={searchTab}
+          onChange={(v) => setSearchTab(v as 'calendar' | 'question')}
+          options={[
+            { label: '搜索日历', value: 'calendar' },
+            { label: '搜索思考题', value: 'question' }
+          ]}
+        />
         <div className="set-search-row">
           <SearchOutlined className="ico" />
           <input
             value={searchInput}
-            placeholder="搜索标题或备注关键词…"
+            placeholder={searchTab === 'calendar' ? '搜索日历标题或备注…' : '搜索思考题题目或内容…'}
             onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') setSearch(searchInput.trim());
-            }}
           />
           {searchInput && (
-            <button className="clr" onClick={() => { setSearchInput(''); setSearch(''); }} aria-label="清除">
+            <button className="clr" onClick={() => setSearchInput('')} aria-label="清除">
               <CloseOutlined />
             </button>
           )}
-          <button className="set-search-btn" onClick={() => setSearch(searchInput.trim())}>
-            搜索
-          </button>
+        </div>
+        <div className="set-search-result">
+          {searchInput.trim() === '' ? (
+            <div className="search-empty">输入关键字后，在此显示{searchTab === 'calendar' ? '日历' : '思考题'}搜索结果</div>
+          ) : searchResults.length === 0 ? (
+            <div className="search-empty">未找到匹配的内容</div>
+          ) : (
+            searchResults.map((e) => (
+              <div
+                key={e.id}
+                className="search-result-item"
+                onClick={() => {
+                  if (searchTab === 'calendar') {
+                    openView(e);
+                  } else {
+                    navigate('/todos');
+                    setFocusQuestionId(e.id);
+                  }
+                }}
+              >
+                <span className={`sr-title${e.done ? ' done' : ''}`}>{e.title}</span>
+                <span className="sr-date">{e.date}</span>
+              </div>
+            ))
+          )}
         </div>
         <div className="set-group-title">导出</div>
         <div className="set-range">
