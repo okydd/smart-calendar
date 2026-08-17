@@ -225,13 +225,14 @@ export default function QuestionsPage() {
         onCancel={() => setDetailId(null)}
         footer={null}
         destroyOnClose
+        centered
         className="q-detail-modal"
       >
         {selected && (
           <div className="q-detail">
             <div className="q-detail-title">{selected.title}</div>
             <div className="q-detail-meta">
-              <CalendarOutlined /> 议题日期：{fmtDate(selected.date)}
+              <CalendarOutlined /> {fmtDate(selected.date)}
             </div>
             {selected.description && (
               <div className="q-detail-note">
@@ -239,24 +240,10 @@ export default function QuestionsPage() {
                 <div className="q-detail-note-body">{selected.description}</div>
               </div>
             )}
-            <div className="q-detail-toggle">
-              <div className="q-toggle-info">
-                <span className="q-toggle-label">完成状态</span>
-                <span className={`q-toggle-state${selected.done ? ' on' : ''}`}>
-                  {selected.done ? '已完成' : '未完成'}
-                </span>
-              </div>
-              <button
-                type="button"
-                className={`q-switch${selected.done ? ' on' : ''}`}
-                role="switch"
-                aria-checked={selected.done}
-                onClick={() => onToggle(selected)}
-              >
-                <span className="q-switch-knob" />
-              </button>
-            </div>
             <div className="q-actions">
+              <button className="q-btn done" onClick={() => onToggle(selected)}>
+                <CheckOutlined /> {selected.done ? '取消标注' : '标注完毕'}
+              </button>
               <button className="q-btn edit" onClick={() => openEdit(selected)}>
                 <EditOutlined /> 编辑
               </button>
