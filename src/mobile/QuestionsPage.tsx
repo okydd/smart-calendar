@@ -3,8 +3,8 @@ import { Modal, message } from 'antd';
 import {
   EditOutlined,
   DeleteOutlined,
-  CheckOutlined,
   CalendarOutlined,
+  DownOutlined,
   FileTextOutlined
 } from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
@@ -15,7 +15,7 @@ import Fab from '../components/Fab';
 function fmtDate(dateStr: string): string {
   const d = dayjs(dateStr);
   if (!d.isValid()) return dateStr || '未设置';
-  return `${d.month() + 1}月${d.date()}日 ${weekdayCN(d)}`;
+  return `${d.month() + 1}月${d.date()}日`;
 }
 
 /**
@@ -49,6 +49,7 @@ export default function QuestionsPage() {
 
   const [activeDate, setActiveDate] = useState<string | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [noteOpen, setNoteOpen] = useState(false);
   const [editing, setEditing] = useState<null | { mode: 'create' | 'edit'; q: Partial<CalendarEvent> }>(
     null
   );
@@ -68,9 +69,15 @@ export default function QuestionsPage() {
   useEffect(() => {
     if (focusQuestionId) {
       setDetailId(focusQuestionId);
+      setNoteOpen(false);
       setFocusQuestionId(null);
     }
   }, [focusQuestionId, setFocusQuestionId]);
+
+  // 打开新详情时，备注默认收起
+  useEffect(() => {
+    setNoteOpen(false);
+  }, [detailId]);
 
   // 默认高亮最新日期
   useEffect(() => {
@@ -179,7 +186,6 @@ export default function QuestionsPage() {
                   {q.done && <span className="q-card-done-tag">已完成</span>}
                 </div>
                 <div className="q-card-title">{q.title}</div>
-                {q.description && <div className="q-card-desc">{q.description}</div>}
               </div>
             ))
           )}
@@ -205,22 +211,63 @@ export default function QuestionsPage() {
             <div className="q-detail-meta">
               <CalendarOutlined /> {fmtDate(selected.date)}
             </div>
+
             {selected.description && (
               <div className="q-detail-note">
-                <div className="q-note-label">备注</div>
-                <div className="q-detail-note-body">{selected.description}</div>
+                <button
+                  type="button"
+                  className="q-note-toggle"
+                  onClick={() => setNoteOpen((v) => !v)}
+                >
+                  <span className="q-note-label">备注</span>
+                  <span className="q-note-caret">
+                    {noteOpen ? '收起' : '展开'}
+                    <DownOutlined className={`q-caret-ico${noteOpen ? ' up' : ''}`} />
+                  </span>
+                </button>
+                {noteOpen && (
+                  <div className="q-detail-note-body">{selected.description}</div>
+                )}
               </div>
             )}
+
             <div className="q-actions">
-              <button className="q-btn done" onClick={() => onToggle(selected)}>
-                <CheckOutlined /> {selected.done ? '取消标注' : '标注完毕'}
-              </button>
-              <button className="q-btn edit" onClick={() => openEdit(selected)}>
-                <EditOutlined /> 编辑
-              </button>
-              <button className="q-btn danger" onClick={() => onDelete(selected)}>
-                <DeleteOutlined /> 删除
-              </button>
+              <div className="q-row">
+                <div className="q-status-block">
+                  <span className="evv-status-label">完成状态</span>
+                  <div className="evv-toggle">
+                    <button
+                      type="button"
+                      className={`opt${!selected.done ? ' active' : ''}`}
+                      onClick={() => {
+                        if (selected.done) onToggle(selected);
+                      }}
+                    >
+                      未完成
+                    </button>
+                    <button
+                      type="button"
+                      className={`opt done${selected.done ? ' active' : ''}`}
+                      onClick={() => {
+                        if (!selected.done) onToggle(selected);
+                      }}
+                    >
+                      已完成
+                    </button>
+                  </div>
+                </div>
+                <button className="q-btn edit" onClick={() => openEdit(selected)}>
+                  <EditOutlined /> 编辑
+                </button>
+              </div>
+              <div className="q-row">
+                <button className="q-btn danger" onClick={() => onDelete(selected)}>
+                  <DeleteOutlined /> 删除
+                </button>
+                <button className="q-btn cancel" onClick={() => setDetailId(null)}>
+                  取消
+                </button>
+              </div>
             </div>
           </div>
         )}
