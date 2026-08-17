@@ -50,7 +50,13 @@ function clamp(p: Pos): Pos {
  * - 按住拖动可改变位置，位置记忆在本机；
  * - 双击按钮可恢复默认右下角位置。
  */
-export default function Fab({ onClick }: { onClick: () => void }) {
+export default function Fab({
+  onClick,
+  color = 'primary'
+}: {
+  onClick: () => void;
+  color?: 'primary' | 'green';
+}) {
   const [pos, setPos] = useState<Pos | null>(() => loadPos());
   const [dragging, setDragging] = useState(false);
   const stateRef = useRef({ moved: false, dx: 0, dy: 0, id: -1 });
@@ -124,7 +130,7 @@ export default function Fab({ onClick }: { onClick: () => void }) {
 
   return (
     <button
-      className={`fab${dragging ? ' dragging' : ''}`}
+      className={`fab${color === 'green' ? ' green' : ''}${dragging ? ' dragging' : ''}`}
       style={style}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
