@@ -1,6 +1,13 @@
 {
-  "semver": "V1.9.16",
+  "semver": "V1.9.17",
   "log": [
+    {
+      "version": "V1.9.17",
+      "date": "2026-08-17",
+      "title": "版本升级弹窗垂直居中",
+      "summary": "「发现新版本」升级确认弹窗（antd modal.confirm）加入 centered，从屏幕上方改为屏幕正中央显示。",
+      "changes": []
+    },
     {
       "version": "V1.9.16",
       "date": "2026-08-17",
