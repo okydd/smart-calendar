@@ -47,6 +47,8 @@ export default function QuestionsPage() {
     return [...set].sort((a, b) => b.localeCompare(a));
   }, [questions]);
 
+  const todayStr = dayjs().format('YYYY-MM-DD');
+
   const [activeDate, setActiveDate] = useState<string | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [noteOpen, setNoteOpen] = useState(false);
@@ -149,10 +151,11 @@ export default function QuestionsPage() {
           dateKeys.map((dk) => {
             const d = dayjs(dk);
             const isActive = dk === activeDate;
+            const isToday = dk === todayStr;
             return (
               <button
                 key={dk}
-                className={`q-date-chip${isActive ? ' active' : ''}`}
+                className={`q-date-chip${isActive ? ' active' : ''}${isToday ? ' today' : ''}`}
                 onClick={() => scrollToDate(dk)}
               >
                 <span className="q-day">{d.isValid() ? d.date() : '?'}</span>
