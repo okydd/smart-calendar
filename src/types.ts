@@ -30,6 +30,8 @@ export interface CalendarEvent {
   description?: string;
   /** 标签/颜色分类 */
   tag: TagColor;
+  /** 数据类型：event=日历事件（默认），question=思考题（独立模块，不进日历/提醒） */
+  kind?: 'event' | 'question';
   /** 是否标记为重点/重要事件（重要事件在提醒列表显示彩色左边框） */
   important?: boolean;
   /** 关联图片（dataURL 数组，最多 10 张） */
