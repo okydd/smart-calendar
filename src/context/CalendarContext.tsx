@@ -122,7 +122,10 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
-  const events = useMemo(() => allEvents.filter((e) => !e.deleted), [allEvents]);
+  const events = useMemo(
+    () => allEvents.filter((e) => !e.deleted && e.kind !== 'question'),
+    [allEvents]
+  );
 
   const filteredEvents = useMemo(() => {
     const kw = search.trim().toLowerCase();
