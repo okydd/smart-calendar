@@ -49,6 +49,9 @@ interface CalendarContextValue {
   selectedEvent: CalendarEvent | null;
   /** 搜索关键字 */
   search: string;
+  /** 设置页搜索思考题后，跳转到思考题页并自动打开该条详情的意图（一次性） */
+  focusQuestionId: string | null;
+  setFocusQuestionId: (id: string | null) => void;
   /** 本地数据版本号，每次变更自增，供同步引擎监听 */
   revision: number;
   setView: (v: ViewMode) => void;
@@ -79,6 +82,7 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
   const [currentDate, setCurrentDate] = useState<Dayjs>(dayjs());
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [focusQuestionId, setFocusQuestionId] = useState<string | null>(null);
   const [revision, setRevision] = useState(0);
 
   // 始终持有最新数据引用，供同步引擎在异步回调中读取
@@ -286,6 +290,8 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
     selectedEventId,
     selectedEvent,
     search,
+    focusQuestionId,
+    setFocusQuestionId,
     revision,
     setView,
     setCurrentDate,
