@@ -234,7 +234,6 @@ export default function QuestionsPage() {
             <div className="q-actions">
               <div className="q-row">
                 <div className="q-status-block">
-                  <span className="evv-status-label">完成状态</span>
                   <div className="evv-toggle">
                     <button
                       type="button"
