@@ -4300,7 +4300,7 @@ body {
   font-size: 11px;
   color: #8a8f9e;
 }
-/* 选中态 / 今日：统一 1px 淡蓝边框 + 极浅蓝底，文字转主题蓝 */
+/* 选中态（非今日）：1px 淡蓝边框 + 极浅蓝底，文字转主题蓝 */
 .q-date-chip.active {
   background: #eef3ff;
   border: 1px solid var(--c-primary-light);
@@ -4309,14 +4309,14 @@ body {
 .q-date-chip.active .q-wk {
   color: var(--c-primary);
 }
-/* 今日：与选中态一致，1px 淡蓝边框（不再用蓝底方块） */
+/* 今日：保留蓝色背景方框（与选中态区分，优先级更高） */
 .q-date-chip.today {
-  background: #eef3ff;
-  border: 1px solid var(--c-primary-light);
+  background: var(--c-primary);
+  border-color: var(--c-primary);
 }
 .q-date-chip.today .q-day,
 .q-date-chip.today .q-wk {
-  color: var(--c-primary);
+  color: #fff;
 }
 
 /* 右侧主区 */
