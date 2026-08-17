@@ -4221,3 +4221,274 @@ body {
   font-size: 12px;
   color: var(--c-text-gray);
 }
+
+/* ===== 思考题页（独立模块，不进日历/提醒） ===== */
+.questions-page {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+.q-tree {
+  width: 44%;
+  max-width: 330px;
+  border-right: 1px solid #ececf0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #fafafb;
+}
+.q-tree-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 12px;
+  border-bottom: 1px solid #ececf0;
+  position: sticky;
+  top: 0;
+  background: #fafafb;
+  z-index: 1;
+}
+.q-tree-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2330;
+}
+.q-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  border-radius: 8px;
+  background: var(--c-primary);
+  color: #fff;
+  font-size: 13px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.q-add-btn:active {
+  background: var(--c-primary-light);
+}
+.q-tree-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 16px;
+}
+.q-empty {
+  padding: 24px 16px;
+  color: #8a8f9e;
+  font-size: 13px;
+  text-align: center;
+}
+
+.q-month-head,
+.q-date-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+  user-select: none;
+}
+.q-month-head {
+  background: #f0f1f5;
+  font-weight: 600;
+  color: #1f2330;
+  font-size: 13px;
+}
+.q-date-head {
+  padding-left: 22px;
+  font-size: 12px;
+  color: #555;
+}
+.q-month-head .anticon,
+.q-date-head .anticon {
+  font-size: 10px;
+  color: #9aa0ad;
+  transition: transform 0.15s;
+}
+.anticon.flip {
+  transform: rotate(-90deg);
+}
+.q-month-label {
+  flex: 1;
+}
+.q-date-label {
+  flex: 1;
+}
+.q-count {
+  min-width: 18px;
+  text-align: center;
+  font-size: 11px;
+  color: #fff;
+  background: #c4c8d4;
+  border-radius: 9px;
+  padding: 0 5px;
+}
+.q-month-head .q-count {
+  background: var(--c-primary);
+}
+
+.q-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px 8px 34px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+}
+.q-item-title {
+  flex: 1;
+  font-size: 13px;
+  color: #2b2f3a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.q-item.active {
+  background: #e9f0ff;
+  border-left-color: var(--c-primary);
+}
+.q-item.done .q-item-title {
+  color: #8a8f9e;
+  text-decoration: line-through;
+}
+.q-done-ico {
+  color: #2f9e44;
+  font-size: 12px;
+}
+
+/* 右侧详情 */
+.q-detail {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow-y: auto;
+}
+.q-detail-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.q-detail-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2330;
+  flex: 1;
+  line-height: 1.4;
+}
+.q-status {
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+  background: #fff3bf;
+  color: #b08900;
+}
+.q-status.done {
+  background: #e6fcf0;
+  color: #2f9e44;
+}
+.q-detail-meta {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #8a8f9e;
+}
+.q-detail-body {
+  margin-top: 12px;
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #3a3f4d;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.q-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+.q-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #d7dae2;
+  background: #fff;
+  color: #3a3f4d;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.q-btn:active {
+  background: #f2f3f6;
+}
+.q-btn.danger {
+  color: #e03131;
+  border-color: #ffc9c9;
+}
+.q-btn.danger:active {
+  background: #fff0f0;
+}
+
+.q-detail-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #8a8f9e;
+}
+.q-empty-ico {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+.q-detail-empty p {
+  margin: 2px 0;
+  font-size: 14px;
+}
+.q-detail-empty .sub {
+  font-size: 12px;
+}
+
+/* 思考题弹窗表单 */
+.q-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 8px;
+}
+.q-form label {
+  font-size: 13px;
+  color: #555;
+  margin-top: 6px;
+}
+.q-input {
+  border: 1px solid #d7dae2;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+  color: #2b2f3a;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.q-input:focus {
+  border-color: var(--c-primary);
+}
+.q-textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+.q-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #3a3f4d;
+}
