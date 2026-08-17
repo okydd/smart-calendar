@@ -100,6 +100,13 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
   }, [expanded, currentDate]);
   const byDate = useMemo(() => groupByDate(filteredEvents), [filteredEvents]);
 
+  // 「已归档」= 已完成 或 已过期（日期早于今天且未完成）；这类事件统一放到各段底部的「已完成」卡片
+  const isArchived = (e: CalendarEvent) => {
+    if (e.done) return true;
+    const d = dayjs(e.date);
+    return d.isValid() && d.isBefore(today, 'day');
+  };
+
   const goMonth = (delta: number) => {
     setSlide(delta > 0 ? 'slide-left' : 'slide-right');
     setCurrentDate(currentDate.add(delta, 'month'));
@@ -129,7 +136,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
   };
 
   // 日 / 周 / 月 分组（周一为每周第一天）
-  const { dayEvents, weekEvents, monthActiveEvents, monthDoneEvents, monthRangeLabel, weekRangeLabel } =
+  const { dayActive, dayDone, weekActive, weekDone, monthActiveEvents, monthDoneEvents, monthRangeLabel, weekRangeLabel } =
     useMemo(() => {
     // 周/月提醒范围固定在「今天所在周」，切换选中日期不会让周/月提醒消失
     const mondayThis = today.isoWeekday(1);
@@ -168,31 +175,28 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
       }
     }
 
-    const isStruck = (e: CalendarEvent) => !!e.done;
     const baseSorter = (a: CalendarEvent, b: CalendarEvent) => {
       if (a.date !== b.date) return a.date < b.date ? -1 : 1;
       if (a.allDay !== b.allDay) return a.allDay ? -1 : 1;
       return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
     };
-    // 周/月提醒：已过期或已完成（struck）的事件排到正常事件之后
-    const sorterStruck = (a: CalendarEvent, b: CalendarEvent) => {
-      const sa = isStruck(a) ? 1 : 0;
-      const sb = isStruck(b) ? 1 : 0;
-      if (sa !== sb) return sa - sb;
-      return baseSorter(a, b);
-    };
 
-    day.sort(sorterStruck);
-    week.sort(sorterStruck);
-    month.sort(baseSorter); // 先按时间排序，再拆分「已完成」到底部独立区块
+    day.sort(baseSorter);
+    week.sort(baseSorter);
+    month.sort(baseSorter);
 
-    // 月提醒：已完成事件从主列表移出，单独放在下方可折叠区块（保持原样式/功能）
-    const monthActiveEvents = month.filter((e) => !e.done);
-    const monthDoneEvents = month.filter((e) => !!e.done).reverse(); // 已完成按日期倒序（近的在前）
+    // 日/周/月提醒：把「已完成」或「已过期」的事件从主列表移出，
+    // 统一放到每段底部的「已完成」可折叠卡片（保持原样式/功能）
+    const dayActive = day.filter((e) => !isArchived(e));
+    const dayDone = day.filter((e) => isArchived(e)).reverse();
+    const weekActive = week.filter((e) => !isArchived(e));
+    const weekDone = week.filter((e) => isArchived(e)).reverse();
+    const monthActiveEvents = month.filter((e) => !isArchived(e));
+    const monthDoneEvents = month.filter((e) => isArchived(e)).reverse();
 
     const monthRangeLabel = `${wk3Start.month() + 1}月${wk3Start.date()}日 - ${wk4End.month() + 1}月${wk4End.date()}日`;
     const weekRangeLabel = `${weekStart.month() + 1}月${weekStart.date()}日 - ${nextWeekEnd.month() + 1}月${nextWeekEnd.date()}日`;
-    return { dayEvents: day, weekEvents: week, monthActiveEvents, monthDoneEvents, monthRangeLabel, weekRangeLabel };
+    return { dayActive, dayDone, weekActive, weekDone, monthActiveEvents, monthDoneEvents, monthRangeLabel, weekRangeLabel };
   }, [filteredEvents, currentDate]);
 
   /** 按月查看：该月所有事件（按天归组） */
@@ -208,10 +212,10 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
       });
   }, [filteredEvents, monthView]);
 
-  // 按月查看：同样把已完成事件拆到下方可折叠区块
-  const monthViewActive = useMemo(() => monthViewEvents.filter((e) => !e.done), [monthViewEvents]);
+  // 按月查看：同样把「已完成 / 已过期」事件拆到下方可折叠区块
+  const monthViewActive = useMemo(() => monthViewEvents.filter((e) => !isArchived(e)), [monthViewEvents]);
   const monthViewDone = useMemo(
-    () => monthViewEvents.filter((e) => !!e.done).reverse(),
+    () => monthViewEvents.filter((e) => isArchived(e)).reverse(),
     [monthViewEvents]
   );
 
@@ -373,30 +377,64 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
             onClick={goToday}
             aria-label="今日提醒数"
           >
-            {dayEvents.length}
+            {dayActive.length}
           </span>
         </div>
-        {dayEvents.length === 0 ? (
+        {dayActive.length === 0 ? (
           <div className="empty-remind" onClick={() => openCreate({ date: selectedKey })}>
             <CalendarOutlined className="empty-check" />
             暂无安排
             <PlusOutlined className="empty-plus" />
           </div>
         ) : (
-          <div className="remind-list">{dayEvents.map((e) => renderEventRow(e, false, true))}</div>
+          <div className="remind-list">{dayActive.map((e) => renderEventRow(e, false, true))}</div>
+        )}
+        {dayDone.length > 0 && (
+          <div className="done-collapse">
+            <button
+              className="done-collapse-btn"
+              onClick={() => setDoneExpanded((v) => !v)}
+              aria-label={doneExpanded ? '收起已完成' : '展开已完成'}
+            >
+              <DownOutlined className={doneExpanded ? 'flip' : ''} />
+              已完成（{dayDone.length}）
+            </button>
+            {doneExpanded && (
+              <div className="remind-list done-list">
+                {dayDone.map((e) => renderEventRow(e, false, true))}
+              </div>
+            )}
+          </div>
         )}
       </section>
 
       {/* 周提醒（本周 + 下周） */}
-      {weekEvents.length > 0 && (
+      {(weekActive.length > 0 || weekDone.length > 0) && (
         <section className="remind-card">
           <div className="remind-header week">
             <CalendarOutlined className="remind-ico" />
             <span className="remind-label">周提醒</span>
             <span className="remind-range">{weekRangeLabel}</span>
-            <span className="remind-count">{weekEvents.length}</span>
+            <span className="remind-count">{weekActive.length}</span>
           </div>
-          <div className="remind-list">{weekEvents.map((e) => renderEventRow(e, true))}</div>
+          <div className="remind-list">{weekActive.map((e) => renderEventRow(e, true))}</div>
+          {weekDone.length > 0 && (
+            <div className="done-collapse">
+              <button
+                className="done-collapse-btn"
+                onClick={() => setDoneExpanded((v) => !v)}
+                aria-label={doneExpanded ? '收起已完成' : '展开已完成'}
+              >
+                <DownOutlined className={doneExpanded ? 'flip' : ''} />
+                已完成（{weekDone.length}）
+              </button>
+              {doneExpanded && (
+                <div className="remind-list done-list">
+                  {weekDone.map((e) => renderEventRow(e, true))}
+                </div>
+              )}
+            </div>
+          )}
         </section>
       )}
 
