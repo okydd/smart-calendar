@@ -77,8 +77,8 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
   const { userId, silentSync } = useSync();
   const [slide, setSlide] = useState<'' | 'slide-left' | 'slide-right'>('');
   const [monthView, setMonthView] = useState<Dayjs | null>(null);
+  const [doneMonthView, setDoneMonthView] = useState<Dayjs | null>(null);
   const [expanded, setExpanded] = useState(false);
-  const [doneExpanded, setDoneExpanded] = useState(true);
   const touchRef = useRef<{ x: number; y: number } | null>(null);
 
   /** 进入日历页时静默同步一次：确保日/周/月提醒打开即显示完整数据，
@@ -212,11 +212,14 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
   // 按月查看：主列表只显示活动事件（已完成/已过期经底部「已完成」卡片统一展示）
   const monthViewActive = useMemo(() => monthViewEvents.filter((e) => !isArchived(e)), [monthViewEvents]);
 
-  // 日历最底部「已完成」卡片：列出全部「已完成 / 已过期」事件（不受日/周/月提醒范围限制）；按月查看时只取当月
-  const allArchivedEvents = useMemo(() => {
-    const pool = monthView ? monthViewEvents : filteredEvents;
+  // 日历最底部「已完成」卡片：列出全部「已完成 / 已过期」事件（不受日/周/月提醒范围限制）；
+  // 点「按月查看」后仅取选中月份（用独立的 doneMonthView 状态，不与月提醒的 monthView 耦合）
+  const doneArchivedEvents = useMemo(() => {
+    const pool = doneMonthView
+      ? filteredEvents.filter((e) => e.date.startsWith(doneMonthView.format('YYYY-MM')))
+      : filteredEvents;
     return pool.filter((e) => isArchived(e)).reverse(); // 日期倒序，近的在前
-  }, [monthView, monthViewEvents, filteredEvents]);
+  }, [doneMonthView, filteredEvents]);
 
   const selectedKey = toDateStr(currentDate);
   const isToday = currentDate.isSame(today, 'day');
@@ -468,25 +471,59 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
         )}
       </section>
 
-      {/* 已完成 / 已过期：日历最底部的统一卡片，列出全部完成与过期事件（不受日/周/月提醒范围限制），始终显示 */}
+      {/* 已完成 / 已过期：日历最底部的统一卡片，标题结构与上方周提醒一致（图标+标签+范围+计数），
+          并支持「按月查看」切换日期（独立 doneMonthView 状态），始终显示 */}
       <section className="remind-card done-card">
-        <div className="done-collapse">
-          <button
-            className="done-collapse-btn"
-            onClick={() => setDoneExpanded((v) => !v)}
-            aria-label={doneExpanded ? '收起已完成' : '展开已完成'}
-          >
-            <DownOutlined className={doneExpanded ? 'flip' : ''} />
-            已完成（{allArchivedEvents.length}）
-          </button>
-          {doneExpanded && (
-            <div className="remind-list done-list">
-              {allArchivedEvents.length === 0 ? (
-                <div className="empty-remind">暂无已完成或已过期的事件</div>
-              ) : (
-                allArchivedEvents.map((e) => renderEventRow(e, true))
-              )}
-            </div>
+        <div className="remind-header done">
+          <CalendarOutlined className="remind-ico" />
+          <span className="remind-label">已完成</span>
+          {doneMonthView ? (
+            <>
+              <button
+                className="nav-btn month-nav-inline"
+                onClick={() => setDoneMonthView(doneMonthView.subtract(1, 'month'))}
+                aria-label="上个月"
+              >
+                <LeftOutlined />
+              </button>
+              <span className="remind-range month-nav-inline-label">
+                {doneMonthView.year()}年{doneMonthView.month() + 1}月（{doneArchivedEvents.length}）
+              </span>
+              <button
+                className="nav-btn month-nav-inline"
+                onClick={() => setDoneMonthView(doneMonthView.add(1, 'month'))}
+                aria-label="下个月"
+              >
+                <RightOutlined />
+              </button>
+              <button
+                className="remind-back"
+                onClick={() => setDoneMonthView(null)}
+                aria-label="返回全部"
+              >
+                返回全部
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="remind-range">全部</span>
+              <span className="remind-count">{doneArchivedEvents.length}</span>
+              <button
+                className="remind-back"
+                onClick={() => setDoneMonthView(currentDate.startOf('month'))}
+                aria-label="按月查看"
+              >
+                <EyeOutlined /> 按月查看
+              </button>
+            </>
+          )}
+        </div>
+
+        <div className="remind-list done-list">
+          {doneArchivedEvents.length === 0 ? (
+            <div className="empty-remind">暂无已完成或已过期的事件</div>
+          ) : (
+            doneArchivedEvents.map((e) => renderEventRow(e, true))
           )}
         </div>
       </section>
