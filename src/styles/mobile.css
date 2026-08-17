@@ -4300,12 +4300,22 @@ body {
   font-size: 11px;
   color: #8a8f9e;
 }
+/* 选中态（非今日）：淡蓝边框 + 极浅蓝底，文字转主题蓝 */
 .q-date-chip.active {
-  background: var(--c-primary);
-  border-color: var(--c-primary);
+  background: #eef3ff;
+  border: 1.5px solid var(--c-primary-light);
 }
 .q-date-chip.active .q-day,
 .q-date-chip.active .q-wk {
+  color: var(--c-primary);
+}
+/* 今日：保留蓝色背景方框（与选中态区分，优先级更高） */
+.q-date-chip.today {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+}
+.q-date-chip.today .q-day,
+.q-date-chip.today .q-wk {
   color: #fff;
 }
 
@@ -4512,10 +4522,10 @@ body {
 }
 .q-row {
   display: flex;
-  gap: 10px;
+  gap: 12px;
 }
 .q-status-block {
-  flex: 1;
+  flex: 1.35 1 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4530,11 +4540,12 @@ body {
 .q-status-block .evv-toggle .opt {
   flex: 1;
   height: 100%;
-  padding: 0 16px;
+  padding: 0 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
+  white-space: nowrap;
 }
 .q-btn {
   flex: 1;
@@ -4548,6 +4559,7 @@ body {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
   transition: transform 0.16s, box-shadow 0.2s, background 0.2s;
   box-shadow: 0 4px 14px rgba(16, 24, 40, 0.08);
 }
