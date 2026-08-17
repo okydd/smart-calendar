@@ -4389,16 +4389,6 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.q-card-desc {
-  margin-top: 4px;
-  font-size: 13px;
-  color: #8a8f9e;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
 
 /* 详情弹层（操作按钮在此出现） */
 .q-detail {
@@ -4455,20 +4445,44 @@ body {
   font-size: 18px;
   color: #4a4f5c;
 }
-/* 备注信息块 */
+/* 备注信息块（默认收起，点击展开；展开后用内部滚动条查看） */
 .q-detail-note {
   margin-top: 14px;
   background: #f7f8fc;
   border: 1px solid #eef0f6;
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 8px 14px;
+}
+.q-note-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  border: none;
+  padding: 4px 0;
+  cursor: pointer;
 }
 .q-note-label {
   font-size: 12px;
   font-weight: 600;
   color: #8a8f9e;
-  margin-bottom: 6px;
   letter-spacing: 0.3px;
+}
+.q-note-caret {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-primary);
+}
+.q-caret-ico {
+  font-size: 11px;
+  transition: transform 0.2s;
+}
+.q-caret-ico.up {
+  transform: rotate(180deg);
 }
 .q-detail-note-body {
   font-size: 14px;
@@ -4476,13 +4490,42 @@ body {
   color: #3a3f4d;
   white-space: pre-wrap;
   word-break: break-word;
+  margin-top: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.q-detail-note-body::-webkit-scrollbar {
+  width: 5px;
+}
+.q-detail-note-body::-webkit-scrollbar-thumb {
+  background: #cfd4e0;
+  border-radius: 3px;
 }
 
-/* 操作按钮：完成 + 编辑 + 删除，一行平均分布 */
+/* 操作按钮：两行，每行两个等分 */
 .q-actions {
   display: flex;
+  flex-direction: column;
   gap: 10px;
   margin-top: 18px;
+}
+.q-row {
+  display: flex;
+  gap: 10px;
+}
+.q-status-block {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 48px;
+  background: #fff;
+  border: 1px solid #eef0f6;
+  border-radius: 14px;
+  padding: 6px 12px;
+  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.06);
 }
 .q-btn {
   flex: 1;
@@ -4502,15 +4545,6 @@ body {
 .q-btn:active {
   transform: scale(0.98);
 }
-/* 完成：绿色实心按钮（与「已完成」语义一致） */
-.q-btn.done {
-  background: linear-gradient(135deg, #34c759, #22b35a);
-  color: #fff;
-  box-shadow: 0 6px 18px rgba(52, 199, 89, 0.32);
-}
-.q-btn.done:active {
-  background: linear-gradient(135deg, #2db24e, #1da24f);
-}
 /* 编辑：主题渐变主按钮 */
 .q-btn.edit {
   background: var(--c-gradient);
@@ -4529,6 +4563,16 @@ body {
 }
 .q-btn.danger:active {
   background: #fff0f0;
+}
+/* 取消：白底灰字描边 */
+.q-btn.cancel {
+  background: #fff;
+  color: #555;
+  border: 1.5px solid #e3e6ee;
+  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.06);
+}
+.q-btn.cancel:active {
+  background: #f3f4f8;
 }
 
 /* 思考题弹窗表单 */
