@@ -11,6 +11,8 @@ export interface RemoteRow {
   all_day: boolean;
   description: string | null;
   tag: string;
+  /** 数据类型：event=日历事件，question=思考题 */
+  kind: string | null;
   done: boolean;
   deleted: boolean;
   important: boolean;
@@ -34,6 +36,7 @@ export function rowToEvent(r: RemoteRow): CalendarEvent {
     allDay: Boolean(r.all_day),
     description: r.description ?? '',
     tag: (TAGS.includes(r.tag) ? r.tag : 'purple') as CalendarEvent['tag'],
+    kind: r.kind === 'question' ? 'question' : 'event',
     done: Boolean(r.done),
     deleted: Boolean(r.deleted),
     important: Boolean(r.important),
@@ -55,6 +58,7 @@ export function eventToRow(e: CalendarEvent, userId: string): RemoteRow {
     all_day: Boolean(e.allDay),
     description: e.description ?? '',
     tag: TAGS.includes(e.tag) ? e.tag : 'purple',
+    kind: e.kind === 'question' ? 'question' : 'event',
     done: Boolean(e.done),
     deleted: Boolean(e.deleted),
     important: Boolean(e.important),
