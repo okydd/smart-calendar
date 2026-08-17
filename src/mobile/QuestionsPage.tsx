@@ -5,6 +5,7 @@ import {
   EditOutlined,
   DeleteOutlined,
   CheckOutlined,
+  CalendarOutlined,
   FileTextOutlined
 } from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
@@ -203,7 +204,11 @@ export default function QuestionsPage() {
               >
                 <div className="q-card-top">
                   <span className="q-card-date">{fmtDate(q.date)}</span>
-                  {q.done && <span className="q-dot done" />}
+                  {q.done && (
+                    <span className="q-dot done">
+                      <CheckOutlined />
+                    </span>
+                  )}
                 </div>
                 <div className="q-card-title">{q.title}</div>
                 {q.description && <div className="q-card-desc">{q.description}</div>}
@@ -216,22 +221,44 @@ export default function QuestionsPage() {
       {/* 详情弹层：操作按钮在此出现 */}
       <Modal
         open={!!selected}
-        title="思考题详情"
+        title={null}
         onCancel={() => setDetailId(null)}
         footer={null}
         destroyOnClose
+        className="q-detail-modal"
       >
         {selected && (
           <div className="q-detail">
-            <div className="q-detail-meta">议题日期：{fmtDate(selected.date)}</div>
             <div className="q-detail-title">{selected.title}</div>
-            <div className="q-detail-body">{selected.description || '（无内容）'}</div>
-            <div className="q-actions">
-              <button className="q-btn" onClick={() => onToggle(selected)}>
-                <CheckOutlined /> {selected.done ? '取消标注' : '标注完毕'}
+            <div className="q-detail-meta">
+              <CalendarOutlined /> 议题日期：{fmtDate(selected.date)}
+            </div>
+            {selected.description && (
+              <div className="q-detail-note">
+                <div className="q-note-label">备注</div>
+                <div className="q-detail-note-body">{selected.description}</div>
+              </div>
+            )}
+            <div className="q-detail-toggle">
+              <div className="q-toggle-info">
+                <span className="q-toggle-label">完成状态</span>
+                <span className={`q-toggle-state${selected.done ? ' on' : ''}`}>
+                  {selected.done ? '已完成' : '未完成'}
+                </span>
+              </div>
+              <button
+                type="button"
+                className={`q-switch${selected.done ? ' on' : ''}`}
+                role="switch"
+                aria-checked={selected.done}
+                onClick={() => onToggle(selected)}
+              >
+                <span className="q-switch-knob" />
               </button>
-              <button className="q-btn" onClick={() => openEdit(selected)}>
-                <EditOutlined /> 修改
+            </div>
+            <div className="q-actions">
+              <button className="q-btn edit" onClick={() => openEdit(selected)}>
+                <EditOutlined /> 编辑
               </button>
               <button className="q-btn danger" onClick={() => onDelete(selected)}>
                 <DeleteOutlined /> 删除
