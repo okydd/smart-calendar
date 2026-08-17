@@ -21,7 +21,7 @@ function fmtDate(dateStr: string): string {
  * 思考题页（独立新类型，不进日历/提醒）：
  * 方案B —— 左侧平铺日期锚点（点日期滚动定位），顶部「按日期 + 按关键词」双搜索，
  * 右侧所有思考题连续平铺，列表项不显示操作按钮；点卡片弹出详情，详情里才有
- * 标注完毕 / 修改 / 删除。完成状态用卡片右上角小方块表示（蓝=思考中 / 绿=已完成）。
+ * 标注完毕 / 修改 / 删除。完成状态用卡片右上角绿色小方块表示（仅已完成时显示）。
  */
 export default function QuestionsPage() {
   const { allEvents, addEvent, updateEvent, deleteEvent, toggleDone } = useCalendar();
@@ -153,7 +153,6 @@ export default function QuestionsPage() {
       {/* 右侧：搜索 + 连续列表 */}
       <div className="q-main">
         <div className="q-main-head">
-          <span className="q-title">思考题</span>
           <button className="q-add-btn" onClick={openCreate}>
             <PlusOutlined /> 增加
           </button>
@@ -204,7 +203,7 @@ export default function QuestionsPage() {
               >
                 <div className="q-card-top">
                   <span className="q-card-date">{fmtDate(q.date)}</span>
-                  <span className={`q-dot${q.done ? ' done' : ''}`} />
+                  {q.done && <span className="q-dot done" />}
                 </div>
                 <div className="q-card-title">{q.title}</div>
                 {q.description && <div className="q-card-desc">{q.description}</div>}
