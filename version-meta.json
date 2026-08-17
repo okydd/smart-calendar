@@ -1,6 +1,14 @@
 {
-  "semver": "V1.9.8",
+  "semver": "V1.9.9",
   "log": [
+    {
+      "version": "V1.9.9",
+      "date": "2026-08-17",
+      "title": "思考题详情美化：绿色方块加对钩 + 详情去标题 + 完成开关 + 高级按钮",
+      "summary": "思考题模块四处升级：① 题卡右上角完成状态由纯绿方块（12px）改为 18px 圆角绿方块并内嵌白色 CheckOutlined 对钩图标（.q-dot.done），更直观表示「已完成」。② 详情弹层去掉「思考题详情」文字标题（Modal title=null，关闭叉仍保留），内容重排为：最上=题目(q-detail-title)→下一行=「议题日期：…」带日历图标(added CalendarOutlined)→有备注才显示「备注」信息块(.q-detail-note)。③ 「标注完毕/取消标注」文字按钮改为 iOS 风格开关切换(.q-switch)，左侧「完成状态」标签 + 实时「未完成/已完成」状态文字，点开关在两者间切换(toggleDone)。④ 编辑/删除按钮重做(.q-btn)：编辑=主题蓝紫渐变实心主按钮(.q-btn.edit)，删除=白底红字红描边(.q-btn.danger)，均加圆角/投影/按压缩放，质感更高级。",
+      "type": "feat",
+      "rollback": true
+    },
     {
       "version": "V1.9.8",
       "date": "2026-08-17",
