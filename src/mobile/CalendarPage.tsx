@@ -78,6 +78,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
   const [slide, setSlide] = useState<'' | 'slide-left' | 'slide-right'>('');
   const [monthView, setMonthView] = useState<Dayjs | null>(null);
   const [doneMonthView, setDoneMonthView] = useState<Dayjs | null>(null);
+  const [doneExpanded, setDoneExpanded] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const touchRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -220,6 +221,20 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
       : filteredEvents;
     return pool.filter((e) => isArchived(e)).reverse(); // 日期倒序，近的在前
   }, [doneMonthView, filteredEvents]);
+
+  // 非按月查看模式：把已完成事件拆成「本周」与「其余」，默认只显示本周，多出的用展开按钮显示
+  const { doneThisWeek, doneRest } = useMemo(() => {
+    const ws = today.isoWeekday(1);
+    const we = ws.add(6, 'day');
+    const inWeek = (e: CalendarEvent) => {
+      const d = dayjs(e.date);
+      return d.isValid() && !d.isBefore(ws, 'day') && !d.isAfter(we, 'day');
+    };
+    return {
+      doneThisWeek: doneArchivedEvents.filter(inWeek),
+      doneRest: doneArchivedEvents.filter((e) => !inWeek(e))
+    };
+  }, [doneArchivedEvents]);
 
   const selectedKey = toDateStr(currentDate);
   const isToday = currentDate.isSame(today, 'day');
@@ -472,7 +487,8 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
       </section>
 
       {/* 已完成 / 已过期：日历最底部的统一卡片，标题结构与上方周提醒一致（图标+标签+范围+计数），
-          并支持「按月查看」切换日期（独立 doneMonthView 状态），始终显示 */}
+          并支持「按月查看」切换日期（独立 doneMonthView 状态），始终显示。
+          默认（非按月查看）只显示本周已完成，多出的事件用底部展开/收起按钮（参考顶部日历）显示 */}
       <section className="remind-card done-card">
         <div className="remind-header done">
           <CalendarOutlined className="remind-ico" />
@@ -506,8 +522,10 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
             </>
           ) : (
             <>
-              <span className="remind-range">全部</span>
-              <span className="remind-count">{doneArchivedEvents.length}</span>
+              <span className="remind-range">{doneExpanded ? '全部' : '本周'}</span>
+              <span className="remind-count">
+                {doneExpanded ? doneArchivedEvents.length : doneThisWeek.length}
+              </span>
               <button
                 className="remind-back"
                 onClick={() => setDoneMonthView(currentDate.startOf('month'))}
@@ -520,12 +538,33 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
         </div>
 
         <div className="remind-list done-list">
-          {doneArchivedEvents.length === 0 ? (
-            <div className="empty-remind">暂无已完成或已过期的事件</div>
+          {doneMonthView ? (
+            doneArchivedEvents.length === 0 ? (
+              <div className="empty-remind">暂无已完成或已过期的事件</div>
+            ) : (
+              doneArchivedEvents.map((e) => renderEventRow(e, true))
+            )
           ) : (
-            doneArchivedEvents.map((e) => renderEventRow(e, true))
+            <>
+              {doneThisWeek.length === 0 && !doneExpanded ? (
+                <div className="empty-remind">暂无已完成事件</div>
+              ) : (
+                doneThisWeek.map((e) => renderEventRow(e, true))
+              )}
+              {doneExpanded && doneRest.map((e) => renderEventRow(e, true))}
+            </>
           )}
         </div>
+
+        {/* 本周之外还有更多已完成事件：底部用向下按钮展开/收起（参考顶部日历的 展开整月 / 收起） */}
+        {!doneMonthView && doneRest.length > 0 && (
+          <div className="month-toggle">
+            <button className="month-toggle-btn" onClick={() => setDoneExpanded((v) => !v)}>
+              {doneExpanded ? <UpOutlined /> : <DownOutlined />}
+              {doneExpanded ? '收起' : `展开全部（${doneRest.length}）`}
+            </button>
+          </div>
+        )}
       </section>
 
       {showFab && <Fab onClick={() => openCreate({ date: selectedKey })} />}
