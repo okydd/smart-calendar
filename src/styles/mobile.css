@@ -4303,7 +4303,7 @@ body {
 /* 选中态（非今日）：淡蓝边框 + 极浅蓝底，文字转主题蓝 */
 .q-date-chip.active {
   background: #eef3ff;
-  border: 1.5px solid var(--c-primary-light);
+  border: 2px solid var(--c-primary-light);
 }
 .q-date-chip.active .q-day,
 .q-date-chip.active .q-wk {
