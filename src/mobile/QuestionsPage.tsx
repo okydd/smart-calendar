@@ -1,27 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, message } from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   CheckOutlined,
-  DownOutlined,
-  ClockCircleOutlined
+  FileTextOutlined
 } from '@ant-design/icons';
 import { useCalendar } from '../context/CalendarContext';
 import { dayjs, weekdayCN } from '../utils/date';
 import type { CalendarEvent } from '../types';
-
-interface DateNode {
-  dateKey: string;
-  dateLabel: string;
-  items: CalendarEvent[];
-}
-interface MonthNode {
-  monthKey: string;
-  monthLabel: string;
-  dates: DateNode[];
-}
 
 function fmtDate(dateStr: string): string {
   const d = dayjs(dateStr);
@@ -31,8 +19,9 @@ function fmtDate(dateStr: string): string {
 
 /**
  * 思考题页（独立新类型，不进日历/提醒）：
- * 左侧日期目录结构（按月 → 日两级可折叠，点题目选中），右侧显示题目详情，
- * 提供 增加 / 修改 / 删除 / 状态标注（思考完毕） 功能。
+ * 方案B —— 左侧平铺日期锚点（点日期滚动定位），顶部「按日期 + 按关键词」双搜索，
+ * 右侧所有思考题连续平铺，列表项不显示操作按钮；点卡片弹出详情，详情里才有
+ * 标注完毕 / 修改 / 删除。完成状态用卡片右上角小方块表示（蓝=思考中 / 绿=已完成）。
  */
 export default function QuestionsPage() {
   const { allEvents, addEvent, updateEvent, deleteEvent, toggleDone } = useCalendar();
@@ -42,64 +31,50 @@ export default function QuestionsPage() {
     [allEvents]
   );
 
-  // 按月 → 日 两级目录，按日期倒序（近的在前）
-  const groups = useMemo<MonthNode[]>(() => {
-    const byDate = new Map<string, CalendarEvent[]>();
-    for (const q of questions) {
-      const key = q.date || '0000-00-00';
-      if (!byDate.has(key)) byDate.set(key, []);
-      byDate.get(key)!.push(q);
-    }
-    const dateKeys = [...byDate.keys()].sort((a, b) => b.localeCompare(a));
-    const monthMap = new Map<string, MonthNode>();
-    for (const dk of dateKeys) {
-      const [y, m] = dk.split('-');
-      const monthKey = `${y}-${m}`;
-      if (!monthMap.has(monthKey)) {
-        monthMap.set(monthKey, { monthKey, monthLabel: `${y}年${Number(m)}月`, dates: [] });
-      }
-      const d = dayjs(dk);
-      monthMap.get(monthKey)!.dates.push({
-        dateKey: dk,
-        dateLabel: d.isValid() ? `${d.month() + 1}月${d.date()}日 ${weekdayCN(d)}` : dk,
-        items: byDate.get(dk)!.sort((a, b) => a.title.localeCompare(b.title))
-      });
-    }
-    return [...monthMap.values()].sort((a, b) => b.monthKey.localeCompare(a.monthKey));
+  // 顶部双搜索
+  const [searchDate, setSearchDate] = useState(''); // YYYY-MM-DD
+  const [keyword, setKeyword] = useState('');
+
+  // 左侧日期锚点（取所有题目的日期，倒序，近的在前）
+  const dateKeys = useMemo(() => {
+    const set = new Set<string>();
+    for (const q of questions) if (q.date) set.add(q.date);
+    return [...set].sort((a, b) => b.localeCompare(a));
   }, [questions]);
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [expMonths, setExpMonths] = useState<Set<string>>(new Set());
-  const [expDates, setExpDates] = useState<Set<string>>(new Set());
+  const [activeDate, setActiveDate] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
   const [editing, setEditing] = useState<null | { mode: 'create' | 'edit'; q: Partial<CalendarEvent> }>(
     null
   );
 
-  // 默认展开最新月份，避免目录全收起
+  const listRef = useRef<HTMLDivElement>(null);
+  const dateRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const filtered = useMemo(() => {
+    const kw = keyword.trim();
+    return questions
+      .filter((q) => !searchDate || (q.date || '').startsWith(searchDate))
+      .filter(
+        (q) =>
+          !kw ||
+          q.title.toLowerCase().includes(kw.toLowerCase()) ||
+          (q.description || '').toLowerCase().includes(kw.toLowerCase())
+      )
+      .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  }, [questions, searchDate, keyword]);
+
+  const selected = questions.find((q) => q.id === detailId) || null;
+
+  // 默认高亮最新日期
   useEffect(() => {
-    if (groups.length && expMonths.size === 0) setExpMonths(new Set([groups[0].monthKey]));
-  }, [groups]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (dateKeys.length && !activeDate) setActiveDate(dateKeys[0]);
+  }, [dateKeys]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const selected = questions.find((q) => q.id === selectedId) || null;
-
-  const toggleMonth = (k: string) =>
-    setExpMonths((prev) => {
-      const n = new Set(prev);
-      if (n.has(k)) n.delete(k);
-      else n.add(k);
-      return n;
-    });
-  const toggleDate = (k: string) =>
-    setExpDates((prev) => {
-      const n = new Set(prev);
-      if (n.has(k)) n.delete(k);
-      else n.add(k);
-      return n;
-    });
-  const selectQ = (q: CalendarEvent) => {
-    setSelectedId(q.id);
-    setExpMonths((prev) => new Set(prev).add(q.date.slice(0, 7)));
-    setExpDates((prev) => new Set(prev).add(q.date));
+  const scrollToDate = (dk: string) => {
+    setActiveDate(dk);
+    const el = dateRefs.current[dk];
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const openCreate = () =>
@@ -144,7 +119,7 @@ export default function QuestionsPage() {
       okButtonProps: { danger: true },
       onOk: () => {
         deleteEvent(q.id);
-        if (selectedId === q.id) setSelectedId(null);
+        if (detailId === q.id) setDetailId(null);
       }
     });
   };
@@ -153,67 +128,104 @@ export default function QuestionsPage() {
 
   return (
     <div className="page questions-page">
-      {/* 左侧：日期目录结构 */}
-      <div className="q-tree">
-        <div className="q-tree-head">
-          <span className="q-tree-title">思考题</span>
+      {/* 左侧：平铺日期锚点 */}
+      <div className="q-dates">
+        {dateKeys.length === 0 ? (
+          <div className="q-dates-empty">暂无</div>
+        ) : (
+          dateKeys.map((dk) => {
+            const d = dayjs(dk);
+            const isActive = dk === activeDate;
+            return (
+              <button
+                key={dk}
+                className={`q-date-chip${isActive ? ' active' : ''}`}
+                onClick={() => scrollToDate(dk)}
+              >
+                <span className="q-day">{d.isValid() ? d.date() : '?'}</span>
+                <span className="q-wk">{d.isValid() ? weekdayCN(d) : ''}</span>
+              </button>
+            );
+          })
+        )}
+      </div>
+
+      {/* 右侧：搜索 + 连续列表 */}
+      <div className="q-main">
+        <div className="q-main-head">
+          <span className="q-title">思考题</span>
           <button className="q-add-btn" onClick={openCreate}>
             <PlusOutlined /> 增加
           </button>
         </div>
-        <div className="q-tree-scroll">
-          {groups.length === 0 ? (
-            <div className="q-empty">暂无思考题，点击「增加」新建</div>
+
+        <div className="q-search">
+          <input
+            type="date"
+            className="q-search-date"
+            value={searchDate}
+            onChange={(e) => setSearchDate(e.target.value)}
+            placeholder="按日期"
+          />
+          <input
+            className="q-search-kw"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            placeholder="按关键词搜索"
+          />
+          {(searchDate || keyword) && (
+            <button
+              className="q-search-clear"
+              onClick={() => {
+                setSearchDate('');
+                setKeyword('');
+              }}
+            >
+              清除
+            </button>
+          )}
+        </div>
+
+        <div className="q-list" ref={listRef}>
+          {filtered.length === 0 ? (
+            <div className="q-list-empty">
+              <FileTextOutlined className="q-empty-ico" />
+              <p>{questions.length === 0 ? '暂无思考题，点击「增加」新建' : '没有匹配的思考题'}</p>
+            </div>
           ) : (
-            groups.map((month) => (
-              <div className="q-month" key={month.monthKey}>
-                <div className="q-month-head" onClick={() => toggleMonth(month.monthKey)}>
-                  <DownOutlined className={expMonths.has(month.monthKey) ? '' : 'flip'} />
-                  <span className="q-month-label">{month.monthLabel}</span>
-                  <span className="q-count">
-                    {month.dates.reduce((s, d) => s + d.items.length, 0)}
-                  </span>
+            filtered.map((q) => (
+              <div
+                key={q.id}
+                ref={(el) => {
+                  dateRefs.current[q.date] = el;
+                }}
+                className="q-card"
+                onClick={() => setDetailId(q.id)}
+              >
+                <div className="q-card-top">
+                  <span className="q-card-date">{fmtDate(q.date)}</span>
+                  <span className={`q-dot${q.done ? ' done' : ''}`} />
                 </div>
-                {expMonths.has(month.monthKey) &&
-                  month.dates.map((d) => (
-                    <div className="q-date" key={d.dateKey}>
-                      <div className="q-date-head" onClick={() => toggleDate(d.dateKey)}>
-                        <DownOutlined className={expDates.has(d.dateKey) ? '' : 'flip'} />
-                        <span className="q-date-label">{d.dateLabel}</span>
-                        <span className="q-count">{d.items.length}</span>
-                      </div>
-                      {expDates.has(d.dateKey) &&
-                        d.items.map((q) => (
-                          <div
-                            className={`q-item${q.id === selectedId ? ' active' : ''}${
-                              q.done ? ' done' : ''
-                            }`}
-                            key={q.id}
-                            onClick={() => selectQ(q)}
-                          >
-                            <span className="q-item-title">{q.title}</span>
-                            {q.done && <CheckOutlined className="q-done-ico" />}
-                          </div>
-                        ))}
-                    </div>
-                  ))}
+                <div className="q-card-title">{q.title}</div>
+                {q.description && <div className="q-card-desc">{q.description}</div>}
               </div>
             ))
           )}
         </div>
       </div>
 
-      {/* 右侧：题目详情 */}
-      <div className="q-detail">
-        {selected ? (
-          <>
-            <div className="q-detail-head">
-              <span className="q-detail-title">{selected.title}</span>
-              <span className={`q-status${selected.done ? ' done' : ''}`}>
-                {selected.done ? '已思考完毕' : '思考中'}
-              </span>
-            </div>
+      {/* 详情弹层：操作按钮在此出现 */}
+      <Modal
+        open={!!selected}
+        title="思考题详情"
+        onCancel={() => setDetailId(null)}
+        footer={null}
+        destroyOnClose
+      >
+        {selected && (
+          <div className="q-detail">
             <div className="q-detail-meta">议题日期：{fmtDate(selected.date)}</div>
+            <div className="q-detail-title">{selected.title}</div>
             <div className="q-detail-body">{selected.description || '（无内容）'}</div>
             <div className="q-actions">
               <button className="q-btn" onClick={() => onToggle(selected)}>
@@ -226,15 +238,9 @@ export default function QuestionsPage() {
                 <DeleteOutlined /> 删除
               </button>
             </div>
-          </>
-        ) : (
-          <div className="q-detail-empty">
-            <ClockCircleOutlined className="q-empty-ico" />
-            <p>选择左侧题目查看详情</p>
-            <p className="sub">或点击左上「增加」新建思考题</p>
           </div>
         )}
-      </div>
+      </Modal>
 
       {/* 新建 / 修改 弹窗 */}
       <Modal
