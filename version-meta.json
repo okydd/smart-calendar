@@ -1,6 +1,14 @@
 {
-  "semver": "V1.9.1",
+  "semver": "V1.9.2",
   "log": [
+    {
+      "version": "V1.9.2",
+      "date": "2026-08-17",
+      "title": "月提醒已完成下移可折叠 + 办事清单改为「思考题」独立模块",
+      "summary": "① 月提醒：把已完成事件从主列表移到底部独立「已完成（N）」区块，默认收起、可点击展开，复用同一 renderEventRow 保持原功能与样式（日历/周提醒不变）。② 新增独立数据类型 kind='question'：types.ts 增加 kind 字段，merge.ts 三处映射加 kind，云端 calendar_events 加 kind text 列（默认 event，迁移脚本 migrate-kind.mjs 已执行）。CalendarContext 的 events 过滤排除 kind==='question'，使思考题不进日历/周月提醒/今天角标/搜索。③ 原「办事清单」整页替换为「思考题」(QuestionsPage)：左侧按月→日两级可折叠日期目录，点题目在右侧显示详情（题目/议题日期/思考内容/状态）；提供 增加/修改/删除/状态标注(思考完毕) 按钮，录入弹窗含题目、议题日期(默认今天)、思考内容、是否思考完毕。App 底部标签「办事清单」→「思考题」，路由 /todos 指向 QuestionsPage，删除旧 TodoPage。",
+      "type": "feature",
+      "rollback": true
+    },
     {
       "version": "V1.9.1",
       "date": "2026-08-15",
