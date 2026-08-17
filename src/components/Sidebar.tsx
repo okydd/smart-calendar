@@ -1,8 +1,7 @@
 import { useRef, useState } from 'react';
-import { Input, Button, App, Divider } from 'antd';
+import { Button, App, Divider } from 'antd';
 import {
   PlusOutlined,
-  SearchOutlined,
   DownloadOutlined,
   UploadOutlined,
   PictureOutlined
@@ -15,13 +14,7 @@ import ExportModal from './ExportModal';
 
 export default function Sidebar() {
   const { message } = App.useApp();
-  const {
-    search,
-    setSearch,
-    events,
-    filteredEvents,
-    importEvents
-  } = useCalendar();
+  const { events, importEvents } = useCalendar();
   const { openCreate } = useUI();
   const fileRef = useRef<HTMLInputElement>(null);
   const [exportOpen, setExportOpen] = useState(false);
@@ -84,25 +77,12 @@ export default function Sidebar() {
 
       <Divider style={{ margin: '4px 0' }} />
 
-      {/* 搜索 */}
-      <div className="side-section">
-        <div className="side-section-title">搜索</div>
-        <Input
-          allowClear
-          prefix={<SearchOutlined style={{ color: 'var(--c-text-gray)' }} />}
-          placeholder="搜索标题或描述…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-
       <div className="side-divider" />
 
       {/* 统计 */}
       <div className="side-section">
         <div className="side-stat">
-          当前显示 <b>{filteredEvents.length}</b> / 共 {events.length} 个事件
+          共 {events.length} 个事件
         </div>
       </div>
 
