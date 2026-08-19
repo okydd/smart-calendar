@@ -2071,10 +2071,17 @@ body {
   box-shadow: 0 6px 18px rgba(0, 184, 163, 0.26);
 }
 
+/* 取消：浅灰背景色块（清晰可辨的按钮） */
 .ev-btn-gray {
-  background: var(--c-card);
-  color: var(--c-text);
-  border: 1px solid var(--c-text-gray) !important;
+  background: #eef0f4;
+  color: #525866;
+  border: 1px solid #e2e5ec !important;
+}
+/* 删除：红色危险样式（淡红背景块 + 红边框 + 红字），与取消区分 */
+.ev-btn-danger {
+  background: #fff1f0;
+  color: #fa5252;
+  border: 1px solid #ffc9c4 !important;
 }
 
 .ev-btn-new:active,
@@ -2083,7 +2090,27 @@ body {
 }
 
 .ev-btn-gray:active {
-  background: #e7e8f0;
+  background: #e3e6ec;
+}
+.ev-btn-danger:active {
+  background: #ffe7e6;
+}
+/* 深色模式下的对应配色（保持对比清晰） */
+:root[data-theme="dark"] .ev-btn-gray {
+  background: #20232e;
+  color: #b6bccb;
+  border-color: #2c3140 !important;
+}
+:root[data-theme="dark"] .ev-btn-gray:active {
+  background: #2a2e3a;
+}
+:root[data-theme="dark"] .ev-btn-danger {
+  background: #3a2326;
+  color: #ff7a73;
+  border-color: #5a2e30 !important;
+}
+:root[data-theme="dark"] .ev-btn-danger:active {
+  background: #462a2c;
 }
 
 /* 事件级别（普通 / 重要） */
