@@ -4,7 +4,8 @@ import { Modal } from 'antd';
 import {
   CalendarOutlined,
   UnorderedListOutlined,
-  SettingOutlined
+  SettingOutlined,
+  ReadOutlined
 } from '@ant-design/icons';
 import { CalendarProvider, useCalendar } from './context/CalendarContext';
 import { SyncProvider, useSync } from './context/SyncContext';
@@ -13,6 +14,7 @@ import EventModal from './components/EventModal';
 import EventView from './components/EventView';
 import CalendarPage from './mobile/CalendarPage';
 import QuestionsPage from './mobile/QuestionsPage';
+import ZhihuPage from './mobile/ZhihuPage';
 import SettingsPage from './mobile/SettingsPage';
 import ReminderSettingsPage from './mobile/ReminderSettingsPage';
 import DataSettingsPage from './mobile/DataSettingsPage';
@@ -200,9 +202,11 @@ function Shell() {
 
   const tab = location.pathname.startsWith('/todos')
     ? 'todos'
-    : location.pathname.startsWith('/settings')
-      ? 'settings'
-      : 'calendar';
+    : location.pathname.startsWith('/zhihu')
+      ? 'zhihu'
+      : location.pathname.startsWith('/settings')
+        ? 'settings'
+        : 'calendar';
 
   /** 待办角标：今天当天、且未完成的待办数量（与清单「今天」组一致） */
   const pending = useMemo(
@@ -258,6 +262,7 @@ function Shell() {
             <Route path="/" element={<Navigate to="/calendar" replace />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/todos" element={<QuestionsPage />} />
+            <Route path="/zhihu" element={<ZhihuPage />} />
             <Route
               path="/settings"
               element={<SettingsPage onOpenSync={() => setSyncOpen(true)} />}
@@ -286,6 +291,13 @@ function Shell() {
         >
           <UnorderedListOutlined className="tab-ico" />
           思考题
+        </button>
+        <button
+          className={`tabbar-item${tab === 'zhihu' ? ' active' : ''}`}
+          onClick={() => navigate('/zhihu')}
+        >
+          <ReadOutlined className="tab-ico" />
+          知乎
         </button>
         <button
           className={`tabbar-item${tab === 'settings' ? ' active' : ''}`}
