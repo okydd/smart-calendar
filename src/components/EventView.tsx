@@ -146,7 +146,7 @@ export default function EventView() {
             </button>
           </div>
           <div className="ev-foot-row">
-            <button className="ev-btn-gray" onClick={handleDelete}>
+            <button className="ev-btn-danger" onClick={handleDelete}>
               删除
             </button>
             <button className="ev-btn-gray" onClick={closeEventView}>
