@@ -1,6 +1,13 @@
 {
-  "semver": "V1.9.20",
+  "semver": "V1.9.21",
   "log": [
+    {
+      "version": "V1.9.21",
+      "date": "2026-08-19",
+      "title": "事件详情删除/取消按钮清晰化（背景块+边框）",
+      "summary": "事件详情页（EventView）底部「删除」「取消」按钮原用 .ev-btn-gray 依赖失效的 --c-text-gray 变量，浅色下几乎不可辨。改为：①「取消」= 浅灰背景色块（#eef0f4 底 + #525866 字 + 1px #e2e5ec 边）；②「删除」= 红色危险样式（#fff1f0 淡红底 + #fa5252 红字 + 1px #ffc9c4 红边），与取消明显区分。删除按钮 className 由 ev-btn-gray 改为 ev-btn-danger，取消保留 ev-btn-gray。新增对应 :active 与深色模式配色。",
+      "changes": []
+    },
     {
       "version": "V1.9.20",
       "date": "2026-08-17",
