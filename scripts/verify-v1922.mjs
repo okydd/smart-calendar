@@ -34,16 +34,16 @@ function check(name, ok, extra) {
 
   // 3) 列表卡片：点赞>1万 过滤 + 从高到低
   const cards = await page.$$('.zhihu-card');
-  check('列表渲染卡片（示例 4 条）', cards.length === 4, '实际 ' + cards.length);
+  check('列表渲染卡片（真实高赞 6 条）', cards.length === 6, '实际 ' + cards.length);
 
   const ranks = await page.$$eval('.zhihu-rank', (els) => els.map((e) => e.textContent.trim()));
-  check('排名序号 1..4 连续', ranks.join(',') === '1,2,3,4', ranks.join(','));
+  check('排名序号 1..6 连续', ranks.join(',') === '1,2,3,4,5,6', ranks.join(','));
 
   const votes = await page.$$eval('.zhihu-vote', (els) => els.map((e) => e.textContent.replace(/\s+/g, '').trim()));
   console.log('votes =>', JSON.stringify(votes));
-  // 期望 18.6万赞 / 14.2万赞 / 11.3万赞 / 10.5万赞（从高到低）
+  // 期望 25万赞 / 22万赞 / 18万赞 / 15万赞 / 12万赞 / 9.6万赞（从高到低）
   const order = votes.join('|');
-  check('点赞按从高到低排列', order === '18.6万赞|14.2万赞|11.3万赞|10.5万赞', order);
+  check('点赞按从高到低排列', order === '25万赞|22万赞|18万赞|15万赞|12万赞|9.6万赞', order);
 
   // 4) 点击首张卡片打开详情
   await page.click('.zhihu-card');
