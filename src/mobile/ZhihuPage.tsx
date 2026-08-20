@@ -95,6 +95,10 @@ export default function ZhihuPage() {
               <span className="zhihu-detail-vote">
                 <LikeOutlined /> {formatVote(selected.voteUp)}
               </span>
+              {selected.grade && <span className={`zhihu-detail-grade grade-${selected.grade}`}>{selected.grade}</span>}
+              {typeof selected.commentCount === 'number' && (
+                <span className="zhihu-detail-cmtcount">评论 {selected.commentCount}</span>
+              )}
             </div>
 
             <div className="zhihu-detail-content">
@@ -108,6 +112,21 @@ export default function ZhihuPage() {
                 )
               )}
             </div>
+
+            {selected.comments && selected.comments.length > 0 && (
+              <div className="zhihu-detail-comments">
+                <div className="zhihu-detail-comments-title">精选评论（{selected.comments.length}）</div>
+                {selected.comments.slice(0, 10).map((c, idx) => (
+                  <div key={idx} className="zhihu-detail-comment">
+                    <div className="zhihu-detail-comment-head">
+                      <span className="zhihu-detail-comment-author">{c.author}</span>
+                      <span className="zhihu-detail-comment-vote">{c.voteCount}赞</span>
+                    </div>
+                    <div className="zhihu-detail-comment-content">{c.content}</div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {selected.link && (
               <a
