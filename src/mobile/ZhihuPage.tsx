@@ -1,13 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ReadOutlined,
   LikeOutlined,
   LinkOutlined,
-  ArrowLeftOutlined,
-  MessageOutlined,
-  StarOutlined,
-  ShareAltOutlined
+  ArrowLeftOutlined
 } from '@ant-design/icons';
 import { zhihuAnswers } from '../data/zhihu';
 
@@ -25,13 +22,32 @@ function formatVote(n: number): string {
 /**
  * 知乎页：收集知乎中点赞数超过 1 万的回答，按点赞从高到低排列。
  * 列表页展示排名 / 问题 / 答主 / 点赞数 / 摘要；点击进入完整详情页（非弹窗）。
- * 详情页为独立路由 /zhihu/:id，左上角有返回列表按钮，底部有操作栏（赞同/评论/收藏/分享）。
- * 数据为本地收藏（src/data/zhihu.ts），不进云同步。
+ * 详情页为独立路由 /zhihu/:id，左上角有返回列表按钮，底部只有一个「查看原回答」链接。
+ * 支持向右滑动返回列表（到一定距离触发）。数据为本地收藏（src/data/zhihu.ts），不进云同步。
  */
 export default function ZhihuPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const detailId = id || null;
+
+  // 向右滑动返回：记录起点，松手时若水平位移足够大且以横向为主，则回列表
+  const touchRef = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchRef.current = { x: t.clientX, y: t.clientY };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const s = touchRef.current;
+    touchRef.current = null;
+    if (!s) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - s.x;
+    const dy = t.clientY - s.y;
+    // 向右滑（dx>0）且横向位移明显大于纵向，距离过阈值即返回
+    if (dx > 70 && dx > Math.abs(dy) * 1.2) {
+      navigate('/zhihu');
+    }
+  };
 
   // 过滤点赞 > 1万，并按点赞从高到低排序
   const list = useMemo(
@@ -55,7 +71,11 @@ export default function ZhihuPage() {
   if (selected) {
     const rank = list.findIndex((x) => x.id === selected.id) + 1;
     return (
-      <div className="page zhihu-detail-page">
+      <div
+        className="page zhihu-detail-page"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
         <header className="zhihu-detail-bar">
           <button className="zhihu-back" onClick={() => navigate('/zhihu')}>
             <ArrowLeftOutlined />
@@ -114,33 +134,18 @@ export default function ZhihuPage() {
               ))}
             </div>
           )}
-
-          {selected.link && (
-            <a
-              className="zhihu-detail-link"
-              href={selected.link}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <LinkOutlined /> 查看原回答
-            </a>
-          )}
         </article>
 
-        <div className="zhihu-detail-actions">
-          <button className="act-vote">
-            <LikeOutlined /> 赞同 {formatVote(selected.voteUp)}
-          </button>
-          <button>
-            <MessageOutlined /> 评论 {selected.commentCount || 0}
-          </button>
-          <button>
-            <StarOutlined /> 收藏
-          </button>
-          <button>
-            <ShareAltOutlined /> 分享
-          </button>
-        </div>
+        {selected.link && (
+          <a
+            className="zhihu-detail-footlink"
+            href={selected.link}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <LinkOutlined /> 查看原回答（在知乎客户端打开）
+          </a>
+        )}
       </div>
     );
   }
