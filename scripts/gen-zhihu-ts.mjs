@@ -24,7 +24,7 @@ function emitAnswer(a) {
   if (a.excerpt) lines.push(`    excerpt: ${JSON.stringify(a.excerpt)},`);
   // 正文按 \n 分段（DB 中已是纯文本换行）
   lines.push(`    content: ${JSON.stringify(a.content || '')},`);
-  if (a.link) lines.push(`    link: ${JSON.stringify(a.link)},`);
+  if (a.link || a.url) lines.push(`    link: ${JSON.stringify(a.link || a.url)},`);
   if (a.grade) lines.push(`    grade: ${JSON.stringify(a.grade)},`);
   if (typeof a.commentCount === 'number') lines.push(`    commentCount: ${a.commentCount},`);
   const cmts = (a.comments || []).filter((c) => c && c.content);
