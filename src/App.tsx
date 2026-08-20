@@ -38,6 +38,7 @@ function Shell() {
   const { userId } = useSync();
   const isSettings = location.pathname === '/settings';
   const isSettingsSub = location.pathname.startsWith('/settings/');
+  const isZhihuDetail = /^\/zhihu\/.+/.test(location.pathname);
   const [syncOpen, setSyncOpen] = useState(false);
 
   /** 事件到期提醒检查：打开即查、每 60 秒、回到前台/可见时各查一次 */
@@ -240,7 +241,7 @@ function Shell() {
     <div className="app-shell">
       {isSettings ? (
         <div className="topbar-spacer" />
-      ) : isSettingsSub ? null : (
+      ) : isSettingsSub || isZhihuDetail ? null : (
         <header className="topbar">
           <div className="topbar-row">
             <div className="topbar-title">
@@ -263,6 +264,7 @@ function Shell() {
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/todos" element={<QuestionsPage />} />
             <Route path="/zhihu" element={<ZhihuPage />} />
+            <Route path="/zhihu/:id" element={<ZhihuPage />} />
             <Route
               path="/settings"
               element={<SettingsPage onOpenSync={() => setSyncOpen(true)} />}
@@ -276,7 +278,8 @@ function Shell() {
         </div>
       </div>
 
-      <nav className="tabbar">
+      {!isZhihuDetail && (
+        <nav className="tabbar">
         <button
           className={`tabbar-item${tab === 'calendar' ? ' active' : ''}`}
           onClick={() => navigate('/calendar')}
@@ -306,7 +309,8 @@ function Shell() {
           <SettingOutlined className="tab-ico" />
           设置
         </button>
-      </nav>
+        </nav>
+      )}
 
       <EventModal />
       <EventView />
