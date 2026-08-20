@@ -4913,3 +4913,133 @@ body {
 .zhihu-detail-close:active {
   background: #e3e6ec;
 }
+
+/* ===== 知乎详情：完整页面（非弹窗）===== */
+.zhihu-detail-page {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+.zhihu-detail-bar {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 50px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid #eef1f7;
+  flex-shrink: 0;
+}
+.zhihu-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--c-primary);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 6px 8px 6px 0;
+}
+.zhihu-back .anticon {
+  font-size: 18px;
+}
+.zhihu-detail-bar-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1b2b57;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.zhihu-detail {
+  padding: 14px 14px 18px;
+}
+.zhihu-detail-author-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 10px;
+}
+.zhihu-detail-avatar {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6e8bf5, #4c6ef5);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.zhihu-detail-author-meta {
+  flex: 1;
+  min-width: 0;
+}
+.zhihu-detail-author-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2330;
+}
+.zhihu-detail-author-sub {
+  font-size: 11.5px;
+  color: #9aa3b5;
+  margin-top: 1px;
+}
+.zhihu-detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+.zhihu-detail-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px calc(8px + var(--safe-bottom));
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid #eef1f7;
+  flex-shrink: 0;
+}
+.zhihu-detail-actions button {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 38px;
+  border: none;
+  background: #f4f6fb;
+  color: #495057;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  min-width: 0;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+.zhihu-detail-actions button:active {
+  background: #e9edf5;
+}
+.zhihu-detail-actions .act-vote {
+  background: var(--c-primary);
+  color: #fff;
+}
+.zhihu-detail-actions .act-vote:active {
+  opacity: 0.9;
+}
