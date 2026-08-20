@@ -70,7 +70,7 @@
 }
 
 body {
-  overscroll-behavior-y: none;
+  overscroll-behavior: none;
 }
 
 .app-shell {
@@ -246,6 +246,8 @@ body {
 .app-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
   position: relative;
   display: flex;
@@ -4920,6 +4922,8 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100%;
+  overscroll-behavior-x: contain;
+  touch-action: pan-y;
 }
 .zhihu-detail-bar {
   position: sticky;
@@ -5003,43 +5007,28 @@ body {
   gap: 12px;
   margin: 0 0 14px;
 }
-.zhihu-detail-actions {
+.zhihu-detail-footlink {
   position: sticky;
   bottom: 0;
   z-index: 6;
   display: flex;
-  gap: 6px;
-  padding: 8px 10px calc(8px + var(--safe-bottom));
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-top: 1px solid #eef1f7;
-  flex-shrink: 0;
-}
-.zhihu-detail-actions button {
-  flex: 1;
-  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  height: 38px;
-  border: none;
-  background: #f4f6fb;
-  color: #495057;
-  border-radius: 10px;
-  font-size: 13px;
-  cursor: pointer;
-  min-width: 0;
-  padding: 0 4px;
-  white-space: nowrap;
-}
-.zhihu-detail-actions button:active {
-  background: #e9edf5;
-}
-.zhihu-detail-actions .act-vote {
+  gap: 6px;
+  margin-top: auto;
+  height: 48px;
+  padding: 0 14px calc(0px + var(--safe-bottom));
   background: var(--c-primary);
   color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  flex-shrink: 0;
 }
-.zhihu-detail-actions .act-vote:active {
+.zhihu-detail-footlink .anticon {
+  font-size: 16px;
+}
+.zhihu-detail-footlink:active {
   opacity: 0.9;
 }
