@@ -1,6 +1,13 @@
 {
-  "semver": "V1.9.25",
+  "semver": "V1.9.26",
   "log": [
+    {
+      "version": "V1.9.26",
+      "date": "2026-08-20",
+      "title": "修复知乎详情页底部「查看原回答」链接不显示",
+      "summary": "根因：scripts/gen-zhihu-ts.mjs 生成 src/data/zhihu.ts 时只读取 db 的 a.link 字段，而 data/zhihu-db.json 中每条回答实际存的是 a.url（如 https://www.zhihu.com/question/362989562/answer/1621625955），导致 75 篇全部没有 link 字段，详情页 selected.link 恒为 undefined、底部链接永不渲染。修复：生成脚本改为优先取 a.link、缺失时回退 a.url；重新生成后 75 篇均带上 link。详情页底部「查看原回答（在知乎客户端打开）」链接恢复正常显示。",
+      "changes": []
+    },
     {
       "version": "V1.9.25",
       "date": "2026-08-20",
