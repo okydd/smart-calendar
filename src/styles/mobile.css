@@ -5005,7 +5005,7 @@ body {
   vertical-align: middle;
   font-weight: 600;
 }
-.zhihu-card.done { background: #f7f8f9; border-color: #f0f1f3; }
+.zhihu-card.done { background: #f7f8f9; }
 .zhihu-card.done .zhihu-q { color: #b6bbc6; }
 .zhihu-card.done .zhihu-author { color: #c2c6cf; }
 .zhihu-card.done .zhihu-vote { color: #c2c6cf; }
