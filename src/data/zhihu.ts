@@ -37,6 +37,10 @@ export interface ZhihuAnswer {
   commentCount?: number;
   /** 精选评论（已抓取的前 N 条，按赞排序） */
   comments?: ZhihuComment[];
+  /** 发布时间（YYYY-MM-DD） */
+  createdAt?: string;
+  /** 最近编辑时间（YYYY-MM-DD）；与发布同日则不输出 */
+  updatedAt?: string;
 }
 
 export const zhihuAnswers: ZhihuAnswer[] = [
@@ -51,6 +55,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/362989562/answer/1621625955",
     grade: "SSS",
     commentCount: 3123,
+    createdAt: "2020-12-11",
+    updatedAt: "2021-12-16",
     comments: [
       { author: "(匿名)", content: "话说我不敢裸睡怕半夜地震", voteCount: 2454 },
       { author: "(匿名)", content: "很喜欢泰戈尔写的一段话：有一个夜晚我烧毁了所有的记忆，从此我的梦就透明了；有一个早晨我扔掉了所有的昨天，从此我的脚步就轻盈了。 ​​​", voteCount: 2324 },
@@ -75,6 +81,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/266090769/answer/1747627643",
     grade: "SSS",
     commentCount: 1850,
+    createdAt: "2021-02-24",
+    updatedAt: "2021-09-26",
     comments: [
       { author: "(匿名)", content: "我老公就是长期搬运货品，导致手臂变粗[捂脸]，苦力活赚辛苦钱不容易啊", voteCount: 1180 },
       { author: "(匿名)", content: "想让手臂粗真的可以不用健身，想知道原因，去社会底层看看吧", voteCount: 795 },
@@ -99,6 +107,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/268776431/answer/1273732514",
     grade: "SSS",
     commentCount: 0,
+    createdAt: "2020-06-09",
+    updatedAt: "2021-08-11",
   },
   {
     id: "2036917683",
@@ -111,6 +121,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/324702775/answer/2036917683",
     grade: "SSS",
     commentCount: 973,
+    createdAt: "2021-08-03",
+    updatedAt: "2021-11-05",
     comments: [
       { author: "(匿名)", content: "深呼吸那一关，我就觉得我要睡觉了。", voteCount: 2425 },
       { author: "(匿名)", content: "黄冈人表示没听说过·", voteCount: 1091 },
@@ -135,6 +147,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/393200731/answer/1298542501",
     grade: "SSS",
     commentCount: 1640,
+    createdAt: "2020-06-23",
+    updatedAt: "2021-06-11",
     comments: [
       { author: "(匿名)", content: "输出倒逼输入\n这会是个很好的办法\n你若每日强制早起，则必会开始早睡", voteCount: 856 },
       { author: "(匿名)", content: "第33条，哈哈哈，好真的有惊喜，之前整理小房间的时候，发现了老妈藏在墙角的小袋子（我妈没上过学不识字，只会写自己名字，她没银行卡），打开一看，我勒个去，偷偷数了两遍，10W现金，我特么就没一次性拿过这么多钱在手上（穷逼见笑了）。", voteCount: 592 },
@@ -159,6 +173,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/266090769/answer/764049007",
     grade: "SSS",
     commentCount: 1665,
+    createdAt: "2019-07-27",
+    updatedAt: "2021-06-28",
     comments: [
       { author: "(匿名)", content: "不是所有的人都值得深交", voteCount: 3765 },
       { author: "(匿名)", content: "不请自来。觉得作者写的特别好，1.看到第一条就秒点进来了，感觉和自己很像，一般自己做很多事情，没做好之前不会对其他人说，藏在心里，除非遇到问题再去找相关人员，再就是自己学一门艺术或是技能，也是不会告诉他人，低调一点，不张扬。\n2.自控与毅力，我还是做的不好，心里乱，很多时候静不下。听说冥想会有帮助[酷]\n3.现在放假，我把游戏都卸载了(真的不玩了，没兴趣了，这里打包票[耶])，还有一开始迷恋小说，那天也卸载了。我现在每天看直播学英语，再自己学习编程，让自己变得更好(如果爱一个人，不要整天你你我我，而是做一个出色的人，在以后的以后，与别人竞争时，希望会有更大的自信与实力。(许多年前朋友送给我的）)\n4.我现在还是学生，经历的并没有那么多，也无法体会作者提出的那些，但以后肯定会有的，在这里看到了这些，心里也有所缓冲，感谢山山[爱]。\n5.头一次发评论，不小心说的很多，但确实是心里有些触动，再加上我写作不是很好，有逻辑乱的地方，请忽略[捂脸]\n有幸遇见这篇文章", voteCount: 2725 },
@@ -183,6 +199,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/362989562/answer/1603986561",
     grade: "SS",
     commentCount: 3584,
+    createdAt: "2020-11-30",
+    updatedAt: "2021-06-09",
     comments: [
       { author: "(匿名)", content: "每天坚持一千五百个跳绳 虽然不多 但是不管夜班还是白班每天都在跳 已经坚持了快半年了 变化很大 生命真的在于运动", voteCount: 481 },
       { author: "(匿名)", content: "把吹过的牛逼一条条实现。", voteCount: 332 },
@@ -207,6 +225,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/30178891/answer/570941536",
     grade: "SS",
     commentCount: 2047,
+    createdAt: "2019-01-10",
     comments: [
       { author: "(匿名)", content: "午睡两个小时 幸福感可以说很高了[飙泪笑][飙泪笑][飙泪笑]", voteCount: 5732 },
       { author: "(匿名)", content: "读书3遍，其意自现。", voteCount: 2657 },
@@ -231,6 +250,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/26811466/answer/34723592",
     grade: "SS",
     commentCount: 765,
+    createdAt: "2014-12-07",
+    updatedAt: "2014-12-30",
     comments: [
       { author: "(匿名)", content: "感谢细致的整理", voteCount: 250 },
       { author: "(匿名)", content: "每个答案都是满满的干货！大赞", voteCount: 130 },
@@ -255,6 +276,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/64501030/answer/223468870",
     grade: "SS",
     commentCount: 1539,
+    createdAt: "2017-08-31",
+    updatedAt: "2020-02-04",
     comments: [
       { author: "(匿名)", content: "不猥琐发育，怎能超神翻盘。", voteCount: 3611 },
       { author: "(匿名)", content: "很赞成您的观点，看到每一条都想说：真是深得我心啊！只是我的语言表达能力不够好，无法和您一样表达得这么清晰😊", voteCount: 2033 },
@@ -279,6 +302,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/384441334/answer/2596104794",
     grade: "S",
     commentCount: 2397,
+    createdAt: "2022-07-28",
+    updatedAt: "2022-08-08",
     comments: [
       { author: "(匿名)", content: "活着就是最好的。经历了生死，其他的都是小事", voteCount: 511 },
       { author: "(匿名)", content: "有人活着就已是万幸，而我却为那么多没什么意义的事情烦恼，真是浪费这短短的人生啊", voteCount: 455 },
@@ -303,6 +328,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/278913737/answer/461334194",
     grade: "S",
     commentCount: 2450,
+    createdAt: "2018-08-05",
+    updatedAt: "2019-05-02",
   },
   {
     id: "278409457",
@@ -315,6 +342,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/28358499/answer/278409457",
     grade: "S",
     commentCount: 546,
+    createdAt: "2017-12-18",
+    updatedAt: "2023-02-16",
     comments: [
       { author: "(匿名)", content: "不愧我东南学霸哦", voteCount: 166 },
       { author: "(匿名)", content: "抢到了首赞😊", voteCount: 134 },
@@ -339,6 +368,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/386853992/answer/1352645637",
     grade: "S",
     commentCount: 534,
+    createdAt: "2020-07-21",
+    updatedAt: "2022-01-16",
     comments: [
       { author: "(匿名)", content: "看了所有 只有这个值得点赞", voteCount: 4204 },
       { author: "(匿名)", content: "其实我们的社会一直有一个很矛盾的点，就是不管男女，大多数人上大学之前都被要求一样的努力学习，努力考好高中、好大学，分数、排名也都不会看性别。而一旦进入社会，在职场、婚姻问题中，就出现了“女性可以弱一点”“女性不需要有多么强的事业”“只要嫁的好”类似的声音，这与我们18岁之前所受的教育观念背道而驰。如果是这样，那我们从小到大的努力是为了什么？希望女孩子们都为了自己而努力，去实现自己的人生目标。", voteCount: 3176 },
@@ -362,6 +393,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/40223190/answer/887992129",
     grade: "S",
     commentCount: 421,
+    createdAt: "2019-11-09",
+    updatedAt: "2024-03-11",
     comments: [
       { author: "(匿名)", content: "认认真真读完了。\n心境跟我两三个月前初次读这些回答时截然不同，那时刚萌生写作想法，心中对这件事懵懵懂懂、一知半解。这时再看文内所述，心中已然多了些掂量。\n1.坚持。包括读，写，思考，观察。\n2.个人。包括思想，三观，知识面，作息规律。\n3.技巧。卖油翁说，无他，唯手熟尔。\n这些是我总结出的基本功，望指教。", voteCount: 649 },
       { author: "(匿名)", content: "感谢分享，其实感觉最难在坚持", voteCount: 318 },
@@ -386,6 +419,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/301793024/answer/813484954",
     grade: "S",
     commentCount: 810,
+    createdAt: "2019-09-04",
+    updatedAt: "2022-03-05",
     comments: [
       { author: "(匿名)", content: "优秀的人，永远优秀！ 不像我自我感觉优秀…\n例子随便列！能听进去算我输！啊！这浮躁的社会啊！", voteCount: 1000 },
       { author: "(匿名)", content: "带跑鞋跑步这个真的赞同", voteCount: 504 },
@@ -410,6 +445,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/50343728/answer/409389787",
     grade: "S",
     commentCount: 1210,
+    createdAt: "2018-06-04",
+    updatedAt: "2020-12-13",
     comments: [
       { author: "(匿名)", content: "期待答主能继续更下去，这个暑假也有练字的计划", voteCount: 397 },
       { author: "(匿名)", content: "后天高考！！！快！！！来不及了！！", voteCount: 350 },
@@ -434,6 +471,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/432084549/answer/1639574790",
     grade: "S",
     commentCount: 694,
+    createdAt: "2020-12-22",
     comments: [
       { author: "(匿名)", content: "除了叠被子都赞同，我个人真的特别特别不喜欢叠被子", voteCount: 892 },
       { author: "(匿名)", content: "面膜不能敷太多次，容易引起角质层糜烂…", voteCount: 571 },
@@ -458,6 +496,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/283384207/answer/453688121",
     grade: "S",
     commentCount: 2651,
+    createdAt: "2018-07-27",
     comments: [
       { author: "(匿名)", content: "赞一个，黑的不留痕迹", voteCount: 11167 },
       { author: "(匿名)", content: "完美的计划啊，要不要建个群交流下流程、心得？名字就叫资源共享", voteCount: 5649 },
@@ -482,6 +521,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/263474432/answer/562772745",
     grade: "S",
     commentCount: 754,
+    createdAt: "2018-12-30",
+    updatedAt: "2024-03-11",
     comments: [
       { author: "(匿名)", content: "我一度以为知乎已经被“你婆婆有多讨厌”、“你老公最让你心寒的是什么”、“某某有多美”给占据了呢。这种文章才是知乎区别于其他论坛网站的重要因素", voteCount: 1378 },
       { author: "(匿名)", content: "感谢，谢老师，老师的文章一篇我要大概看十遍，理解能力比较差。一边回味一边记笔记，晚上睡觉还在脑子里面过一遍，希望能足能吸收老师的精髓！感恩！", voteCount: 265 },
@@ -506,6 +547,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/23913984/answer/29414843",
     grade: "S",
     commentCount: 748,
+    createdAt: "2014-08-19",
     comments: [
       { author: "(匿名)", content: "完美主义拖延症病史3年重度患者手动点赞！", voteCount: 1738 },
       { author: "(匿名)", content: "绝大多数时候，凑合着做完，比完美地半途而废要好。\n绝大多数时候，决定要做就直接开始，比自认为准备充分了再开始要好。\n两句话胜过各种治愈拖延症的书了", voteCount: 919 },
@@ -530,6 +572,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/540368950/answer/20255994510",
     grade: "S",
     commentCount: 855,
+    createdAt: "2024-11-01",
+    updatedAt: "2025-04-29",
   },
   {
     id: "79860188",
@@ -542,6 +586,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/38455082/answer/79860188",
     grade: "S",
     commentCount: 1559,
+    createdAt: "2016-01-04",
+    updatedAt: "2026-07-14",
     comments: [
       { author: "(匿名)", content: "我除了点赞，都不知道如何评论了。", voteCount: 2521 },
       { author: "(匿名)", content: "原来这也只是极其普通。。。以我小时候对画画得热爱，要是能画成这样，我就毅然决然的去考美术生了。。。还好没有。。。", voteCount: 906 },
@@ -566,6 +612,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/301793024/answer/763195787",
     grade: "S",
     commentCount: 586,
+    createdAt: "2019-07-26",
+    updatedAt: "2023-04-13",
     comments: [
       { author: "(匿名)", content: "想看眼霜篇的宝贝们右边集合[爱]", voteCount: 479 },
       { author: "(匿名)", content: "牛", voteCount: 24 },
@@ -590,6 +638,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/1976708803165712649/answer/1977042770205110538",
     grade: "S",
     commentCount: 587,
+    createdAt: "2025-11-26",
     comments: [
       { author: "(匿名)", content: "没话找话耍宝也就算了，顶多有点尬。这已经到了你们玩的都是坏梗 快来学我玩好梗的程度，\n又想打成一片、又不想放下身段，更想教你茴字的写法", voteCount: 4864 },
       { author: "(匿名)", content: "一边不让玩烂梗，一边春晚上又硬蹭烂梗", voteCount: 3844 },
@@ -613,6 +662,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/266090769/answer/770274375",
     grade: "S",
     commentCount: 438,
+    createdAt: "2019-08-01",
+    updatedAt: "2023-04-11",
     comments: [
       { author: "(匿名)", content: "走心的建议，感谢答主", voteCount: 190 },
       { author: "(匿名)", content: "才75年？那我得设计一个100岁的格子", voteCount: 178 },
@@ -637,6 +688,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/654056256/answer/1984372019006039960",
     grade: "S",
     commentCount: 235,
+    createdAt: "2025-12-16",
     comments: [
       { author: "(匿名)", content: "如何白嫖？", voteCount: 4850 },
       { author: "(匿名)", content: "我以前做过人力资源薪酬绩效方向的工作，大部分老板都把绩效当做是考核不是激励。最好是活干了钱不发。。。", voteCount: 3607 },
@@ -661,6 +713,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/389273261/answer/2093828190",
     grade: "S",
     commentCount: 565,
+    createdAt: "2021-08-30",
+    updatedAt: "2021-08-31",
     comments: [
       { author: "(匿名)", content: "从来没有哪一代垮掉了，只是大部分人只愿意去看那些垮掉的，然后高高在上，说出讥讽的话语", voteCount: 2715 },
       { author: "(匿名)", content: "震惊，10后至今没有人活过15岁", voteCount: 2304 },
@@ -685,6 +739,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/351764371/answer/2658448797",
     grade: "S",
     commentCount: 1940,
+    createdAt: "2022-09-03",
     comments: [
       { author: "(匿名)", content: "我觉得你爸已经做好看戏的准备了[惊喜]", voteCount: 8059 },
       { author: "(匿名)", content: "你爸：检测到在途的不明物体打击[惊喜]", voteCount: 6085 },
@@ -709,6 +764,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/62006185/answer/200877346",
     grade: "S",
     commentCount: 755,
+    createdAt: "2017-07-20",
   },
   {
     id: "2001287121999259464",
@@ -721,6 +777,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/38215616/answer/2001287121999259464",
     grade: "S",
     commentCount: 1309,
+    createdAt: "2026-02-01",
+    updatedAt: "2026-02-04",
     comments: [
       { author: "(匿名)", content: "这个一看就是自然人，没有科技狠活。", voteCount: 5292 },
       { author: "(匿名)", content: "不说脸，这样的体型就是我的梦中情体了", voteCount: 4094 },
@@ -745,6 +803,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/20439256/answer/2049478724165296214",
     grade: "S",
     commentCount: 1131,
+    createdAt: "2026-06-14",
     comments: [
       { author: "(匿名)", content: "烂大街的道理到处都是，能讲到人心里去的话术凤毛麟角[赞]", voteCount: 2693 },
       { author: "(匿名)", content: "有人说要问如何评价张雪峰：一个劝你读书的人，他再坏能坏到哪去？", voteCount: 2197 },
@@ -769,6 +828,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/23913984/answer/690515803",
     grade: "S",
     commentCount: 441,
+    createdAt: "2019-05-21",
+    updatedAt: "2023-04-15",
     comments: [
       { author: "(匿名)", content: "我想知道怎么从弱智模式变回来，以前为了不让自己受到伤害时刻处于弱智模式，现在大脑习惯了不思考，哎", voteCount: 411 },
       { author: "(匿名)", content: "我是属于实战派的，理论确实不如答主那么详细，但是基本上自己也已经摸索出了一套非常高明的自我消化负面情绪的能力，而且这能力最大的好处我发现：我甚至可以避免社交，我发现社交的本质也是从外界寻求快乐，可是任何外界总不可能避免的一个就是无常，这就是我们最痛苦的地方，我们人都希望无条件的不停的接受快乐的感受，不想要痛苦的感受，可是假如快乐是从外界来的，那么无常对人的影响就太大了，比如有朋友你就开心，没朋友你就孤独拉！那太糟糕了，等于就完全依靠了外界，那么人就根本停不下来，停不下来才是人最焦虑的地方，人本身需要的其实就俩个东西：一个是可以停下来做自己想做的事，第二个是在这个状态里还要保持舒服的感觉，所以大部分人是做不来的，其实舒服的感觉我现在通过积年累月加上看很多人的感受也做出了一个判断：一个人经历过生活的痛苦 各种困苦知道之后，才会知道，其实舒服我们不动就舒服，只要一动，就会不舒服的，所以很多时候，我们自身其实有个能让自己开心幸福的能力，但是这个东西反正我做到了，别人我看做到的寥寥无几，所以我想，没或许每个人都不一样，或许和经历有很大关系，总之很多时候就是这样，所以我现在不轻易给别人传授经验，我的经验给了别人，假如别人还信我，那么就会变成我的知识和他的潜意识有冲突（不可千万别不信我说的，你的绝大部分痛苦或者甚至说全部的痛苦都是冲突造成了），所以很多时候没减少社交才是真正让自己减少冲突增加快乐地关键，但是假如你不许人多你ibixu你必须人多你才能快乐的话，那么和别人的好充分体育冲突特会也会咋能家咋鞥增加你的痛苦。", voteCount: 249 },
@@ -793,6 +854,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/22594681/answer/1394098371",
     grade: "S",
     commentCount: 2608,
+    createdAt: "2020-08-08",
+    updatedAt: "2022-05-22",
     comments: [
       { author: "(匿名)", content: "想反驳你，但是又找不到可杠的点。。。", voteCount: 2141 },
       { author: "(匿名)", content: "那你就不要找一个有上进心的，找一个“努力”的就好，但是很可惜，富士康流水线上每一个员工都很努力。\n所以你要的，明明是美好的未来。", voteCount: 1815 },
@@ -817,6 +880,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/48749292/answer/1685146179",
     grade: "S",
     commentCount: 136,
+    createdAt: "2021-01-19",
+    updatedAt: "2024-03-19",
     comments: [
       { author: "(匿名)", content: "这是高考作文吗？以毛泽东为例，阐述自律的方法。", voteCount: 1265 },
       { author: "(匿名)", content: "但是夸主席的，我一律点赞。", voteCount: 1122 },
@@ -841,6 +906,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/26773243/answer/2202515061",
     grade: "A",
     commentCount: 812,
+    createdAt: "2021-11-02",
+    updatedAt: "2024-03-19",
   },
   {
     id: "653414400",
@@ -853,6 +920,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/319623962/answer/653414400",
     grade: "A",
     commentCount: 1548,
+    createdAt: "2019-04-16",
+    updatedAt: "2025-03-11",
     comments: [
       { author: "(匿名)", content: "哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈人设啊我也为了人设活着", voteCount: 1448 },
       { author: "(匿名)", content: "脑子灵活的学生学习效率真高啊！👍小时候家长给你打得基础没有白费！", voteCount: 937 },
@@ -877,6 +946,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/508264893/answer/1992688020843946197",
     grade: "A",
     commentCount: 1108,
+    createdAt: "2026-01-08",
+    updatedAt: "2026-05-16",
     comments: [
       { author: "(匿名)", content: "国内那么多大佬采访，很少能听到实话的。大部分都是吹。有几个采访你是真能学到东西的。或者会跟你说点真话的，王健林，雷军，潘石屹。这几个是我觉得采访会说真话给你听的人。其他的要么只是分享，很少表达过于主观的内容。不过现在大佬都不怎么公开发言了。还有人能说就不错了。[为难]", voteCount: 2239 },
       { author: "(匿名)", content: "他们是“不背叛自我”的人。", voteCount: 822 },
@@ -901,6 +972,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/61427877/answer/352716797",
     grade: "A",
     commentCount: 1602,
+    createdAt: "2018-03-28",
+    updatedAt: "2021-10-27",
     comments: [
       { author: "(匿名)", content: "浙江和江苏的考生应该都是被逼出来的，高考的数学试卷简直丧心病狂", voteCount: 2831 },
       { author: "(匿名)", content: "年级十四上同济 天水一中还是兰炼一中？", voteCount: 1382 },
@@ -925,6 +998,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/31125974/answer/50898442",
     grade: "A",
     commentCount: 1300,
+    createdAt: "2015-06-11",
+    updatedAt: "2015-09-26",
     comments: [
       { author: "(匿名)", content: "必须强答。\n记忆力好是有弊端的。比如说。拖延症。反正都会记住。考前三个月准备和考前一周背诵没有差别。于是各种拖延。\n 一本300多页的教材。用6个小时左右可以读完并记住重点百分之八十。传说中的一目十行吧。但是后遗症是整个人虚脱。吃不下饭。\n 这得益于小学时强大的阅读量。家里有面书墙。它是空的。有天我说。老爸你能把书墙填满嘛。我爸说我填满了你会认真读每本书嘛。我说会。不但要读还要快。我说好的。那个暑假没日没夜的看书。只是为了和爸爸打赌。就是那个夏天。我认识了三毛。席慕蓉。余秋雨。等等等等。\n 阅读量大带给我的感受是：\n 1功能性书籍:快速阅读的话看前言和目录。书的核心思想在前言里阐述鲜明。目录存在的意义就是达到核心思想的过程。掐头去尾。知识点get。\n 2文学性书籍：自传型经历感受居多。回忆录轶事为主。散文类心情漫步。励志类无数鸡汤。小说类故事主线和写作环境布局。不同类型带着不同心情。有的放矢。哦。忘了。名著之所以是名著。在梗概。人物刻画。细节补充。性格测写。自成一统。我最爱的名著是。《简爱》。哦哈哈。\n 3语言性书籍：语言始源。基本发音。单词。组合词。同义词。反义词。诶。英语的字母发音大部分是固定的。跟中文边旁部首一样。发音和单词结构组合记忆更配哦。中文博大精深。语式结构巩固巩固再巩固。主谓宾。顺过来。倒过去。 语法提炼和重点总结相辅相成。4学术性书籍：论点。实验模型。数据表格。应用反馈。代入性。再论证。这类书籍我更喜欢先倒后正看。逻辑上更合理。节约纠结疑惑的时间。个人习惯哈。不喜勿喷。 \n 理解再记忆比直接记忆有效。一份资料。初读找出架构或者脉络。再度确认重点与非重点。最后重复重点记忆和寻找相关文献或理论支撑素材。记忆流程结束。\n 说了这么多。核心是。鼓励大家多读多看。量变产生质变。千古恒理。\n 记忆力好其实并没有什么卵用。对于我。记忆模式真的只是模式。遇到学术时自动启动。大部分时候。我都活的很无助。\n 丢东西。找东西。再丢东西。找东西。家里钥匙放朋友那好几把。因为总丢。\n 最后。补充一句。说了这么多。我只是想论证下。记忆力好的人。路痴的几率会无限增大。比如答主和我。筒子们。高楼码起来。", voteCount: 663 },
       { author: "(匿名)", content: "我去年学习了记忆宫殿，效果很好。现在记单词根本不是事。", voteCount: 561 },
@@ -949,6 +1024,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/22034803/answer/60356087",
     grade: "A",
     commentCount: 377,
+    createdAt: "2015-08-22",
+    updatedAt: "2015-08-23",
   },
   {
     id: "633858638",
@@ -961,6 +1038,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/303672817/answer/633858638",
     grade: "A",
     commentCount: 767,
+    createdAt: "2019-03-27",
+    updatedAt: "2020-07-13",
   },
   {
     id: "1496759469",
@@ -973,6 +1052,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/268776431/answer/1496759469",
     grade: "A",
     commentCount: 259,
+    createdAt: "2020-09-28",
+    updatedAt: "2020-11-09",
     comments: [
       { author: "(匿名)", content: "长期阅读真的是能改变一个人的气质，心态会越来越平和，而不至于让偏见导致自己的局限和狭隘。\n我决定以后刷知乎真的不能只刷高赞的答案，第一时间先看作者的主页所有回答是不是有公众号导向，那些大部分答主主页回答都是高赞答案更多的像是搬运整合拼凑出来的替代性经验，看似有用但答主其实自身没有真实体验过，因为一个人的一生的时间和精力有限，那些答主不可能有那么多实践经验回答问题，只能搬运书籍或者老瓶装新酒，所以显得不够深刻、贴近现实，而像作者这样主页高赞答案很少只有零星几个的普通人给出的建议反而才更纯粹更真实更能给我带来惊喜，因为大家都只是芸芸众生中的一个平凡人，都是在为了自己不平凡而努力着，与作者共勉之。[拜托][拜托]", voteCount: 831 },
       { author: "(匿名)", content: "河西走廊 感觉真的不错。", voteCount: 74 },
@@ -997,6 +1078,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/639453581/answer/3534698528",
     grade: "A",
     commentCount: 728,
+    createdAt: "2024-06-18",
+    updatedAt: "2025-04-11",
   },
   {
     id: "1955688994823214657",
@@ -1009,6 +1092,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/656517397/answer/1955688994823214657",
     grade: "A",
     commentCount: 1935,
+    createdAt: "2025-09-28",
   },
   {
     id: "1373525545",
@@ -1021,6 +1105,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/304924099/answer/1373525545",
     grade: "A",
     commentCount: 2752,
+    createdAt: "2020-07-31",
     comments: [
       { author: "(匿名)", content: "懒妈妈养出勤快女儿，勤快妈妈养出懒女儿，我就是这样[捂脸]", voteCount: 5420 },
       { author: "(匿名)", content: "好看~ 我也看过同学妈妈比她都像少女的，就是同学放两个背影照片在朋友圈，我觉得有张背影就很少女、很娇俏，没想到是她妈妈，保养的太牛了[捂脸]", voteCount: 1359 },
@@ -1045,6 +1130,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/265218925/answer/1857488153",
     grade: "A",
     commentCount: 156,
+    createdAt: "2021-04-27",
     comments: [
       { author: "(匿名)", content: "用阅读小标题的方式读完了这篇文章，不由得感叹自己的明智……", voteCount: 349 },
       { author: "(匿名)", content: "我以为什么牛逼的计划呢，还不是只是在停留做计划的层面，做计划可以很多种方式，即便写出时间，只要自己可控都可以，比如读书，你不写时间怎么知道如何分配，读多少，每页尽量快点。被割韭菜了！！！你靠这些玩意来割韭菜吗？大家现在的问题是如何执行，这个才是重点，不是你在忽悠如何写计划", voteCount: 285 },
@@ -1069,6 +1155,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/38692641/answer/514598536",
     grade: "A",
     commentCount: 433,
+    createdAt: "2018-10-20",
+    updatedAt: "2024-03-11",
     comments: [
       { author: "(匿名)", content: "单纯商榷，不是杠。\n我觉得老师其实也没错，你在一个应试环境下，需要的是正确答案。\n而且阿米尔汗的想法也说不上多高级，而是一种对于机械装置的感性认识。\n好学生回答的是总结出来的抽象认知。\n单从答案而论，后者是强过前者的。\n这样的定义不仅清晰，而且才具有指导意义。\n比如要发明一个机械装置，或者判断具体的装置是不是机械装置，那么后者的定义就有意义了。", voteCount: 751 },
       { author: "(匿名)", content: "你的这些思维，只会把自己累死！从层面上看，你这些思维都只停留在心智层面！很零散，片面，一点都不系统化！", voteCount: 220 },
@@ -1093,6 +1181,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/58662264/answer/397791607",
     grade: "A",
     commentCount: 3945,
+    createdAt: "2018-05-22",
+    updatedAt: "2018-05-26",
   },
   {
     id: "330239463",
@@ -1105,6 +1195,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/267861219/answer/330239463",
     grade: "A",
     commentCount: 707,
+    createdAt: "2018-02-28",
+    updatedAt: "2018-04-26",
     comments: [
       { author: "(匿名)", content: "你母亲的反应令人匪夷所思", voteCount: 4742 },
       { author: "(匿名)", content: "阿姨真的令人匪夷所思啊", voteCount: 2364 },
@@ -1129,6 +1221,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/634203381/answer/89047052430",
     grade: "A",
     commentCount: 604,
+    createdAt: "2025-01-29",
   },
   {
     id: "3521028917",
@@ -1141,6 +1234,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/656517397/answer/3521028917",
     grade: "A",
     commentCount: 1226,
+    createdAt: "2024-06-05",
   },
   {
     id: "2062502872256870353",
@@ -1153,6 +1247,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/266972664/answer/2062502872256870353",
     grade: "A",
     commentCount: 706,
+    createdAt: "2026-07-20",
     comments: [
       { author: "(匿名)", content: "蔡老师向来是直言不讳，他视频被下架很多了，B站还能找到很多尖锐视频的留档，不过还是少看，就当掩耳盗铃吧", voteCount: 2857 },
       { author: "(匿名)", content: "蔡老师他真有个女儿", voteCount: 2077 },
@@ -1177,6 +1272,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/456139673/answer/2119424331",
     grade: "A",
     commentCount: 1195,
+    createdAt: "2021-09-14",
+    updatedAt: "2021-11-21",
   },
   {
     id: "16147081",
@@ -1189,6 +1286,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/20777633/answer/16147081",
     grade: "A",
     commentCount: 378,
+    createdAt: "2013-02-15",
+    updatedAt: "2018-12-29",
     comments: [
       { author: "(匿名)", content: "一言以蔽之，写作的要点是简单明了；锻炼方式有复述和翻译。", voteCount: 1035 },
       { author: "(匿名)", content: "你说的复述我也用过，能起到一定的作用，但是我反应较慢，一般跟别人复述完以后，我就又快速的被别人的观点带走了。而且我觉得我的复述很生硬，能让别人直接发现我就是在复述，没有自己讲出来的那种感觉。所以我一直为此而苦恼。所以后来我开始习惯写东西，因为说东西比写东西除了智商层面上的东西还有情商层面的，鄙人情商低，智商也有待开发，所以就不想直接从最容易受打击的方式入手。所以我锻炼逻辑的方式是从写东西开始。我非常爱看影视剧，所以我会用写影评或者剧评的方式表达我的观点、锻炼自己的逻辑思维能力。但这个有一个缺点就是，互动性比较差，一般没有耐力的人是坚持不了的。但我相信，每周一评，长久这样坚持下去，我的文字表达能力和思维逻辑能力也会有从量变到质变的变化。等到我文字表达能力和思维逻辑提高到一定的水平后，我再尝试在QQ群里发表自己的观点，成为某一方面的领袖，之后再练说话。这是我的一些浅薄之见，希望能够获得亲提一些更有建设性的意见。", voteCount: 229 },
@@ -1213,6 +1312,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/490344475/answer/2174703899",
     grade: "A",
     commentCount: 336,
+    createdAt: "2021-10-17",
+    updatedAt: "2022-08-09",
     comments: [
       { author: "(匿名)", content: "成长不是变强，而是填坑！深有体会[赞]", voteCount: 530 },
       { author: "(匿名)", content: "说得很有道理啊，所以有的人说感谢苦难，但其实苦难本身并不值得感谢，该感谢的是那个在苦难中不放弃成长的自己。", voteCount: 393 },
@@ -1237,6 +1338,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/639909397/answer/3442472840",
     grade: "A",
     commentCount: 850,
+    createdAt: "2024-03-25",
     comments: [
       { author: "(匿名)", content: "渣男和骗子就是要做到即使自己实际很弱小，也要给女人制造一种强大的错觉，然后生米煮成熟饭，她们就会自我pua了[大笑]", voteCount: 3578 },
       { author: "(匿名)", content: "因为普通女性找不到真强的，只能找到看起来强的[捂脸][捂脸]真强的男性周围都一帮年轻优秀的女生围着抢，普通女性根本抢不到。", voteCount: 2298 },
@@ -1260,6 +1362,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/575674852/answer/3262660637",
     grade: "A",
     commentCount: 806,
+    createdAt: "2023-10-24",
   },
   {
     id: "1966454017275204391",
@@ -1272,6 +1375,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/407315520/answer/1966454017275204391",
     grade: "A",
     commentCount: 380,
+    createdAt: "2025-10-28",
+    updatedAt: "2026-08-19",
     comments: [
       { author: "(匿名)", content: "用词造句风格类似，这一点真的特别重要，阅读类似。这也是我为什么不推荐别人看经济学人，每篇文章下笔风格迥异，里面包含各种阴阳怪气典故修辞一大堆乱七八糟的东西，根本不适合英语学习", voteCount: 331 },
       { author: "(匿名)", content: "这方法挺好，唯一不足的是没有听力输入。我觉得听力输入很重要的。", voteCount: 206 },
@@ -1296,6 +1401,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/304924099/answer/675003097",
     grade: "A",
     commentCount: 662,
+    createdAt: "2019-05-07",
     comments: [
       { author: "(匿名)", content: "前提是你得有钱和有时间去做这些", voteCount: 2078 },
       { author: "(匿名)", content: "运动健身节食是演员工作的一部分了 普通人还能够这样坚持才是真正的自律啊！", voteCount: 1233 },
@@ -1320,6 +1426,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/10697371203/answer/90167686442",
     grade: "A",
     commentCount: 862,
+    createdAt: "2025-01-31",
     comments: [
       { author: "(匿名)", content: "真开了[飙泪笑]战鹰都回应了", voteCount: 7315 },
       { author: "(匿名)", content: "大校什么概念？刘培强炸木星的时候才中校。", voteCount: 5210 },
@@ -1344,6 +1451,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/61427877/answer/354165081",
     grade: "A",
     commentCount: 594,
+    createdAt: "2018-03-30",
+    updatedAt: "2026-07-31",
     comments: [
       { author: "(匿名)", content: "厉害了，728应该是状元吧", voteCount: 2320 },
       { author: "(匿名)", content: "为祝你幸福四个字点赞。", voteCount: 1986 },
@@ -1368,6 +1477,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/38342690/answer/1351202585",
     grade: "A",
     commentCount: 175,
+    createdAt: "2020-07-21",
+    updatedAt: "2024-03-11",
     comments: [
       { author: "(匿名)", content: "为什么要读书？\n一是通过读书到达你去不到的地方、领略你未曾领略的风景、接触你不曾见过的人或事，了解超越空间和时间的事物。\n二是潜移默化丰富你内心的世界，可以让你的视野更加开阔，思维更加敏锐，洞见更加精准。\n三是多维看待世界和人生的角度，加深对世间万物的变迁迭代和人生意义不舍追求的深刻认知。\n\n读什么书？\n哲学、历史、人文、社科等等，都可以涉略，\n摒弃功利性读书的态度，抱以非功利性读书的态度，博观以达约取，厚积才能薄发。\n\n怎么读书？\n好的书可以反复读，力求新的启发、新的感受。", voteCount: 1017 },
       { author: "(匿名)", content: "就像老师说的，读书可以知道自己的无知，从而时刻保持谦逊。我喜欢看关于中国历史的书，里面有很多王侯将相，帝王皇帝。他们用冠绝时代的才华妄图打造完美的制度，但往往是死后甚至没死制度就迅速崩坏，甚至造成巨大的反噬。\n从来没有什么人定胜天，我们只是认识并运用了更多的自然规律从而挖掘出了自然的能量。从某种角度上来讲，我们与自然的联系正越来越紧密！这就是所谓“天人合一”吧。", voteCount: 253 },
@@ -1392,6 +1503,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/624719717/answer/3239912787",
     grade: "A",
     commentCount: 326,
+    createdAt: "2023-10-07",
   },
   {
     id: "1765444786",
@@ -1404,6 +1516,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/385248053/answer/1765444786",
     grade: "A",
     commentCount: 199,
+    createdAt: "2021-03-06",
     comments: [
       { author: "(匿名)", content: "现在多选漏选只有两分了...", voteCount: 202 },
       { author: "(匿名)", content: "数学苟分方法简直和我一模一样，不过因为本身水平不咋地最后只有100左右，不会做的题真的不要死磕，大多数时候就算想二十分钟也做不出来[发呆]就算做出来也是亏了。水平不高的人不要在前面叽叽歪歪的，到后面把该拿的都拿了才是首选。", voteCount: 145 },
@@ -1428,6 +1541,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/300713363/answer/812523656",
     grade: "A",
     commentCount: 314,
+    createdAt: "2019-09-04",
+    updatedAt: "2021-03-01",
     comments: [
       { author: "(匿名)", content: "嗯嗯，谢谢你的提醒。每个人都有自己的方式，我们一起加油哈", voteCount: 41 },
       { author: "(匿名)", content: "几分钟？是起催眠作用还是？", voteCount: 18 },
@@ -1452,6 +1567,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/301793024/answer/1920735652",
     grade: "A",
     commentCount: 314,
+    createdAt: "2021-06-03",
+    updatedAt: "2021-11-20",
     comments: [
       { author: "(匿名)", content: "扑面而来的油腻和市侩", voteCount: 325 },
       { author: "(匿名)", content: "收藏夹里呆着去[爱]", voteCount: 184 },
@@ -1476,6 +1593,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/30178891/answer/704052534",
     grade: "A",
     commentCount: 239,
+    createdAt: "2019-06-03",
     comments: [
       { author: "(匿名)", content: "果然是学霸们的学习方法大致相同……学渣的各自不同", voteCount: 507 },
       { author: "(匿名)", content: "原来之前一直在用所谓的费曼学习法。", voteCount: 271 },
@@ -1500,6 +1618,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/319623962/answer/1898186962403300625",
     grade: "A",
     commentCount: 962,
+    createdAt: "2025-04-23",
+    updatedAt: "2025-11-07",
     comments: [
       { author: "(匿名)", content: "老师不是不教，是很多老师没有能力教，而且很多学生也没有能力学。\n如果一个事情班级70%的学生不懂，就没办法教給学生了，哪怕学生会。\n\n以前是通过分级分层解决这个问题，现在不让搞快慢班，重点班。就只能牺牲聪明一点的学生了。\n\n五三很好，但是缺点是不够基础，题目偏难，对基础差的学生不友好。\n很可惜一个高中基础差的学生能占到70%-90%。除非是省里排名前几位的高中之外，其余的高中985 211的比例太低了。\n\n基础差的学生四则运算都不熟练，更何况题型了。", voteCount: 2207 },
       { author: "(匿名)", content: "你靠53能到140真不说明53厉害，是你厉害，甚至可以反馈出你们学校不行[捂脸][捂脸][捂脸]", voteCount: 1901 },
@@ -1524,6 +1644,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/21880681/answer/924308190",
     grade: "A",
     commentCount: 162,
+    createdAt: "2019-12-06",
+    updatedAt: "2021-05-05",
   },
   {
     id: "3462619893",
@@ -1536,6 +1658,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/412551827/answer/3462619893",
     grade: "A",
     commentCount: 876,
+    createdAt: "2024-04-11",
+    updatedAt: "2024-05-18",
   },
   {
     id: "75404999925",
@@ -1548,6 +1672,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/531866239/answer/75404999925",
     grade: "A",
     commentCount: 280,
+    createdAt: "2025-01-09",
     comments: [
       { author: "(匿名)", content: "将军：吃饭一定要用嘴吃[大笑]", voteCount: 2249 },
       { author: "(匿名)", content: "《猿辅导》", voteCount: 1161 },
@@ -1572,6 +1697,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/575674852/answer/3086843430",
     grade: "A",
     commentCount: 389,
+    createdAt: "2023-06-23",
   },
   {
     id: "348685038",
@@ -1584,6 +1710,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/58662264/answer/348685038",
     grade: "A",
     commentCount: 450,
+    createdAt: "2018-03-23",
+    updatedAt: "2018-07-30",
   },
   {
     id: "1716386069",
@@ -1596,6 +1724,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/24114669/answer/1716386069",
     grade: "A",
     commentCount: 362,
+    createdAt: "2021-02-05",
+    updatedAt: "2023-08-15",
   },
   {
     id: "10200390739",
@@ -1608,6 +1738,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/639909397/answer/10200390739",
     grade: "A",
     commentCount: 767,
+    createdAt: "2024-10-20",
     comments: [
       { author: "(匿名)", content: "人家都放过你了，你要感恩[赞]", voteCount: 9582 },
       { author: "(匿名)", content: "她的闺蜜圈子里，一定有一个被开帕拉梅拉的玩过。\n导致她们一整个圈子都有种错觉，自己的段位得至少是开帕拉梅拉的男人才能配上", voteCount: 3709 },
@@ -1632,6 +1763,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/575674852/answer/2970431889",
     grade: "A",
     commentCount: 680,
+    createdAt: "2023-04-06",
   },
   {
     id: "2513176682",
@@ -1644,6 +1776,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/412551827/answer/2513176682",
     grade: "A",
     commentCount: 3412,
+    createdAt: "2022-06-03",
+    updatedAt: "2022-08-02",
   },
   {
     id: "542638383",
@@ -1656,6 +1790,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/20585936/answer/542638383",
     grade: "A",
     commentCount: 341,
+    createdAt: "2018-12-01",
+    updatedAt: "2022-07-03",
     comments: [
       { author: "(匿名)", content: "深奥的一批……作者厉害", voteCount: 378 },
       { author: "(匿名)", content: "因为语速和视频播放速度的问题，不得不反复看了几遍。不过并不算浪费时间，重复的遍数也给了反刍的空间。即使不讨论对错也是能给人以思考的干货，值得点赞。", voteCount: 188 },
@@ -1680,6 +1816,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/37226968/answer/1030207889",
     grade: "A",
     commentCount: 710,
+    createdAt: "2020-02-22",
+    updatedAt: "2024-02-28",
     comments: [
       { author: "(匿名)", content: "丢太漂亮了吧[思考]求微信", voteCount: 285 },
       { author: "(匿名)", content: "答主长得好看还很自律，好厉害。我也养成了几个有正回馈的习惯，但还没活着答主的样子", voteCount: 202 },
@@ -1704,6 +1842,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/1970645824292750490/answer/2061410089551115217",
     grade: "A",
     commentCount: 147,
+    createdAt: "2026-07-17",
+    updatedAt: "2026-07-18",
   },
   {
     id: "1443246642",
@@ -1716,6 +1856,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/393200731/answer/1443246642",
     grade: "A",
     commentCount: 671,
+    createdAt: "2020-08-30",
+    updatedAt: "2020-09-30",
     comments: [
       { author: "(匿名)", content: "第一点买个降噪耳机就好了", voteCount: 359 },
       { author: "(匿名)", content: "不自觉的把手机抬高了些[捂嘴]", voteCount: 282 },
@@ -1740,6 +1882,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/537552336/answer/3328838461",
     grade: "A",
     commentCount: 436,
+    createdAt: "2023-12-17",
     comments: [
       { author: "(匿名)", content: "学会复盘，是一个人成长最快的方式。所谓复盘，就是能反观过去，反思不足，总结经验。", voteCount: 93 },
       { author: "(匿名)", content: "当你把“这件事为什么发生在我身上”换成“这件事要教会／成就我什么”，你离成功就不远了。", voteCount: 62 },
@@ -1764,6 +1907,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/10697371203/answer/88780149458",
     grade: "A",
     commentCount: 576,
+    createdAt: "2025-01-29",
     comments: [
       { author: "(匿名)", content: "的确 关键是战鹰的互联网影响力不受战绩影响 [惊喜]", voteCount: 3666 },
       { author: "(匿名)", content: "这话说的不对 之前智运会五连胜 粉丝直呼塌房[惊喜]", voteCount: 1241 },
@@ -1788,6 +1932,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/466730886/answer/1964318792",
     grade: "A",
     commentCount: 481,
+    createdAt: "2021-06-27",
+    updatedAt: "2021-09-27",
   },
   {
     id: "3332863375",
@@ -1800,6 +1946,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/24657136/answer/3332863375",
     grade: "A",
     commentCount: 163,
+    createdAt: "2023-12-20",
     comments: [
       { author: "(匿名)", content: "坏了，我已经有案底了。幸好当初和同学去丽江旅游的时候他酒吧在休息，不然就更进一步了[大哭]", voteCount: 1964 },
       { author: "(匿名)", content: "[尴尬]你让初中时的我情何以堪\n而且，看大冰书的那个是过去的我，不是现在的我！！！！！", voteCount: 726 },
@@ -1824,6 +1971,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/267861219/answer/330886620",
     grade: "A",
     commentCount: 370,
+    createdAt: "2018-02-28",
     comments: [
       { author: "(匿名)", content: "小时候。我爸在我考不好的时候嘲笑我说，那你就考的好了，向我们证明你自己咯。这话是很常见很正常吧。\n真是搞笑，我考得好是我自己的事情，凭什么向别人证明自己。\n我们做任何事情都只是我们自己的事情，我们的价值是由我们自己来决定，如果自己做什么，全部都取决于别人的肯定或者否定，这种状态实在太危险了。", voteCount: 303 },
       { author: "(匿名)", content: "想认识你爸爸", voteCount: 53 },
@@ -1848,6 +1996,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/531866239/answer/69257415499",
     grade: "A",
     commentCount: 409,
+    createdAt: "2025-01-01",
     comments: [
       { author: "(匿名)", content: "是的，诚哉斯言。\n包括父母，催婚、催买房、催要孩子等等所谓“建议”或者“规劝”实际上都是“闲得没话说了”，在他们的认知范围内所能扯出来的最没滋没味的淡话了。\n路大多数的上一代“底层”，莫说有建设性的成功的经验和建议了，实际上连“失败”的经验都不具备。\n他们只是浑浑噩噩混了一辈子，眼睛所能看到的，就只有那浅浅的一圈，任何主观能动性都不曾用出来过，从生到死，默默无闻，他们的规劝，实际上只不过是一种畏惧，对不确定性骨子里的恐慌和畏惧，迫不及待的想把身边人拉入到和他们一样沉默的漩涡里头去。", voteCount: 766 },
       { author: "(匿名)", content: "已点赞收藏。讲出了我的心里话。\n\n对方能明白自己讲的东西。是客套寒暄话的。已经算通透的人。\n\n怕就怕什么？\n\n他讲一大堆没营养的大道理。然后认为自己指点了你。让你回报感激他。\n\n说白了。这是一次无本买卖。“我为你好。给你出了主意。你得感激我。至于用什么回报我。你看着办。”\n\n这种交流真的挺难受的。。嗯。你单方面的难受。因为对你毫无营养。备受折磨。\n\n对方呢？享受了一把高高在上。还试图从你这里拿走点什么。\n\n哎。什么玩意", voteCount: 649 },
@@ -1872,6 +2021,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/386853992/answer/1814081802",
     grade: "A",
     commentCount: 653,
+    createdAt: "2021-04-02",
+    updatedAt: "2021-04-16",
     comments: [
       { author: "(匿名)", content: "想多了吧 能让他碰基本上是信任的人吧。这个顶多就是试探而已，也只有关系好试图更进一步的人才会这样接触[撇嘴]", voteCount: 733 },
       { author: "(匿名)", content: "要是我想碰男生的手腕子，胳膊肘子，肩膀头子那咋办呢？", voteCount: 452 },
@@ -1896,6 +2047,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/10697371203/answer/90449920070",
     grade: "A",
     commentCount: 197,
+    createdAt: "2025-02-01",
     comments: [
       { author: "(匿名)", content: "他对于战鹰的优势仅限于棋艺和身高", voteCount: 1690 },
       { author: "(匿名)", content: "大家愿意给他刀.是希望他砍韩国.。\n他回来第一时间居然是砍队友.。\n他要是挑那个领导砍一砍.也还说得过去.。\n毕竟当时领导确实不给力.。\n可人家战鹰一直在全力支持他.给他做后勤诶.。", voteCount: 756 },
@@ -1920,6 +2072,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/620927844/answer/3251293664",
     grade: "A",
     commentCount: 1706,
+    createdAt: "2023-10-16",
+    updatedAt: "2024-12-05",
   },
   {
     id: "2764417186",
@@ -1932,6 +2086,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/391483413/answer/2764417186",
     grade: "A",
     commentCount: 207,
+    createdAt: "2022-11-18",
+    updatedAt: "2024-05-09",
     comments: [
       { author: "(匿名)", content: "能反思就不错了，太高端，不明觉厉！", voteCount: 33 },
       { author: "(匿名)", content: "？问题是如何深度复盘，这个很叩题目了", voteCount: 18 },
@@ -1956,6 +2112,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/20585936/answer/632981745",
     grade: "A",
     commentCount: 175,
+    createdAt: "2019-03-26",
+    updatedAt: "2020-04-13",
     comments: [
       { author: "(匿名)", content: "所以发现自从当了老师之后专业水平突飞猛进[捂脸]", voteCount: 646 },
       { author: "(匿名)", content: "关于这个问题，作者本身就做到了用简单的语言讲清楚了原理～", voteCount: 72 },
@@ -1980,6 +2138,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/325952857/answer/2947157684",
     grade: "A",
     commentCount: 453,
+    createdAt: "2023-03-21",
+    updatedAt: "2023-03-22",
     comments: [
       { author: "(匿名)", content: "奇葩小国一个月没更新了", voteCount: 888 },
       { author: "(匿名)", content: "传下去，可汗将率亲兵讨伐小红书[惊喜]", voteCount: 620 },
@@ -2004,6 +2164,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/341475001/answer/3287413326",
     grade: "A",
     commentCount: 174,
+    createdAt: "2023-11-13",
     comments: [
       { author: "(匿名)", content: "父母辛辛苦苦的工作都是孩子带来的[惊喜]", voteCount: 1150 },
       { author: "(匿名)", content: "真是这样的，一件事由某人单独执行，没做好，可能是客观条件太苛刻了或者自己能力不足，但一件事由两个人一起做，那失败的原因肯定是对方太傻逼了。", voteCount: 383 },
@@ -2028,6 +2189,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/386853992/answer/1849379381",
     grade: "A",
     commentCount: 219,
+    createdAt: "2021-04-22",
+    updatedAt: "2021-04-26",
     comments: [
       { author: "(匿名)", content: "没胸必须要练屁股", voteCount: 452 },
       { author: "(匿名)", content: "没胸不要练PP那个图给我看笑了哈哈哈哈跟我身材一模一样", voteCount: 376 },
@@ -2052,6 +2215,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/28358499/answer/1762418904",
     grade: "A",
     commentCount: 212,
+    createdAt: "2021-03-04",
+    updatedAt: "2021-03-16",
     comments: [
       { author: "(匿名)", content: "这真的是我所看过类似话题中最好的一篇，语言简练舒畅，逻辑清晰，且能够落地。对于我这种从小学习看起来捧着教科书其实底下压着杂志时不时偷看一眼的低效学习者来说，值得好好研究学习一番～", voteCount: 148 },
       { author: "(匿名)", content: "我最讨厌阅读长篇了 可能被碎片化坑了。但是刚刚居然认认真真看完了。tdl里面不仅列步骤，还列了考核目标，实用。给自己奖励。还有那个什么不追求完美，则全什么的，挺现实的。代偿哈哈哈 可以很好解决报复性反弹。其实都是人性的问题吧[思考]", voteCount: 57 },
@@ -2076,6 +2241,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/375495780/answer/3086472501",
     grade: "A",
     commentCount: 229,
+    createdAt: "2023-06-23",
   },
   {
     id: "253490158",
@@ -2088,6 +2254,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/62006185/answer/253490158",
     grade: "A",
     commentCount: 1642,
+    createdAt: "2017-11-01",
+    updatedAt: "2017-11-02",
   },
   {
     id: "889723112",
@@ -2100,6 +2268,8 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/331786825/answer/889723112",
     grade: "A",
     commentCount: 748,
+    createdAt: "2019-11-11",
+    updatedAt: "2024-12-19",
     comments: [
       { author: "(匿名)", content: "这个故事告诉我们的启示：只要活的久，没有什么完不成的事。。。", voteCount: 1008 },
       { author: "(匿名)", content: "你这不还是自律嘛，之前没找对方法后来找到了。就像马克思主义到了中国就需要中国化一样[调皮]", voteCount: 458 },
@@ -2124,6 +2294,7 @@ export const zhihuAnswers: ZhihuAnswer[] = [
     link: "https://www.zhihu.com/question/313830485/answer/113026066983",
     grade: "A",
     commentCount: 460,
+    createdAt: "2025-02-28",
     comments: [
       { author: "(匿名)", content: "像张雪峰说学电力的，最后你毕业去过西藏的国家电网，也全是一群不学无术的二代在那，你汤都喝不上[捂脸]", voteCount: 908 },
       { author: "(匿名)", content: "从我个人经历来看，是这样的，那些半斤的早早的鼓起腰包，要么身居高位，要么衣食无忧的稳定。无他，愿意骗，愿意站队就可以，技术算什么，上不了桌的。", voteCount: 655 },
