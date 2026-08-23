@@ -1,6 +1,13 @@
 {
-  "semver": "V1.9.28",
+  "semver": "V1.9.29",
   "log": [
+    {
+      "version": "V1.9.29",
+      "date": "2026-08-23",
+      "title": "知乎详情还原原始排版与配图",
+      "summary": "知乎模块详情页改为按知乎原网页排版渲染：重新采集 75 篇回答的原始富文本 HTML（保留 <img> 配图、<strong> 加粗、列表、引用、代码、公式图等），新增 contentHtml 字段；详情页用 dangerouslySetInnerHTML 渲染并做安全清洗（提取真实图片地址 data-original/data-actualsrc、去掉脚本/事件属性、补全省略号链接前缀）。经实测，知乎图床（pica/pic.zhimg.com）无 Referer 直链返回 200，配图可在 App 内直接显示，无需下载。详情页补充知乎风格排版 CSS（图片自适应、加粗 600、列表/引用/代码块/表格等）。共 75 篇、829 张配图。",
+      "changes": []
+    },
     {
       "version": "V1.9.28",
       "date": "2026-08-23",
