@@ -1,6 +1,13 @@
 {
-  "semver": "V1.9.32",
+  "semver": "V1.9.33",
   "log": [
+    {
+      "version": "V1.9.33",
+      "date": "2026-08-23",
+      "title": "知乎详情：底部按钮吸底 + 发布/编辑时间",
+      "summary": "① 详情页底部 4 按钮改为吸底操作栏（position:sticky bottom:0，白底+顶边+安全区适配），长文滚动时始终固定在屏幕底部，不再随内容滚出视野，按钮高度 44→42px、间距收紧。② 详情正文结尾新增「发布于 YYYY-MM-DD · 编辑于 YYYY-MM-DD」时间行（101 篇全部补采 createdTime/updatedTime，新增脚本 zhihu-fetch-times.mjs）。③ IP 属地说：知乎公开 API 与渲染页（403 反爬）均不返回 ip_info，暂无法获取，已如实说明。",
+      "changes": []
+    },
     {
       "version": "V1.9.32",
       "date": "2026-08-23",
