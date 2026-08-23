@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ReadOutlined,
@@ -59,6 +59,24 @@ export default function ZhihuPage() {
   );
 
   const selected = list.find((a) => a.id === detailId) || null;
+
+  // 已完成阅读状态（本地持久化，不进云同步）
+  const [doneMap, setDoneMap] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem('zhihu_done_v1') || '{}'); } catch { return {}; }
+  });
+  const toggleDone = (id: string) => {
+    setDoneMap((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      try { localStorage.setItem('zhihu_done_v1', JSON.stringify(next)); } catch { /* 忽略 */ }
+      return next;
+    });
+  };
+  // 分享到有道云笔记：跳转到有道云「网页收藏」分享页，带入知乎原文链接与标题
+  const youdaoUrl = selected
+    ? `https://note.youdao.com/yws/public/bookmark/share/?url=${encodeURIComponent(
+        selected.link || ''
+      )}&title=${encodeURIComponent(selected.question || '')}`
+    : '';
 
   // 列表摘要：优先用 excerpt，否则取正文前 48 字
   const excerptOf = (content: string, excerpt?: string) => {
@@ -141,14 +159,28 @@ export default function ZhihuPage() {
         </article>
 
         {selected.link && (
-          <a
-            className="zhihu-detail-footlink"
-            href={selected.link}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <LinkOutlined /> 查看原回答（在知乎客户端打开）
-          </a>
+          <div className="zhihu-detail-actions">
+            <button
+              className={`zh-btn zh-btn-toggle${doneMap[selected.id] ? ' on' : ''}`}
+              onClick={() => toggleDone(selected.id)}
+            >
+              {doneMap[selected.id] ? '✓ 已完成阅读' : '标记为已完成'}
+            </button>
+            <a className="zh-btn zh-btn-youdao" href={youdaoUrl} target="_blank" rel="noreferrer">
+              分享到有道云
+            </a>
+            <button className="zh-btn zh-btn-back" onClick={() => navigate('/zhihu')}>
+              返回列表
+            </button>
+            <a
+              className="zh-btn zh-btn-link"
+              href={selected.link}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <LinkOutlined /> 查看原回答
+            </a>
+          </div>
         )}
       </div>
     );
@@ -173,12 +205,15 @@ export default function ZhihuPage() {
           list.map((a, i) => (
             <div
               key={a.id}
-              className="zhihu-card"
+              className={`zhihu-card${doneMap[a.id] ? ' done' : ''}`}
               onClick={() => navigate(`/zhihu/${a.id}`)}
             >
               <div className="zhihu-rank">{i + 1}</div>
               <div className="zhihu-card-body">
-                <div className="zhihu-q">{a.question}</div>
+                <div className="zhihu-q">
+                  {a.question}
+                  {doneMap[a.id] && <span className="zhihu-done-badge">已读</span>}
+                </div>
                 <div className="zhihu-meta">
                   <span className="zhihu-author">{a.author}</span>
                   <span className="zhihu-vote">
