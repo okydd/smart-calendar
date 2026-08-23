@@ -4966,6 +4966,47 @@ body {
 .zhihu-detail-close:active {
   background: #e3e6ec;
 }
+/* 详情页底部 4 按钮：2 行 × 2 列网格 */
+.zhihu-detail-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+.zh-btn {
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+.zh-btn-toggle { background: #f2f3f5; color: #525866; border-color: #e6e8ec; }
+.zh-btn-toggle.on { background: #e6f7ec; color: #1a9d54; border-color: #b6e8c8; font-weight: 600; }
+.zh-btn-youdao { background: linear-gradient(135deg, #7c5cff, #4f7cff); color: #fff; }
+.zh-btn-back { background: #eef0f4; color: #525866; border-color: #e2e5ec; }
+.zh-btn-link { background: #fff; color: var(--c-primary); border-color: var(--c-primary); }
+/* 列表页：已完成（已读）标记 */
+.zhihu-done-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-size: 11px;
+  line-height: 16px;
+  border-radius: 4px;
+  background: #e6f7ec;
+  color: #1a9d54;
+  vertical-align: middle;
+  font-weight: 600;
+}
+.zhihu-card.done { background: #fafbfa; }
+.zhihu-card.done .zhihu-q { color: #8a8f9e; }
 
 /* ===== 知乎详情：完整页面（非弹窗）===== */
 .zhihu-detail-page {
