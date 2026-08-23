@@ -387,7 +387,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
       <section className="remind-card">
         <div className="remind-header today">
           <CalendarOutlined className="remind-ico" />
-          <span className="remind-label">日提醒</span>
+          <span className="remind-label">今天</span>
           <span className="remind-range">{selDateText}</span>
           <span
             className={`today-tag${isToday ? ' active' : ''}`}
@@ -413,7 +413,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
         <section className="remind-card">
           <div className="remind-header week">
             <CalendarOutlined className="remind-ico" />
-            <span className="remind-label">周提醒</span>
+            <span className="remind-label">本周</span>
             <span className="remind-range">{weekRangeLabel}</span>
             <span className="remind-count">{weekActive.length}</span>
           </div>
@@ -425,7 +425,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
       <section className="remind-card">
         <div className="remind-header month">
           <CalendarOutlined className="remind-ico" />
-          <span className="remind-label">月提醒</span>
+          <span className="remind-label">本月</span>
           {monthView ? (
             <>
               <button
@@ -470,7 +470,7 @@ export default function CalendarPage({ showFab = true }: { showFab?: boolean }) 
         {monthView ? (
           <>
             {monthViewActive.length === 0 ? (
-              <div className="empty-remind">本月暂无安排</div>
+              <div className="empty-remind">暂无安排</div>
             ) : (
               <div className="remind-list">{monthViewActive.map((e) => renderEventRow(e, true))}</div>
             )}
