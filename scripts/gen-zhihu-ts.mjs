@@ -14,6 +14,15 @@ const items = (db.items || [])
 
 const clean = (s) => (s || '').replace(/\s+/g, ' ').trim();
 
+// 知乎 Unix 秒时间戳 → YYYY-MM-DD
+function fmtDate(sec) {
+  if (!sec) return '';
+  const d = new Date(Number(sec) * 1000);
+  if (isNaN(d.getTime())) return '';
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
 // 清洗知乎原始富文本 HTML，供前端按原网页排版渲染（含配图、加粗、列表、公式图等）
 function cleanZhihuHtml(h) {
   if (!h) return '';
@@ -61,6 +70,10 @@ function emitAnswer(a) {
   if (a.link || a.url) lines.push(`    link: ${JSON.stringify(a.link || a.url)},`);
   if (a.grade) lines.push(`    grade: ${JSON.stringify(a.grade)},`);
   if (typeof a.commentCount === 'number') lines.push(`    commentCount: ${a.commentCount},`);
+  const createdAt = fmtDate(a.createdTime);
+  const updatedAt = fmtDate(a.updatedTime);
+  if (createdAt) lines.push(`    createdAt: ${JSON.stringify(createdAt)},`);
+  if (updatedAt && updatedAt !== createdAt) lines.push(`    updatedAt: ${JSON.stringify(updatedAt)},`);
   const cmts = (a.comments || []).filter((c) => c && c.content);
   if (cmts.length) {
     lines.push('    comments: [');
@@ -116,6 +129,10 @@ export interface ZhihuAnswer {
   commentCount?: number;
   /** 精选评论（已抓取的前 N 条，按赞排序） */
   comments?: ZhihuComment[];
+  /** 发布时间（YYYY-MM-DD） */
+  createdAt?: string;
+  /** 最近编辑时间（YYYY-MM-DD）；与发布同日则不输出 */
+  updatedAt?: string;
 }
 `;
 
