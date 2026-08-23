@@ -156,6 +156,13 @@ export default function ZhihuPage() {
               ))}
             </div>
           )}
+
+          <div className="zhihu-detail-time">
+            {selected.createdAt && <span>发布于 {selected.createdAt}</span>}
+            {selected.updatedAt && selected.updatedAt !== selected.createdAt && (
+              <span> · 编辑于 {selected.updatedAt}</span>
+            )}
+          </div>
         </article>
 
         {selected.link && (
