@@ -14,6 +14,38 @@ const items = (db.items || [])
 
 const clean = (s) => (s || '').replace(/\s+/g, ' ').trim();
 
+// 清洗知乎原始富文本 HTML，供前端按原网页排版渲染（含配图、加粗、列表、公式图等）
+function cleanZhihuHtml(h) {
+  if (!h) return '';
+  // 去掉脚本/样式/iframe/noscript（防 XSS、去无关资源）
+  h = h.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, '')
+    .replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, '');
+  // 图片：取真实地址（data-original / data-actualsrc 优先，其次 src），丢弃 svg/gif 占位动画
+  h = h.replace(/<img\b[^>]*>/gi, (tag) => {
+    const real =
+      (tag.match(/data-original="([^"]+)"/i) || [])[1] ||
+      (tag.match(/data-actualsrc="([^"]+)"/i) || [])[1] ||
+      (tag.match(/src="([^"]+)"/i) || [])[1] || '';
+    if (!real || real.startsWith('data:image/svg') || real.startsWith('data:image/gif')) return '';
+    const alt = (tag.match(/alt="([^"]*)"/i) || [])[1] || '';
+    return `<img src="${real.replace(/&amp;/g, '&')}" alt="${alt}" loading="lazy">`;
+  });
+  // 链接：相对路径补 https://www.zhihu.com 前缀；非 http(s)/mailto 协议丢弃
+  h = h.replace(/<a\b([^>]*?)href="([^"]*)"/gi, (m, pre, href) => {
+    let u = href.trim();
+    if (u.startsWith('//')) u = 'https:' + u;
+    else if (u.startsWith('/')) u = 'https://www.zhihu.com' + u;
+    if (/^(https?:|mailto:)/i.test(u)) return `<a${pre}href="${u}" target="_blank" rel="noopener noreferrer"`;
+    return `<a${pre}href="#"`;
+  });
+  // 去掉所有事件属性（on*），去掉 <base>/<meta>/<link> 等危险/无意义标签（保留内容）
+  h = h.replace(/\s+on\w+="[^"]*"/gi, '');
+  h = h.replace(/<\/?(base|meta|link)\b[^>]*>/gi, '');
+  return h;
+}
+
 function emitAnswer(a) {
   const lines = [];
   lines.push('  {');
@@ -24,6 +56,8 @@ function emitAnswer(a) {
   if (a.excerpt) lines.push(`    excerpt: ${JSON.stringify(a.excerpt)},`);
   // 正文按 \n 分段（DB 中已是纯文本换行）
   lines.push(`    content: ${JSON.stringify(a.content || '')},`);
+  // 富文本正文（原始 HTML，含配图/加粗/列表/公式图，已清洗，供详情页按原排版渲染）
+  if (a.contentHtml) lines.push(`    contentHtml: ${JSON.stringify(cleanZhihuHtml(a.contentHtml))},`);
   if (a.link || a.url) lines.push(`    link: ${JSON.stringify(a.link || a.url)},`);
   if (a.grade) lines.push(`    grade: ${JSON.stringify(a.grade)},`);
   if (typeof a.commentCount === 'number') lines.push(`    commentCount: ${a.commentCount},`);
@@ -72,6 +106,8 @@ export interface ZhihuAnswer {
   excerpt?: string;
   /** 回答正文，'\\n' 分段 */
   content: string;
+  /** 富文本正文（原始 HTML，含配图/加粗/列表/公式图），详情页按知乎原排版渲染 */
+  contentHtml?: string;
   /** 知乎原文链接 */
   link?: string;
   /** 分级：SSS(≥10万) / SS(≥5万) / S(≥2万) / A(≥1万) */
