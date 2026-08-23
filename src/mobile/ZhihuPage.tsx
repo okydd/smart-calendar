@@ -109,13 +109,17 @@ export default function ZhihuPage() {
           </div>
 
           <div className="zhihu-detail-content">
-            {selected.content.split('\n').map((p, idx) =>
-              p.trim() === '' ? (
-                <div key={idx} className="zhihu-detail-gap" />
-              ) : (
-                <p key={idx} className="zhihu-detail-p">
-                  {p}
-                </p>
+            {selected.contentHtml ? (
+              <div dangerouslySetInnerHTML={{ __html: selected.contentHtml }} />
+            ) : (
+              selected.content.split('\n').map((p, idx) =>
+                p.trim() === '' ? (
+                  <div key={idx} className="zhihu-detail-gap" />
+                ) : (
+                  <p key={idx} className="zhihu-detail-p">
+                    {p}
+                  </p>
+                )
               )
             )}
           </div>
