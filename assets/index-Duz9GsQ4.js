@@ -1,0 +1,2 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./web-dUtmHkHb.js","./index-DPzYW3Vq.js","./vendor-react-DFxU1kFX.js","./vendor-antd-DSX0SCtZ.js","./vendor-CXP2eCqR.js","./vendor-antd-BdOndhxL.css","./index-D2jSOVQ5.css"])))=>i.map(i=>d[i]);
+import{r as e,_ as t}from"./index-DPzYW3Vq.js";import"./vendor-react-DFxU1kFX.js";import"./vendor-antd-DSX0SCtZ.js";import"./vendor-CXP2eCqR.js";const a=e("Share",{web:()=>t(()=>import("./web-dUtmHkHb.js"),__vite__mapDeps([0,1,2,3,4,5,6]),import.meta.url).then(r=>new r.ShareWeb)});export{a as Share};
