@@ -1,5 +1,5 @@
 /* 智能日历 Service Worker：离线可用（激进更新版） */
-const CACHE = 'smart-calendar-v3-2026-08-28T13-47-50-058Z';
+const CACHE = 'smart-calendar-v3-2026-08-28T14-08-15-121Z';
 const CORE = ['./', './index.html', './manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {
