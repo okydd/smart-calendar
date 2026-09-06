@@ -7,6 +7,12 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <meta name="theme-color" content="#5e60ff" />
+    <!--
+      关闭 Referer：云端朗读走百度翻译 TTS（<audio src> 直接播 MP3），
+      该接口对外部 Referer 做了防盗链（带 Referer 返回 0 字节 HTML）。
+      no-referrer 已验证不影响知乎图片（picx.zhimg.com 两种 Referer 均返回 200 image/jpeg）。
+    -->
+    <meta name="referrer" content="no-referrer" />
     <meta name="description" content="智能日历 - 日程与办事清单，支持导出精美长图" />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -185,7 +191,7 @@
         setTimeout(maybeShow, 15000);
       })();
     </script>
-    <script type="module" crossorigin src="./assets/index-BJpSuf9-.js"></script>
+    <script type="module" crossorigin src="./assets/index-CHhYQN_o.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/vendor-react-DFxU1kFX.js">
     <link rel="modulepreload" crossorigin href="./assets/vendor-C8IKlzsv.js">
     <link rel="modulepreload" crossorigin href="./assets/vendor-antd-Dj8YgdEL.js">
