@@ -150,6 +150,9 @@
           try { window.__appReady = true; } catch (_) {}
           var fb = document.getElementById('bootFallback');
           if (fb && fb.parentNode) fb.parentNode.removeChild(fb);
+          // 一并移除启动加载指示（首屏白屏期间显示的转圈）
+          var bl = document.getElementById('bootLoading');
+          if (bl && bl.parentNode) bl.parentNode.removeChild(bl);
         };
 
         // 判断是否为「可恢复」的加载类致命错误：资源/模块/chunk 加载失败。
@@ -191,14 +194,68 @@
         setTimeout(maybeShow, 15000);
       })();
     </script>
-    <script type="module" crossorigin src="./assets/index-CHhYQN_o.js"></script>
+    <script type="module" crossorigin src="./assets/index-CO2VmjpN.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/vendor-react-DFxU1kFX.js">
     <link rel="modulepreload" crossorigin href="./assets/vendor-C8IKlzsv.js">
-    <link rel="modulepreload" crossorigin href="./assets/vendor-antd-Dj8YgdEL.js">
+    <link rel="modulepreload" crossorigin href="./assets/vendor-antd-Ucsf4FFU.js">
     <link rel="stylesheet" crossorigin href="./assets/vendor-antd-BdOndhxL.css">
-    <link rel="stylesheet" crossorigin href="./assets/index-bSf6xVMq.css">
+    <link rel="stylesheet" crossorigin href="./assets/index-BFQetZz3.css">
   </head>
   <body>
     <div id="root"></div>
+
+    <!--
+      启动指示：JS 包（约 1.4MB）在低端安卓机上解析需要 1~3 秒，
+      期间 #root 为空 → 用户看到的是「白屏」，容易被误认为卡死。
+      这里在 HTML 里内联一个极简加载指示（首帧即可见，不等 JS），
+      React 挂载后由 main.tsx 的 __hideBootFallback 立即移除。
+    -->
+    <div id="bootLoading" aria-live="polite">
+      <div class="boot-load-box">
+        <div class="boot-load-dot"></div>
+        <div class="boot-load-text">智能日历</div>
+      </div>
+    </div>
+    <style>
+      #bootLoading {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f6f7fb;
+      }
+      .boot-load-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+      }
+      .boot-load-dot {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: 3px solid #e0e3ee;
+        border-top-color: #5e60ff;
+        animation: boot-spin 0.9s linear infinite;
+      }
+      @keyframes boot-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .boot-load-text {
+        font:
+          14px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          'PingFang SC',
+          'Microsoft YaHei',
+          sans-serif;
+        color: #8a8f99;
+        letter-spacing: 1px;
+      }
+    </style>
+
   </body>
 </html>
