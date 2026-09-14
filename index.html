@@ -155,6 +155,11 @@
           if (bl && bl.parentNode) bl.parentNode.removeChild(bl);
         };
 
+        // 暴露「彻底清缓存的硬刷新」给 React 错误边界复用：与下方 freshReload 同一实现
+        // （先注销正在控制的 SW、清空 Cache API，再以纯网络 + 缓存破坏方式跳转），
+        // 确保「渲染期崩溃」也能像「资源加载失败」一样真正清掉设备上损坏的缓存组合。
+        window.__bootFreshReload = freshReload;
+
         // 判断是否为「可恢复」的加载类致命错误：资源/模块/chunk 加载失败。
         // 这类错误多因部署后 CDN 传播不一致（某个 JS chunk 暂时缺失）导致，
         // 纯网络重试一次通常即可自愈；其余异步错误不触发自动重试，避免误刷。
@@ -194,10 +199,10 @@
         setTimeout(maybeShow, 15000);
       })();
     </script>
-    <script type="module" crossorigin src="./assets/index-BJiZ-ipg.js"></script>
+    <script type="module" crossorigin src="./assets/index-C_wvJKqr.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/vendor-react-DFxU1kFX.js">
-    <link rel="modulepreload" crossorigin href="./assets/vendor-9M5To02F.js">
-    <link rel="modulepreload" crossorigin href="./assets/vendor-antd-B1qgmgqq.js">
+    <link rel="modulepreload" crossorigin href="./assets/vendor-DpWmDn4b.js">
+    <link rel="modulepreload" crossorigin href="./assets/vendor-antd-CYGslJsi.js">
     <link rel="stylesheet" crossorigin href="./assets/vendor-antd-BdOndhxL.css">
     <link rel="stylesheet" crossorigin href="./assets/index-C0heu7r0.css">
   </head>
